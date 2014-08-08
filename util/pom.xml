@@ -8,10 +8,6 @@
 
     <artifactId>floto-util</artifactId>
 
-    <properties>
-        <rootDir>${project.parent.basedir}</rootDir>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
