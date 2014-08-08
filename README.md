@@ -1,4 +1,4 @@
-# floto
+# floto [![Build Status](https://travis-ci.org/floto/floto.svg?branch=master)](https://travis-ci.org/floto/floto)
 
 floto is a tool for deploying and orchestrating services using docker containers.
 
