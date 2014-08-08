@@ -1,0 +1,11 @@
+<div ng-controller="ContainerController">
+    <h3>{{container.name}}</h3>
+        <div class="row">
+            <div class="col-md-2" floto-fill-height>
+                <ul class="nav nav-pills nav-stacked" role="tablist">
+                    <li ng-repeat="fileTarget in fileTargets" ui-sref-active="active"><a title="{{fileTarget.destination}}" ui-sref="container.file({file: fileTarget.file})">{{fileTarget.name}}</a></li>
+                </ul>
+            </div>
+            <div class="col-md-10" ui-view></div>
+        </div>
+</div>

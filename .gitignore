@@ -1,0 +1,12 @@
+target/
+.project
+.settings
+.checkstyle
+.classpath
+.springBeans
+.directory
+.vagrant
+.externalToolBuilders
+*.iml
+.gradle
+.idea

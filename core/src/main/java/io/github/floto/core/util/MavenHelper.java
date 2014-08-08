@@ -1,0 +1,77 @@
+package io.github.floto.core.util;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
+import org.eclipse.aether.impl.DefaultServiceLocator;
+import org.eclipse.aether.installation.InstallRequest;
+import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
+import org.eclipse.aether.spi.connector.transport.TransporterFactory;
+import org.eclipse.aether.transport.file.FileTransporterFactory;
+import org.eclipse.aether.transport.http.HttpTransporterFactory;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class MavenHelper {
+    List<RemoteRepository> remoteRepositories = new ArrayList<>();
+
+
+    public MavenHelper(JsonNode repositories) {
+        if (repositories == null || repositories.isMissingNode()) {
+            RemoteRepository central = new RemoteRepository.Builder("central", "default", "http://repo1.maven.org/maven2/").build();
+            remoteRepositories.add(central);
+        } else {
+            for(JsonNode repository: repositories) {
+                if(repository.isTextual()) {
+                    RemoteRepository remoteRepository = new RemoteRepository.Builder(null, "default", repository.asText()).build();
+                    remoteRepositories.add(remoteRepository);
+                } else {
+                    throw new IllegalArgumentException("Can't handle repository node. "+ repository);
+                }
+            }
+        }
+
+    }
+
+    public File resolveMavenDependency(String coordinates) {
+        RepositorySystem system = newRepositorySystem();
+        DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        String userHome = System.getProperty("user.home");
+        LocalRepository localRepo = new LocalRepository(userHome + "/.m2/repository");
+        session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepo));
+        Artifact artifact = new DefaultArtifact(coordinates);
+
+        ArtifactRequest artifactRequest = new ArtifactRequest();
+        artifactRequest.setArtifact(artifact);
+        artifactRequest.setRepositories(remoteRepositories);
+        try {
+            ArtifactResult artifactResult = system.resolveArtifact(session, artifactRequest);
+            InstallRequest ins = new InstallRequest();
+            ins.addArtifact(artifactResult.getArtifact());
+            return artifactResult.getArtifact().getFile();
+        } catch (ArtifactResolutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private RepositorySystem newRepositorySystem() {
+        DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
+        locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
+        locator.addService(TransporterFactory.class, FileTransporterFactory.class);
+        locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
+
+        return locator.getService(RepositorySystem.class);
+    }
+}
