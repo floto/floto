@@ -88,12 +88,12 @@ public class FlotoService implements Closeable {
         }
 	}
 
-	public void reload() {
-		log.info("Reloading manifest");
+	public void compileManifest() {
+		log.info("Compiling manifest");
 		String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
 		manifest = flotoDsl.toManifest(manifestString);
         this.manifestString = manifestString;
-		log.info("Reloaded manifest");
+		log.info("Compiled manifest");
 	}
 
 	public String getManifestString() {

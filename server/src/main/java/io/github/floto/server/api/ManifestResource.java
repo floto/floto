@@ -25,9 +25,9 @@ public class ManifestResource {
 	}
 
 	@POST
-	@Path("reload")
-	public void reloadManifest() {
-		flotoService.reload();
+	@Path("compile")
+	public void compileManifest() {
+		flotoService.compileManifest();
 	}
 
 }

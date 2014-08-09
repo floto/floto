@@ -14,8 +14,8 @@
             });
         };
 
-		FlotoService.reloadManifest = function reloadManifest() {
-            var recompilePromise = $http.post(app.urlPrefix + 'manifest/reload');
+		FlotoService.compileManifest = function compileManifest() {
+            var recompilePromise = $http.post(app.urlPrefix + 'manifest/compile');
             recompilePromise.then(function() {
                 FlotoService.refreshManifest();
             });

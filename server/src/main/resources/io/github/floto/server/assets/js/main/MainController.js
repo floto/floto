@@ -11,8 +11,8 @@
 	                    };
 		}
 
-		$scope.reloadManifest = function reloadManifest() {
-			FlotoService.reloadManifest().then(notifySuccess("Manifest reloaded"));
+		$scope.compileManifest = function compileManifest() {
+			FlotoService.compileManifest().then(notifySuccess("Manifest compiled"));
 		};
 
 	});

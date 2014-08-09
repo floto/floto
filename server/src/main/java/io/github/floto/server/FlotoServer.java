@@ -3,7 +3,6 @@ package io.github.floto.server;
 import com.beust.jcommander.JCommander;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
-import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.server.api.ContainersResource;
 import io.github.floto.server.api.HostsResource;
 import io.github.floto.server.api.ManifestResource;
@@ -19,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.woelker.jimix.servlet.JimixServlet;
-
-import java.io.File;
 
 public class FlotoServer {
 	private Logger log = LoggerFactory.getLogger(FlotoServer.class);
@@ -66,7 +63,7 @@ public class FlotoServer {
 		ResourceConfig resourceConfig = new ResourceConfig();
 		FlotoService flotoService = new FlotoService(parameters);
         try {
-            flotoService.reload();
+            flotoService.compileManifest();
         } catch(Throwable throwable) {
             // Error compiling manifest, continue anyway
             log.error("Error compiling manifest", throwable);

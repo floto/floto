@@ -3,18 +3,13 @@ package io.github.floto.builder;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
 import io.github.floto.core.FlotoService;
-import io.github.floto.core.ssh.SshService;
 import io.github.floto.core.tasks.HypervisorTask;
 import io.github.floto.core.tasks.RedeployVmTask;
 import io.github.floto.core.util.TemplateHelper;
-import io.github.floto.core.virtualization.VmDescription;
-import io.github.floto.core.virtualization.workstation.WorkstationHypervisorService;
 import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
-import io.github.floto.dsl.model.VmConfiguration;
 import io.github.floto.util.GitHelper;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormat;
@@ -23,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -67,7 +61,7 @@ public class FlotoBuilder {
             String gitDescription = new GitHelper(rootDefinitionFile.getParentFile()).describe();
             log.info("Git Description {}", gitDescription);
             flotoService = new FlotoService(parameters);
-            flotoService.reload();
+            flotoService.compileManifest();
 
             flotoService.enableBuildOutputDump(true);
 
