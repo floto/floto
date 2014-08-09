@@ -20,7 +20,7 @@
 
 		FlotoService.compileManifest = function compileManifest() {
             var recompilePromise = $http.post(app.urlPrefix + 'manifest/compile');
-            recompilePromise.then(function() {
+            recompilePromise.finally(function() {
                 FlotoService.refreshManifest();
             });
             return  recompilePromise;
