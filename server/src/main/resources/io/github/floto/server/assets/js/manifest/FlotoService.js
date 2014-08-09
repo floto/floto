@@ -4,16 +4,22 @@
 		var FlotoService = {};
 
 		FlotoService.getManifest = function getManifest() {
-			var manifest = $resource(app.urlPrefix + 'manifest').get();
-			manifest.$promise.then(function (manifest) {
-				$rootScope.domainName = manifest.site.domainName;
-			});
-
-			return $resource(app.urlPrefix + 'manifest').get();
+            return this.manifest;
 		};
 
+        FlotoService.refreshManifest = function refreshManifest() {
+            this.manifest = $resource(app.urlPrefix + 'manifest').get();
+            this.manifest.$promise.then(function (manifest) {
+                $rootScope.domainName = manifest.site.domainName;
+            });
+        };
+
 		FlotoService.reloadManifest = function reloadManifest() {
-			return $http.post(app.urlPrefix + 'manifest/reload');
+            var recompilePromise = $http.post(app.urlPrefix + 'manifest/reload');
+            recompilePromise.then(function() {
+                FlotoService.refreshManifest();
+            });
+            return  recompilePromise;
 		};
 
 		FlotoService.getContainerStates = function getContainerStates() {
@@ -132,6 +138,7 @@
 			});
 
 		};
+        FlotoService.refreshManifest();
 
 		return FlotoService;
 	});

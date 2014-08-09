@@ -15,7 +15,7 @@
 
 <body>
 
-<div class="container-fluid ng-cloak">
+<div class="container-fluid ng-cloak" ng-controller="MainController">
 
 	<script src="/lib/lodash.js"></script>
 	<script src="/lib/jquery.js"></script>
@@ -40,6 +40,8 @@
 
     <script src="/js/manifest/ManifestController.js"></script>
 
+    <script src="/js/main/MainController.js"></script>
+
     <script src="/js/containers/ContainersController.js"></script>
 	<script src="/js/containers/ContainerController.js"></script>
 	<script src="/js/util/FileController.js"></script>
@@ -60,10 +62,13 @@
 			</a>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
-                    <li ui-sref-active="active"><a ui-sref="manifest">Manifest</a></li>
                     <li ui-sref-active="active"><a ui-sref="containers">Containers</a></li>
                     <li ui-sref-active="active"><a ui-sref="hosts">Hosts</a></li>
+                    <li ui-sref-active="active"><a ui-sref="manifest">Manifest</a></li>
                 </ul>
+                <form class="navbar-form navbar-left" role="search">
+                    <button type="button" class="btn btn-primary btn-sm" ng-click="reloadManifest()">Recompile</button>
+                </form>
                 <span ng-show="domainName" class="navbar-brand pull-right" href="#"><strong>[{{domainName}}]</strong></span>
             </div>
             </a>

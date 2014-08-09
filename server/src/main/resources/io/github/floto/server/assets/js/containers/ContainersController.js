@@ -7,13 +7,14 @@
 			$scope.containerStates = FlotoService.getContainerStates();
 		}
 
-		update();
-
 		function merge() {
+            if(!$scope.manifest || !$scope.manifest.containers) {
+                return;
+            }
+            if(!$scope.containerStates) {
+                return;
+            }
 			var states = $scope.containerStates.states;
-			if(!$scope.manifest.containers) {
-				return;
-			}
 			$scope.manifest.containers.forEach(function(container) {
 				container.state = "unknown";
 				if(!states || !states[container.name]) {
@@ -25,6 +26,10 @@
 		$scope.$watch("manifest.containers", merge);
 		$scope.$watch("containerStates.states", merge);
 
+        $scope.$watch(function() {
+            return FlotoService.getManifest()
+        }, update);
+
 		function notifySuccess(title) {
 			return function() {
 	                        NotificationService.notify({
@@ -33,10 +38,6 @@
 	                        });
 	                    };
 		}
-
-		$scope.reloadManifest = function reloadManifest() {
-			FlotoService.reloadManifest().then(notifySuccess("Manifest reloaded")).then(update);
-		};
 
 		$scope.redeployContainers = function redeployContainers(request) {
 			FlotoService.redeployContainers(request).then(notifySuccess("Containers redeployed")).then(update);

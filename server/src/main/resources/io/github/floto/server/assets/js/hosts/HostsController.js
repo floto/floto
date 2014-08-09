@@ -2,18 +2,19 @@
 	"use strict";
 
 	app.controller("HostsController", function($scope, FlotoService, NotificationService) {
-		function update() {
+        function update() {
 			$scope.manifest = FlotoService.getManifest();
 			$scope.hostStates = FlotoService.getHostStates();
 		}
 
-		update();
-
 		function merge() {
+            if(!$scope.manifest || !$scope.manifest.hosts) {
+                return;
+            }
+            if(!$scope.hostStates) {
+                return;
+            }
 			var states = $scope.hostStates.states;
-			if(!$scope.manifest.hosts) {
-				return;
-			}
 			$scope.manifest.hosts.forEach(function(host) {
 				host.state = "unknown";
 				if(!states || !states[host.name]) {
@@ -25,6 +26,10 @@
 		$scope.$watch("manifest.hosts", merge);
 		$scope.$watch("hostStates.states", merge);
 
+        $scope.$watch(function() {
+            return FlotoService.getManifest()
+        }, update);
+
 		function notifySuccess(title) {
 			return function() {
 	                        NotificationService.notify({
@@ -35,10 +40,6 @@
 		}
 
 		$scope.refresh = update;
-
-		$scope.reloadManifest = function reloadManifest() {
-			FlotoService.reloadManifest().then(notifySuccess("Manifest reloaded")).then(update);
-		};
 
 		$scope.redeployHosts = function redeployHosts(request) {
 			notifySuccess("Hosts redeploy started");
