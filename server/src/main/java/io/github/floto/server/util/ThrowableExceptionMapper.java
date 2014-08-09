@@ -31,7 +31,11 @@ public class ThrowableExceptionMapper implements ExceptionMapper<Throwable> {
 		Object entity = model;
 		int status = INTERNAL_SERVER_ERROR;
 		String id = UUID.randomUUID().toString();
-		model.put("message", exception.getMessage());
+        String message = exception.getMessage();
+        if(message == null) {
+            message = exception.toString();
+        }
+        model.put("message", message);
 		if (exception instanceof WebApplicationException) {
 			WebApplicationException webApplicationException = (WebApplicationException) exception;
 			status = webApplicationException.getResponse().getStatus();

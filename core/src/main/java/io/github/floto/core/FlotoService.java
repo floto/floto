@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Throwables;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.ssh.SshService;
+import io.github.floto.core.tasks.ManifestTask;
 import io.github.floto.core.util.DockerfileHelper;
 import io.github.floto.core.util.ErrorClientResponseFilter;
 import io.github.floto.core.util.MavenHelper;
@@ -609,5 +610,41 @@ public class FlotoService implements Closeable {
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(proxy);
+    }
+
+    public void verifyTemplates() {
+        try {
+            new ManifestTask<Void>(manifest) {
+                
+                @Override
+                public Void execute() throws Exception {
+                    for(Image image: manifest.images) {
+                        verifyTemplates(image.buildSteps);             
+                    }
+
+                    for(Container container: manifest.containers) {
+                        verifyTemplates(container.configureSteps);
+                    }
+
+                    for(Host host: manifest.hosts) {
+                        verifyTemplates(host.postDeploySteps);
+                        verifyTemplates(host.reconfigureSteps);
+                    }
+                    return null;
+                }
+
+                private void verifyTemplates(Iterable<JsonNode> steps) {
+                    Map<String, Object> globalConfig = createGlobalConfig(manifest);
+                    for (JsonNode step : steps) {
+                        String type = step.path("type").asText();
+                        if ("ADD_TEMPLATE".equals(type)) {
+                            new TemplateUtil().getTemplate(step, globalConfig);
+                        }
+                    }
+                }
+            }.execute();
+        } catch (Exception e) {
+            Throwables.propagate(e);
+        }
     }
 }

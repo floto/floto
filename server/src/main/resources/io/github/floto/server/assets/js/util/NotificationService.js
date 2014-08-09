@@ -11,7 +11,8 @@
 		};
 		var defaults = {
 			addclass: "stack-bottomright",
-			stack: stack_bottomright
+			stack: stack_bottomright,
+            width: "500px"
 		};
 		notificationService.notify = function (settings) {
 			settings = $.extend({}, defaults, settings);

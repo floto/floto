@@ -28,6 +28,7 @@ public class ManifestResource {
 	@Path("compile")
 	public void compileManifest() {
 		flotoService.compileManifest();
+		flotoService.verifyTemplates();
 	}
 
 }

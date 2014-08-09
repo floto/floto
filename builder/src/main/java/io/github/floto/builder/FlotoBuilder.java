@@ -62,6 +62,7 @@ public class FlotoBuilder {
             log.info("Git Description {}", gitDescription);
             flotoService = new FlotoService(parameters);
             flotoService.compileManifest();
+            flotoService.verifyTemplates();
 
             flotoService.enableBuildOutputDump(true);
 
