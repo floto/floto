@@ -2,6 +2,10 @@
     "use strict";
 
     app.controller("ManifestController", function ($scope, FlotoService) {
-        $scope.manifest = FlotoService.getManifest();
+        $scope.$watch(function () {
+            return FlotoService.getManifest();
+        }, function (manifest) {
+            $scope.manifest = manifest;
+        });
     });
 })();

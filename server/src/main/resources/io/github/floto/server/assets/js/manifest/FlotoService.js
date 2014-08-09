@@ -10,7 +10,11 @@
         FlotoService.refreshManifest = function refreshManifest() {
             this.manifest = $resource(app.urlPrefix + 'manifest').get();
             this.manifest.$promise.then(function (manifest) {
-                $rootScope.domainName = manifest.site.domainName;
+                if(manifest.site) {
+                    $rootScope.domainName = manifest.site.domainName;
+                } else {
+                    $rootScope.domainName = null;
+                }
             });
         };
 
