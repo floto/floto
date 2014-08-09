@@ -1,11 +1,28 @@
 (function() {
 	"use strict";
 
-	app.controller("ContainersController", function($scope, FlotoService, NotificationService) {
+	app.controller("ContainersController", function($scope, FlotoService, NotificationService, $state, $stateParams) {
+        $scope.groupings = {
+            host: {},
+            image: {}
+        };
 		function update() {
 			$scope.manifest = FlotoService.getManifest();
 			$scope.containerStates = FlotoService.getContainerStates();
+
 		}
+
+        function updateGroups() {
+            $scope.groups = $scope.groupings[$stateParams.grouping];
+        }
+
+        $scope.$state = $state;
+        $scope.$watch(function() {
+            return $stateParams.grouping
+        }, function(grouping) {
+            $scope.grouping = grouping;
+            updateGroups();
+        });
 
 		function merge() {
             if(!$scope.manifest || !$scope.manifest.containers) {
@@ -22,6 +39,23 @@
 				}
 				container.state = states[container.name];
 			});
+
+            $scope.groupings = {
+                host: {},
+                image: {}
+            };
+            $scope.manifest.containers.forEach(function(container) {
+                var hostGroup = $scope.groupings.host[container.host] || {title: container.host, containers: []};
+                $scope.groupings.host[container.host] = hostGroup;
+                hostGroup.containers.push(container);
+
+                var imageGroup = $scope.groupings.image[container.image] || {title: container.image, containers: []};
+                $scope.groupings.image[container.image] = imageGroup;
+                imageGroup.containers.push(container);
+            });
+            $scope.containers = $scope.manifest.containers;
+            updateGroups();
+
 		}
 		$scope.$watch("manifest.containers", merge);
 		$scope.$watch("containerStates.states", merge);
