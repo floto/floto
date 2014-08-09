@@ -16,7 +16,6 @@
             $scope.groups = $scope.groupings[$stateParams.grouping];
         }
 
-        $scope.$state = $state;
         $scope.$watch(function() {
             return $stateParams.grouping
         }, function(grouping) {

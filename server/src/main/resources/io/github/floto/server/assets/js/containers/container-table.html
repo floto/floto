@@ -1,5 +1,5 @@
 <table class="table table-bordered table-striped table-hover table-condensed">
-    <tr ng-repeat="container in containers">
+    <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name}">
         <td><span style="display: inline-block;width: 100px" class="label label-default"
                   ng-class="{'label-success': container.state==='running', 'label-warning': container.state==='stopped', 'label-danger': container.state === 'not-there'}">{{container.state}}</span>
         </td>

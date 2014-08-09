@@ -1,10 +1,10 @@
 <div ng-controller="HostsController">
     <div class="row">
         <div class="col-md-6">
-            <h2>Hosts    <button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>
+            <h2>Hosts<button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>
             </h2>
             <table class="table table-bordered table-striped table-hover table-condensed">
-                <tr ng-repeat="host in manifest.hosts">
+                <tr ng-repeat="host in manifest.hosts" ng-class="{'info': $stateParams.hostName === host.name}">
                     <td><span style="display: inline-block;width: 100px" class="label label-default"
                               ng-class="{'label-success': host.state==='running', 'label-warning': host.state==='stopped', 'label-danger': host.state === 'not-there'}">{{host.state || "unknown"}}</span>
                     </td>

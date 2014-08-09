@@ -33,4 +33,9 @@ var app;
                 templateUrl: '/js/manifest/manifest.html'
             });
     });
+
+    app.run(['$rootScope', '$state', '$stateParams', function ($rootScope, $state, $stateParams) {
+        $rootScope.$state = $state;
+        $rootScope.$stateParams = $stateParams;
+    }]);
 })();
