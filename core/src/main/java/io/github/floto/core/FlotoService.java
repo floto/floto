@@ -1,5 +1,6 @@
 package io.github.floto.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -48,7 +49,7 @@ public class FlotoService implements Closeable {
 	private FlotoDsl flotoDsl = new FlotoDsl();
 	private File rootDefinitionFile;
 	private String manifestString;
-	private Manifest manifest;
+	private Manifest manifest = new Manifest();
 	private SshService sshService = new SshService();
     private int proxyPort = 40005;
     private File flotoHome = new File(System.getProperty("user.home") + "/.floto");
@@ -68,6 +69,11 @@ public class FlotoService implements Closeable {
 	public FlotoService(FlotoCommonParameters commonParameters) {
 		this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
         this.useProxy = !commonParameters.noProxy;
+        try {
+            this.manifestString = new ObjectMapper().writer().writeValueAsString(manifest);
+        } catch (JsonProcessingException e) {
+            throw Throwables.propagate(e);
+        }
         if(this.useProxy) {
             proxy = new HttpProxy(proxyPort);
             proxy.start();
@@ -84,9 +90,10 @@ public class FlotoService implements Closeable {
 
 	public void reload() {
 		log.info("Reloading manifest");
-		manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
+		String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
 		manifest = flotoDsl.toManifest(manifestString);
-		log.info("Reloaded manifest:\n{}", manifestString);
+        this.manifestString = manifestString;
+		log.info("Reloaded manifest");
 	}
 
 	public String getManifestString() {

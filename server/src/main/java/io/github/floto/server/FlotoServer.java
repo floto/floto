@@ -65,7 +65,12 @@ public class FlotoServer {
 		context.addServlet(new ServletHolder(new DefaultServlet()), "/*");
 		ResourceConfig resourceConfig = new ResourceConfig();
 		FlotoService flotoService = new FlotoService(parameters);
-		flotoService.reload();
+        try {
+            flotoService.reload();
+        } catch(Throwable throwable) {
+            // Error compiling manifest, continue anyway
+            log.error("Error compiling manifest", throwable);
+        }
         HostService hostService = new HostService(flotoService);
 
 		resourceConfig.register(new ManifestResource(flotoService));
