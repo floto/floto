@@ -1,7 +1,7 @@
 var app;
 (function () {
 	'use strict';
-	app = angular.module('floto', ['ngResource', 'ui.router', 'luegg.directives']);
+	app = angular.module('floto', ['ngResource', 'ui.router', 'luegg.directives', 'gd.ui.jsonexplorer']);
 	app.urlPrefix = '/api/';
 
 	app.config(function ($stateProvider, $urlRouterProvider) {
@@ -27,6 +27,9 @@ var app;
 			}).state('host.file', {
 				url: "/file/:file",
 				templateUrl: '/js/util/file.html'
+            }).state('manifest', {
+                url: "/manifest",
+                templateUrl: '/js/manifest/manifest.html'
 			});
 	});
 })();

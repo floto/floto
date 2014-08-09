@@ -5,6 +5,7 @@
 	<link rel="stylesheet" href="/lib/bootstrap/css/bootstrap.css"/>
 	<link rel="stylesheet" href="/lib/bootstrap/css/bootstrap-theme.css"/>
 	<link rel="stylesheet" href="/lib/pnotify/jquery.pnotify.default.css"/>
+	<link rel="stylesheet" href="/lib/json-explorer/gd-ui-jsonexplorer.css"/>
 
 	<link rel="icon" sizes="16x16 32x32" href="/img/floto-icon.png">
 	<title ng-bind="'Floto' + titleSuffix">Floto</title>
@@ -27,6 +28,8 @@
 	<script src="/lib/angular/angular-animate.js"></script>
 	<script src="/lib/angular/angular-ui-router.js"></script>
 
+    <script src="/lib/json-explorer/gd-ui-jsonexplorer.js"></script>
+
     <script src="/lib/angular/angular-scroll-glue.js"></script>
 
 	<script src="/lib/pnotify/jquery.pnotify.js"></script>
@@ -35,12 +38,15 @@
 
 	<script src="/js/manifest/FlotoService.js"></script>
 
-	<script src="/js/containers/ContainersController.js"></script>
+    <script src="/js/manifest/ManifestController.js"></script>
+
+    <script src="/js/containers/ContainersController.js"></script>
 	<script src="/js/containers/ContainerController.js"></script>
 	<script src="/js/util/FileController.js"></script>
 
     <script src="/js/hosts/HostsController.js"></script>
     <script src="/js/hosts/HostController.js"></script>
+
 
 	<script src="/js/util/NotificationService.js"></script>
 	<script src="/js/util/ErrorHandling.js"></script>
@@ -54,6 +60,7 @@
 			</a>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
+                    <li ui-sref-active="active"><a ui-sref="manifest">Manifest</a></li>
                     <li ui-sref-active="active"><a ui-sref="containers">Containers</a></li>
                     <li ui-sref-active="active"><a ui-sref="hosts">Hosts</a></li>
                 </ul>
