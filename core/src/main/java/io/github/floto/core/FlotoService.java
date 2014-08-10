@@ -42,6 +42,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -87,9 +89,26 @@ public class FlotoService implements Closeable {
             proxy.start();
             try {
                 String ownAddress = Inet4Address.getLocalHost().getHostAddress();
+                if(ownAddress.startsWith("127.")) {
+                    Enumeration e = NetworkInterface.getNetworkInterfaces();
+                    while (e.hasMoreElements()) {
+                        NetworkInterface n = (NetworkInterface) e.nextElement();
+                        if(n.getDisplayName().startsWith("eth")) {
+                            Enumeration ee = n.getInetAddresses();
+                            while (ee.hasMoreElements()) {
+                                InetAddress i = (InetAddress) ee.nextElement();
+                                if(i instanceof Inet4Address) {
+                                    ownAddress = i.getHostAddress();
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                log.info("Using proxy address: {}", ownAddress);
                 httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";
                 flotoDsl.setGlobal("httpProxy", httpProxyUrl);
-            } catch (UnknownHostException e) {
+            } catch (Exception e) {
                 throw Throwables.propagate(e);
             }
 
@@ -362,13 +381,7 @@ public class FlotoService implements Closeable {
     private String createDockerFile(List<JsonNode> buildSteps) {
         DockerfileHelper dockerfileHelper = new DockerfileHelper();
         if(useProxy) {
-            try {
-                String ownAddress = Inet4Address.getLocalHost().getHostAddress();
-                String httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";
-                dockerfileHelper.setHttpProxy(httpProxyUrl);
-            } catch (UnknownHostException e) {
-                throw Throwables.propagate(e);
-            }
+            dockerfileHelper.setHttpProxy(httpProxyUrl);
         }
         return dockerfileHelper.createDockerfile(buildSteps);
     }

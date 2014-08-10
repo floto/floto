@@ -30,7 +30,6 @@ public class HttpProxy implements Closeable {
     }
 
     public void setCacheDirectory(File cacheDirectory) {
-
         this.cacheDirectory = cacheDirectory;
     }
 
