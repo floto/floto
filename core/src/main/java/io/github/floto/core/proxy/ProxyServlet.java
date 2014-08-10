@@ -40,6 +40,8 @@ public class ProxyServlet extends HttpServlet {
     public ProxyServlet(HttpClientBuilder httpClientBuilder) {
         httpClientBuilder.disableCookieManagement();
         httpClientBuilder.disableRedirectHandling();
+        httpClientBuilder.setMaxConnPerRoute(100);
+        httpClientBuilder.setMaxConnTotal(1000);
         this.httpClient = httpClientBuilder.build();
 
     }
