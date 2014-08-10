@@ -18,7 +18,6 @@ public class ProxyServlet extends HttpServlet {
     private HttpClient httpClient;
 
     public ProxyServlet(HttpClientBuilder httpClientBuilder) {
-        //httpClientBuilder.setDefaultCookieStore(new NullCookieStore());
         httpClientBuilder.disableCookieManagement();
         httpClientBuilder.disableRedirectHandling();
         this.httpClient = httpClientBuilder.build();
