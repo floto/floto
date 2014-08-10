@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.client.cache.Resource;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.impl.client.cache.FileResourceFactory;
 import org.junit.Before;
@@ -75,6 +76,34 @@ public class HttpCacheTest {
 
         assertEquals("Invocation: 1", responseC);
     }
+
+    @Test
+    public void testPersistentCacheVaryHeader() throws Exception {
+        buildPersistentCache();
+        jettyRule.addServlet(new HttpServlet() {
+            int invocations = 0;
+
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                invocations++;
+                resp.setHeader("Vary", "foo");
+                resp.setHeader("Cache-Control", "max-age=100");
+                resp.getOutputStream().print("Invocation: " + invocations + " "+req.getHeader("foo"));
+            }
+        }, "/foobar");
+
+        HttpGet requestA = new HttpGet(jettyRule.createUri("foobar"));
+        requestA.addHeader("foo", "bar");
+        HttpGet requestB = new HttpGet(jettyRule.createUri("foobar"));
+        requestB.addHeader("foo", "baz");
+        String responseA = IOUtils.toString(httpClient.execute(requestA).getEntity().getContent());
+        String responseB = IOUtils.toString(httpClient.execute(requestB).getEntity().getContent());
+
+        assertEquals("Invocation: 1 bar", responseA);
+        assertEquals("Invocation: 2 baz", responseB);
+
+    }
+
 
     private void buildSimpleCache() throws IOException {
         CachingHttpClientBuilder builder = CachingHttpClientBuilder.create();
