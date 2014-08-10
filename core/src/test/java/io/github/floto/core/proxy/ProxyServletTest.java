@@ -18,9 +18,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class ProxyServletTest {
 
@@ -59,6 +58,21 @@ public class ProxyServletTest {
 
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertEquals("foobaz", body);
+
+    }
+
+    @Test
+    public void testSimpleGetQueryString() throws Exception {
+        destinationJettyRule.addServlet(new HttpServlet() {
+
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                assertEquals("foo=bar", req.getQueryString());
+            }
+        }, "/foobar");
+
+        CloseableHttpResponse response = httpClient.execute(new HttpGet(destinationJettyRule.createUri("foobar?foo=bar")));
+        assertEquals(200, response.getStatusLine().getStatusCode());
 
     }
 

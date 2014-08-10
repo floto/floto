@@ -43,9 +43,13 @@ public class ProxyServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        HttpGet proxyRequest = new HttpGet(req.getRequestURL().toString());
+        String uri = req.getRequestURL().toString();
+        if (req.getQueryString() != null) {
+            uri += "?" + req.getQueryString();
+        }
+        HttpGet proxyRequest = new HttpGet(uri);
         for (String headerName : Collections.list(req.getHeaderNames())) {
-            if(HOP_BY_HOP_HEADERS.contains(headerName)) {
+            if (HOP_BY_HOP_HEADERS.contains(headerName)) {
                 continue;
             }
             for (String value : Collections.list(req.getHeaders(headerName))) {
@@ -55,7 +59,7 @@ public class ProxyServlet extends HttpServlet {
         HttpResponse proxyResponse = httpClient.execute(proxyRequest);
         resp.setStatus(proxyResponse.getStatusLine().getStatusCode());
         for (Header header : proxyResponse.getAllHeaders()) {
-            if(HOP_BY_HOP_HEADERS.contains(header.getName())) {
+            if (HOP_BY_HOP_HEADERS.contains(header.getName())) {
                 continue;
             }
             resp.setHeader(header.getName(), header.getValue());
