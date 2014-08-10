@@ -2,6 +2,7 @@ package io.github.floto.core.jobs;
 
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.esx.EsxHypervisorService;
+import io.github.floto.core.virtualization.virtualbox.VirtualboxHypervisorService;
 import io.github.floto.core.virtualization.workstation.WorkstationHypervisorService;
 import io.github.floto.dsl.model.*;
 
@@ -23,6 +24,9 @@ public abstract class HypervisorJob<T> extends HostJob<T> {
         } else if(hypervisorDescription instanceof EsxHypervisorDescription) {
             EsxHypervisorDescription description = (EsxHypervisorDescription) hypervisorDescription;
             return new EsxHypervisorService(description, manifest.site.get("domainName").asText());
+        } else if(hypervisorDescription instanceof VirtualboxHypervisorDescription) {
+            VirtualboxHypervisorDescription description = (VirtualboxHypervisorDescription) hypervisorDescription;
+            return new VirtualboxHypervisorService(description);
         } else {
             throw new IllegalArgumentException("Unknown hypervisor type: "+hypervisorDescription.getClass().getName());
         }
