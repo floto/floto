@@ -9,15 +9,28 @@
                     <button type="button"
                             class="btn btn-default" ng-click="refresh()">Refresh
                     </button>
+                    <button type="button" class="btn btn-primary"
+                            ng-click="redeployContainers({containers: containerNames})">Redeploy all
+                    </button>
+
                 </div>
                 <div class="col-md-6">
                     <div style="display: inline">
                         <div class="pull-right">
                             group by &nbsp;
                             <div class="btn-group">
-                                <button type="button" class="btn btn-default" ng-click="$state.go('.', {grouping: null})" ng-class="{'active': grouping == null}">None</button>
-                                <button type="button" class="btn btn-default" ng-click="$state.go('.', {grouping: 'host'})" ng-class="{'active': grouping == 'host'}">Host</button>
-                                <button type="button" class="btn btn-default" ng-click="$state.go('.', {grouping: 'image'})" ng-class="{'active': grouping == 'image'}">Image</button>
+                                <button type="button" class="btn btn-default"
+                                        ng-click="$state.go('.', {grouping: null})"
+                                        ng-class="{'active': grouping == null}">None
+                                </button>
+                                <button type="button" class="btn btn-default"
+                                        ng-click="$state.go('.', {grouping: 'host'})"
+                                        ng-class="{'active': grouping == 'host'}">Host
+                                </button>
+                                <button type="button" class="btn btn-default"
+                                        ng-click="$state.go('.', {grouping: 'image'})"
+                                        ng-class="{'active': grouping == 'image'}">Image
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -25,18 +38,29 @@
             </div>
 
             <div floto-fill-height>
+                <br>
+
                 <div ng-if="grouping">
                     <div ng-repeat="group in groups" ng-init="containers = group.containers">
-                        <h3>{{group.title}}</h3>
+                        <div style="display: table">
+                            <div style="display: table-row;">
+                                <div style="display: table-cell;width: 100%">
+                                    <h4>{{group.title}}</h4>
+                                </div>
+                                <div style="display: table-cell;">
+                                    <button type="button" class="btn btn-xs btn-primary"
+                                            ng-click="redeployContainers({containers: group.containerNames})">Redeploy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <ng-include src="'/js/containers/container-table.html'"></ng-include>
                     </div>
                 </div>
                 <div ng-if="!grouping">
-                    <br>
                     <ng-include src="'/js/containers/container-table.html'"></ng-include>
                 </div>
             </div>
+            <div class="col-md-6" ui-view></div>
         </div>
-        <div class="col-md-6" ui-view></div>
     </div>
-</div>

@@ -44,14 +44,17 @@
                 image: {}
             };
             $scope.manifest.containers.forEach(function(container) {
-                var hostGroup = $scope.groupings.host[container.host] || {title: container.host, containers: []};
+                var hostGroup = $scope.groupings.host[container.host] || {title: container.host, containers: [], containerNames: []};
                 $scope.groupings.host[container.host] = hostGroup;
                 hostGroup.containers.push(container);
+                hostGroup.containerNames.push(container.name);
 
-                var imageGroup = $scope.groupings.image[container.image] || {title: container.image, containers: []};
+                var imageGroup = $scope.groupings.image[container.image] || {title: container.image, containers: [], containerNames: []};
                 $scope.groupings.image[container.image] = imageGroup;
                 imageGroup.containers.push(container);
+                imageGroup.containerNames.push(container.name);
             });
+            $scope.containerNames = _.pluck($scope.manifest.containers, "name");
             $scope.containers = $scope.manifest.containers;
             updateGroups();
 
