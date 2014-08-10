@@ -26,7 +26,9 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,8 +62,13 @@ public class FlotoService implements Closeable {
 
     private Map<String, String> externalHostIpMap = new HashMap<>();
 
-	private Client client = ClientBuilder.newClient(new ClientConfig());
+	private Client client;
 	{
+        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder();
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.connectorProvider(new ApacheConnectorProvider());
+        clientBuilder.withConfig(clientConfig);
+        client = clientBuilder.build();
 		client.register(new ErrorClientResponseFilter());
 	}
 
