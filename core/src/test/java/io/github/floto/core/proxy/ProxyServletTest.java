@@ -4,6 +4,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.After;
@@ -76,6 +78,58 @@ public class ProxyServletTest {
         assertEquals(302, response.getStatusLine().getStatusCode());
         assertEquals(destinationJettyRule.createUri("otherlocation"), response.getFirstHeader("Location").getValue());
         assertEquals("", body);
+
+    }
+
+    @Test
+    public void testClientHeaders() throws Exception {
+        destinationJettyRule.addServlet(new HttpServlet() {
+
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                assertEquals("bar", req.getHeader("foo"));
+            }
+        }, "/foobar");
+
+        HttpUriRequest request = RequestBuilder.get().setUri(destinationJettyRule.createUri("foobar")).setHeader("foo", "bar").build();
+        CloseableHttpResponse response = httpClient.execute(request);
+
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+    }
+
+    @Test
+    public void testStripHopByHopClientHeaders() throws Exception {
+        destinationJettyRule.addServlet(new HttpServlet() {
+
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                assertEquals(null, req.getHeader("Proxy-Authenticate"));
+            }
+        }, "/foobar");
+
+        HttpUriRequest request = RequestBuilder.get().setUri(destinationJettyRule.createUri("foobar")).setHeader("Proxy-Authenticate", "bar").build();
+        CloseableHttpResponse response = httpClient.execute(request);
+
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+    }
+
+    @Test
+    public void testStripHopByHopServerHeaders() throws Exception {
+        destinationJettyRule.addServlet(new HttpServlet() {
+
+            @Override
+            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+                resp.setHeader("Proxy-Authenticate", "foobar");
+            }
+        }, "/foobar");
+
+        HttpUriRequest request = RequestBuilder.get().setUri(destinationJettyRule.createUri("foobar")).build();
+        CloseableHttpResponse response = httpClient.execute(request);
+
+        assertEquals(200, response.getStatusLine().getStatusCode());
+        assertEquals(null, response.getFirstHeader("Proxy-Authenticate"));
 
     }
 
