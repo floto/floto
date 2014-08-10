@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app="floto">
+<html ng-app="floto" ng-controller="MainController">
 
 <head>
 	<link rel="stylesheet" href="/lib/bootstrap/css/bootstrap.css"/>
@@ -8,14 +8,14 @@
 	<link rel="stylesheet" href="/lib/json-explorer/gd-ui-jsonexplorer.css"/>
 
 	<link rel="icon" sizes="16x16 32x32" href="/img/floto-icon.png">
-	<title ng-bind="'Floto' + titleSuffix">Floto</title>
+	<title ng-bind="'floto' + titleSuffix">floto</title>
 
 
 </head>
 
 <body>
 
-<div class="container-fluid ng-cloak" ng-controller="MainController">
+<div class="container-fluid ng-cloak">
 
 	<script src="/lib/lodash.js"></script>
 	<script src="/lib/jquery.js"></script>
@@ -57,7 +57,7 @@
 
 	<div class="navbar navbar-default navbar-fixed-top" bs-navbar>
 		<div class="navbar-inner">
-			<a class="navbar-brand" href="#">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;Floto&nbsp;&nbsp;
+			<a class="navbar-brand" href="#">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
 
 			</a>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
