@@ -7,6 +7,7 @@
 	</appender>
 
     <logger name="net.schmizz" level="WARN"/>
+    <logger name="io.github.floto.core.proxy.PersistentHttpCacheStorage" level="DEBUG"/>
 
 	<root level="info">
 		<appender-ref ref="STDOUT" />
