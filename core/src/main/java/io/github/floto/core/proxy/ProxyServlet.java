@@ -7,6 +7,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -18,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ProxyServlet extends HttpServlet {
+    private Logger log = LoggerFactory.getLogger(HttpProxy.class);
 
     private static Set<String> HOP_BY_HOP_HEADERS = new HashSet<>();
 
@@ -43,6 +46,7 @@ public class ProxyServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.debug("Proxying GET: {}", req.getRequestURL());
         String uri = req.getRequestURL().toString();
         if (req.getQueryString() != null) {
             uri += "?" + req.getQueryString();
@@ -67,4 +71,27 @@ public class ProxyServlet extends HttpServlet {
         IOUtils.copy(proxyResponse.getEntity().getContent(), resp.getOutputStream());
     }
 
+    @Override
+    protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.error("Unhandled HEAD request: {}", req.getRequestURL());
+        super.doHead(req, resp);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.error("Unhandled POST request: {}", req.getRequestURL());
+        super.doPost(req, resp);
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.error("Unhandled PUT request: {}", req.getRequestURL());
+        super.doPut(req, resp);
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        log.error("Unhandled DELETE request: {}", req.getRequestURL());
+        super.doDelete(req, resp);
+    }
 }
