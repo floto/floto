@@ -300,7 +300,7 @@ public class EsxHypervisorService implements HypervisorService {
                     vmUrl.toString().length());
             String fileNameWithoutExtn = fileName.substring(0,
                     fileName.lastIndexOf('.'));
-            String templateVmName = fileNameWithoutExtn;
+            String templateVmName = fileNameWithoutExtn +"_"+ esxDesc.esxHost;
 
             if (vmManager.getVm(templateVmName) == null) {
                 try {
