@@ -4,7 +4,7 @@
 		$httpProvider.interceptors.unshift(function ($injector, $q, NotificationService) {
 			return {
 				responseError: function (response) {
-					if (!response.config.suppressErrorNotfications) {
+					if (response.config &&  !response.config.suppressErrorNotfications) {
 						console.log(response.data.message);
 						console.log(response);
 						var message = response.data.message;

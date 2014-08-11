@@ -74,7 +74,7 @@
             var result = {
                 content: "Loading..."
             };
-            $http.get(app.urlPrefix + url).then(function (response) {
+            $http.get(app.urlPrefix + url, {transformResponse: function(x) {return x;}}).then(function (response) {
                 result.content = response.data;
             });
             return  result;

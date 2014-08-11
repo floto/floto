@@ -8,6 +8,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,8 +56,8 @@ public class ContainerResource {
 	@GET
 	@Path("template/{path:.*}")
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getTemplate(@PathParam("path") String path) {
-		return flotoService.getTemplate(containerName, path);
+	public Response getTemplate(@PathParam("path") String path) {
+		return Response.ok(flotoService.getTemplate(containerName, path)).type(MediaType.TEXT_PLAIN).build();
 	}
 
 
