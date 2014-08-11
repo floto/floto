@@ -22,7 +22,7 @@ public abstract class HypervisorTask<T> extends HostTask<T> {
             return new WorkstationHypervisorService(new File(System.getProperty("user.home")+"/.floto/vm"));
         } else if(hypervisorDescription instanceof EsxHypervisorDescription) {
             EsxHypervisorDescription description = (EsxHypervisorDescription) hypervisorDescription;
-            return new EsxHypervisorService(description);
+            return new EsxHypervisorService(description, manifest.site.get("domainName").asText());
         } else {
             throw new IllegalArgumentException("Unknown hypervisor type: "+hypervisorDescription.getClass().getName());
         }

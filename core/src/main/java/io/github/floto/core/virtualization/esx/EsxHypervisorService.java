@@ -8,6 +8,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.vmware.vim25.GuestProgramSpec;
@@ -39,7 +40,7 @@ public class EsxHypervisorService implements HypervisorService {
     
 
 
-    public EsxHypervisorService(EsxHypervisorDescription description) {
+    public EsxHypervisorService(EsxHypervisorDescription description, String domainName) {
     	this.esxDesc = description;
         Preconditions.checkNotNull(description.networks, "networks");
         Preconditions.checkNotNull(description.esxHost, "esxHost");
@@ -47,8 +48,7 @@ public class EsxHypervisorService implements HypervisorService {
         Preconditions.checkNotNull(description.username, "username");
         Preconditions.checkNotNull(description.password, "password");
         Preconditions.checkNotNull(description.defaultDatastore, "datastore");
-        
-        vmManager = new VirtualMachineManager(esxDesc);
+        vmManager = new VirtualMachineManager(esxDesc, domainName);
     }
 
 

@@ -61,13 +61,15 @@ public class VirtualMachineManager {
     
     ServiceInstance si;
     Folder rootFolder;
+    Folder vmFolder;
     HostSystem host;
     Datacenter dc;
     ResourcePool rp;
+    String domainName;
     
-    
-    public VirtualMachineManager(EsxHypervisorDescription description) {
+    public VirtualMachineManager(EsxHypervisorDescription description, String domainName) {
     	this.esxDesc = description;
+    	this.domainName = domainName;
     	connect();
     }
     
@@ -97,7 +99,13 @@ public class VirtualMachineManager {
             }
 
             rootFolder = dc.getVmFolder();
-            // TODO: check if everything initialized right
+            ManagedEntity me = new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+            if (me != null) {
+            	vmFolder = (Folder)me;
+            } else {
+            	vmFolder = rootFolder.createFolder(domainName);
+            }
+            
         } catch (Throwable e) {
             disconnect();
             Throwables.propagate(e);
@@ -210,8 +218,7 @@ public class VirtualMachineManager {
         cloneSpec.setPowerOn(false);
         cloneSpec.setTemplate(false);
 
-        Task task = vm.cloneVM_Task((Folder) vm.getParent(), vmDesc.vmName,
-                cloneSpec);
+        Task task = vm.cloneVM_Task(vmFolder, vmDesc.vmName, cloneSpec);
         log.info("Launching the VM clone task. Please wait ...");
 
         if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
@@ -220,6 +227,8 @@ public class VirtualMachineManager {
             log.error("Failure -: VM cannot be cloned");
         }
 
+        ManagedEntity[] me = {(ManagedEntity)getVm(vmDesc.vmName)};
+        vmFolder.moveIntoFolder_Task(me);
     }
 
 	public void reconfigureVm(VmDescription vmDesc) throws Exception {
@@ -355,7 +364,7 @@ public class VirtualMachineManager {
 
         HttpNfcLease httpNfcLease;
         httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(),
-                rootFolder, host);
+                vmFolder, host);
 
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
