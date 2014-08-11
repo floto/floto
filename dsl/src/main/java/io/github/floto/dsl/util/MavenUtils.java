@@ -10,13 +10,11 @@ import java.io.FileReader;
 
 public class MavenUtils {
     public static String getVersion(String directory) {
-        Model model = null;
-        FileReader reader = null;
         MavenXpp3Reader mavenReader = new MavenXpp3Reader();
         try {
             File pomFile = new File(directory + "/pom.xml");
-            reader = new FileReader(pomFile);
-            model = mavenReader.read(reader);
+            FileReader reader = new FileReader(pomFile);
+            Model model = mavenReader.read(reader);
             model.setPomFile(pomFile);
             MavenProject project = new MavenProject(model);
             return project.getVersion();

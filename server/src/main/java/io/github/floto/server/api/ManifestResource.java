@@ -11,7 +11,6 @@ import javax.ws.rs.core.MediaType;
 
 @Path("manifest")
 public class ManifestResource {
-	private FlotoDsl flotoDsl = new FlotoDsl();
 	private FlotoService flotoService;
 
 	public ManifestResource(FlotoService flotoService) {
