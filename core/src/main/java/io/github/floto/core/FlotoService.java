@@ -84,6 +84,7 @@ public class FlotoService implements Closeable {
         }
         if(this.useProxy) {
             proxy = new HttpProxy(proxyPort);
+            proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
             proxy.start();
             try {
                 String ownAddress = Inet4Address.getLocalHost().getHostAddress();

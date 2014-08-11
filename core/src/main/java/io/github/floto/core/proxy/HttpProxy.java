@@ -1,6 +1,7 @@
 package io.github.floto.core.proxy;
 
 import com.google.common.base.Throwables;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.client.cache.Resource;
 import org.apache.http.impl.client.cache.CacheConfig;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
@@ -30,8 +31,13 @@ public class HttpProxy implements Closeable {
     }
 
     public void setCacheDirectory(File cacheDirectory) {
-
         this.cacheDirectory = cacheDirectory;
+        cachingEnabled = true;
+        try {
+            FileUtils.forceMkdir(cacheDirectory);
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        }
     }
 
     public void start() {
@@ -66,15 +72,23 @@ public class HttpProxy implements Closeable {
     private ProxyServlet createCachingProxyServlet() {
         CacheConfig.Builder configBuilder = CacheConfig.custom();
         configBuilder.setMaxCacheEntries(10000);
-        configBuilder.setMaxObjectSize(2*1024*1024*1024);
+        configBuilder.setMaxObjectSize(2L*1024*1024*1024L);
 
         CachingHttpClientBuilder clientBuilder = CachingHttpClientBuilder.create();
         clientBuilder.setCacheConfig(configBuilder.build());
 
-        PersistentHttpCacheStorage storage = new PersistentHttpCacheStorage(new File(cacheDirectory, "storage"));
+        File storageDirectory = new File(cacheDirectory, "storage");
+        File resourceDirectory = new File(cacheDirectory, "resources");
+        try {
+            FileUtils.forceMkdir(storageDirectory);
+            FileUtils.forceMkdir(resourceDirectory);
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        }
+        PersistentHttpCacheStorage storage = new PersistentHttpCacheStorage(storageDirectory);
         clientBuilder.setHttpCacheStorage(storage);
 
-        clientBuilder.setResourceFactory(new FileResourceFactory(new File(cacheDirectory, "resources")) {
+        clientBuilder.setResourceFactory(new FileResourceFactory(resourceDirectory) {
             // Do not actually copy files
             @Override
             public Resource copy(String requestId, Resource resource) throws IOException {

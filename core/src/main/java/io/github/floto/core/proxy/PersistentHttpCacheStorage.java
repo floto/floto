@@ -1,6 +1,7 @@
 package io.github.floto.core.proxy;
 
 import com.google.common.base.Throwables;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.client.cache.HttpCacheEntry;
 import org.apache.http.client.cache.HttpCacheStorage;
 import org.apache.http.client.cache.HttpCacheUpdateCallback;
@@ -21,7 +22,8 @@ public class PersistentHttpCacheStorage implements HttpCacheStorage, Closeable {
     private HTreeMap<String, HttpCacheEntry> map;
 
     public PersistentHttpCacheStorage(File directory) {
-        db = DBMaker.newFileDB(new File(directory, "cacheEntries"))
+        File cacheEntries = new File(directory, "cacheEntries");
+        db = DBMaker.newFileDB(cacheEntries)
                 .closeOnJvmShutdown()
                 .make();
         map = db.createHashMap("entries").makeOrGet();
@@ -38,6 +40,11 @@ public class PersistentHttpCacheStorage implements HttpCacheStorage, Closeable {
     public HttpCacheEntry getEntry(String key) throws IOException {
         HttpCacheEntry entry = map.get(key);
         log.debug("GET {}->{}", key, entry);
+        if(entry == null) {
+            log.info("Cache MISS: {}", key);
+        } else {
+            log.info("!!!!! Cache HIT: {}", key);
+        }
         return entry;
     }
 

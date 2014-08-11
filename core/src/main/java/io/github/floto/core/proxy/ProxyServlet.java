@@ -70,7 +70,9 @@ public class ProxyServlet extends HttpServlet {
             }
             resp.setHeader(header.getName(), header.getValue());
         }
-        IOUtils.copy(proxyResponse.getEntity().getContent(), resp.getOutputStream());
+        if(proxyResponse.getEntity() != null && proxyResponse.getEntity().getContent() != null) {
+            IOUtils.copy(proxyResponse.getEntity().getContent(), resp.getOutputStream());
+        }
     }
 
     @Override
