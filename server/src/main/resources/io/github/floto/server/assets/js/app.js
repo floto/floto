@@ -5,7 +5,7 @@ var app;
     app.urlPrefix = '/api/';
 
     app.config(function ($stateProvider, $urlRouterProvider) {
-        $urlRouterProvider.otherwise('/containers')
+        $urlRouterProvider.otherwise('/containers');
 
         $stateProvider
             .state('containers', {

@@ -112,6 +112,7 @@
                 </executions>
                 <configuration>
                     <version>${jshint.version}</version>
+                    <configFile>.jshintrc</configFile>
                     <directories>
                         <directory>src/main/resources/io/github/floto/server/assets/js</directory>
                     </directories>

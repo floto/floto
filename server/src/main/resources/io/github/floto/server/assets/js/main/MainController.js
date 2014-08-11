@@ -1,14 +1,14 @@
-(function() {
+(function () {
 	"use strict";
 
-	app.controller("MainController", function($scope, FlotoService, NotificationService) {
+	app.controller("MainController", function ($scope, FlotoService, NotificationService) {
 		function notifySuccess(title) {
-			return function() {
-	                        NotificationService.notify({
-	                            title: title,
-	                            type: 'success'
-	                        });
-	                    };
+			return function () {
+				NotificationService.notify({
+					title: title,
+					type: 'success'
+				});
+			};
 		}
 
 		$scope.compileManifest = function compileManifest() {

@@ -1,78 +1,79 @@
-(function() {
+(function () {
 	"use strict";
 
-	app.controller("ContainersController", function($scope, FlotoService, NotificationService, $state, $stateParams) {
-        $scope.groupings = {
-            host: {},
-            image: {}
-        };
+	app.controller("ContainersController", function ($scope, FlotoService, NotificationService, $state, $stateParams) {
+		$scope.groupings = {
+			host: {},
+			image: {}
+		};
 		function update() {
 			$scope.manifest = FlotoService.getManifest();
 			$scope.containerStates = FlotoService.getContainerStates();
 
 		}
 
-        function updateGroups() {
-            $scope.groups = $scope.groupings[$stateParams.grouping];
-        }
+		function updateGroups() {
+			$scope.groups = $scope.groupings[$stateParams.grouping];
+		}
 
-        $scope.$watch(function() {
-            return $stateParams.grouping
-        }, function(grouping) {
-            $scope.grouping = grouping;
-            updateGroups();
-        });
+		$scope.$watch(function () {
+			return $stateParams.grouping;
+		}, function (grouping) {
+			$scope.grouping = grouping;
+			updateGroups();
+		});
 
 		function merge() {
-            if(!$scope.manifest || !$scope.manifest.containers) {
-                return;
-            }
-            if(!$scope.containerStates) {
-                return;
-            }
+			if (!$scope.manifest || !$scope.manifest.containers) {
+				return;
+			}
+			if (!$scope.containerStates) {
+				return;
+			}
 			var states = $scope.containerStates.states;
-			$scope.manifest.containers.forEach(function(container) {
+			$scope.manifest.containers.forEach(function (container) {
 				container.state = "unknown";
-				if(!states || !states[container.name]) {
+				if (!states || !states[container.name]) {
 					return;
 				}
 				container.state = states[container.name];
 			});
 
-            $scope.groupings = {
-                host: {},
-                image: {}
-            };
-            $scope.manifest.containers.forEach(function(container) {
-                var hostGroup = $scope.groupings.host[container.host] || {title: container.host, containers: [], containerNames: []};
-                $scope.groupings.host[container.host] = hostGroup;
-                hostGroup.containers.push(container);
-                hostGroup.containerNames.push(container.name);
+			$scope.groupings = {
+				host: {},
+				image: {}
+			};
+			$scope.manifest.containers.forEach(function (container) {
+				var hostGroup = $scope.groupings.host[container.host] || {title: container.host, containers: [], containerNames: []};
+				$scope.groupings.host[container.host] = hostGroup;
+				hostGroup.containers.push(container);
+				hostGroup.containerNames.push(container.name);
 
-                var imageGroup = $scope.groupings.image[container.image] || {title: container.image, containers: [], containerNames: []};
-                $scope.groupings.image[container.image] = imageGroup;
-                imageGroup.containers.push(container);
-                imageGroup.containerNames.push(container.name);
-            });
-            $scope.containerNames = _.pluck($scope.manifest.containers, "name");
-            $scope.containers = $scope.manifest.containers;
-            updateGroups();
+				var imageGroup = $scope.groupings.image[container.image] || {title: container.image, containers: [], containerNames: []};
+				$scope.groupings.image[container.image] = imageGroup;
+				imageGroup.containers.push(container);
+				imageGroup.containerNames.push(container.name);
+			});
+			$scope.containerNames = _.pluck($scope.manifest.containers, "name");
+			$scope.containers = $scope.manifest.containers;
+			updateGroups();
 
 		}
+
 		$scope.$watch("manifest.containers", merge);
 		$scope.$watch("containerStates.states", merge);
 
-        $scope.$watch(function() {
-            return FlotoService.getManifest()
-        }, update);
+		$scope.$watch(function () {
+			return FlotoService.getManifest();
+		}, update);
 
 		function notifySuccess(title) {
-			return function() {
-	                        NotificationService.notify({
-	                            title: title,
-	                            type: 'success'
-	                        });
-	                    };
+			return function () {
+				NotificationService.notify({
+					title: title,
+					type: 'success'
+				});
+			};
 		}
 
 		$scope.redeployContainers = function redeployContainers(request) {
