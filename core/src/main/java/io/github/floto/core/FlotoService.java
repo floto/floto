@@ -209,15 +209,18 @@ public class FlotoService implements Closeable {
 
 	private Map<String, String> getContainerVolumes(Image image, Container container) {
 		HashMap<String, String> volumeMap = new HashMap<>();
-		ArrayList<String> binds = new ArrayList<>();
 		ArrayList<JsonNode> steps = new ArrayList<>(image.buildSteps);
 		steps.addAll(container.configureSteps);
 		for (JsonNode step : steps) {
 			String type = step.path("type").asText();
 			if (type.equals("VOLUME")) {
-				String path = step.path("path").asText();
-				String name = step.path("name").asText();
-				volumeMap.put("/data/" + container.name + "/" + name, path);
+                String path = step.path("path").asText();
+                String name = step.path("name").asText();
+                volumeMap.put("/data/" + container.name + "/" + name, path);
+            } else if (type.equals("MOUNT")) {
+                String hostPath = step.path("hostPath").asText();
+                String containerPath = step.path("containerPath").asText();
+                volumeMap.put(hostPath, containerPath);
 			}
 		}
 		return volumeMap;
@@ -329,9 +332,9 @@ public class FlotoService implements Closeable {
                                 FileUtils.copyFile(file, out);
                                 out.closeEntry();
                             }
-
-
-
+                        } else if ("MOUNT".equals(type)) {
+                            String hostPath = step.path("hostPath").asText();
+                            String containerPath = step.path("containerPath").asText();
                         }
 					}
 
@@ -667,5 +670,13 @@ public class FlotoService implements Closeable {
         } catch (Exception e) {
             Throwables.propagate(e);
         }
+    }
+
+    public boolean isUseProxy() {
+        return useProxy;
+    }
+
+    public String getHttpProxyUrl() {
+        return httpProxyUrl;
     }
 }

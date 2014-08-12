@@ -47,6 +47,9 @@ public class HostStepRunner {
                     break;
                 case "RUN":
                     String line = step.path("line").asText();
+                    if (flotoService.isUseProxy()) {
+                        line = "http_proxy='" + flotoService.getHttpProxyUrl() + "' " + line;
+                    }
                     hostManipulator.run(line);
                     break;
                 case "DETERMINE_IP":
@@ -57,7 +60,7 @@ public class HostStepRunner {
                         hypervisorService.runInVm(vmName, command + " > /ip.txt");
                         hypervisorService.copyFileFromGuest(vmName, "/ip.txt", ipFile);
                         String ipAddress = FileUtils.readFileToString(ipFile).replaceAll("\\s", "");
-                        if(ipAddress.isEmpty()) {
+                        if (ipAddress.isEmpty()) {
                             ipAddress = host.ip;
                         }
                         log.info("Using IP {} for host {}", ipAddress, vmName);
@@ -71,7 +74,7 @@ public class HostStepRunner {
                     }
                     break;
                 default:
-                    throw new IllegalArgumentException("No handler for step type "+step + "\n"+ step);
+                    throw new IllegalArgumentException("No handler for step type " + step + "\n" + step);
             }
         }
 

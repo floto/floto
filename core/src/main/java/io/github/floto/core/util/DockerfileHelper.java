@@ -58,6 +58,11 @@ public class DockerfileHelper {
                 String path = step.path("path").asText();
                 String name = step.path("name").asText();
                 line = path;
+            } else if ("MOUNT".equals(type)) {
+                String hostPath = step.path("hostPath").asText();
+                String containerPath = step.path("containerPath").asText();
+                type = "VOLUME";
+                line = containerPath;
             }
 
             if (useProxy && type.equals("RUN")) {

@@ -78,6 +78,15 @@
 		});
 	};
 
+	global.mount = function volume(hostPath, containerPath) {
+		currentSteps.push({
+			type: "MOUNT",
+			hostPath: hostPath,
+			containerPath: containerPath
+		});
+	};
+
+
 	global.addTemplate = function addTemplate(templateName, destination, config) {
 		if (!config) {
 			config = {};
