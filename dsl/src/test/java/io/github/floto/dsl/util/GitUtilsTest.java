@@ -1,20 +1,20 @@
 package io.github.floto.dsl.util;
 
-import org.eclipse.jgit.api.Git;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 public class GitUtilsTest {
 
     @Test
     public void testDescribe() throws Exception {
         String description = GitUtils.describe(".");
-        assertThat(description, CoreMatchers.startsWith("floto-"));
+        assertThat(description, CoreMatchers.containsString("floto-"));
     }
 
     @Test
