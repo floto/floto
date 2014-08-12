@@ -39,7 +39,7 @@
                                 ng-click="deleteHosts({hosts: [host.name]})">Delete
                         </button>
                     </td>
-                    <td style="width: 100%"><a ui-sref="host({hostName: host.name})" ui-sref>{{host.name}}</a></td>
+                    <td style="width: 100%"><a ui-sref="host({hostName: host.name})" ui-sref>{{host.name}} ( @ {{host.vmConfiguration.hypervisor.esxHost}})</a></td>
                 </tr>
             </table>
         </div>
