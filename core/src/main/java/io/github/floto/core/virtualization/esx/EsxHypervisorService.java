@@ -263,8 +263,25 @@ public class EsxHypervisorService implements HypervisorService {
             return;
         }
         try {
+            int SHUTDOWN_GRACE_PERIOD = 20;
             VirtualMachine vm = vmManager.getVm(vmname);
 
+            if (vm != null) {
+                try {
+                    vm.shutdownGuest();
+                    for (int i = 0; i < SHUTDOWN_GRACE_PERIOD; i++) {
+                        if (!isVmRunning(vmname)) {
+                            log.warn("VM {} shutdown gracefully", vmname);
+                            return;
+                        }
+                        Thread.sleep(1000);
+                    }
+                    log.warn("VM {} did not shutdown after {} seconds, terminating forcefully", vmname, SHUTDOWN_GRACE_PERIOD);
+                } catch(Throwable throwable) {
+                    log.warn("Error stopping VM {}", throwable);
+                }
+            }
+            vm = vmManager.getVm(vmname);
             if (vm != null) {
                 Task task = vm.powerOffVM_Task();
 				if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
