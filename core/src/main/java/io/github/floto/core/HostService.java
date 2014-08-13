@@ -24,8 +24,14 @@ public class HostService {
             @Override
             public void run() {
                 try {
-                    getManifest().hosts.forEach(host -> reconfigure(host.name));
-                } catch(Throwable t) {
+                    getManifest().hosts.forEach(host -> {
+                        try {
+                            reconfigure(host.name);
+                        } catch (Throwable throwable) {
+                            log.warn("Could not reconfigure host {}", host.name, throwable);
+                        }
+                    });
+                } catch (Throwable t) {
                     log.error("Configuring hosts", t);
                 }
             }
@@ -111,7 +117,7 @@ public class HostService {
         runTask(new HypervisorTask<Object>(flotoService.getManifest(), vmName) {
             @Override
             public Object execute() throws Exception {
-                if(hypervisorService.isVmRunning(vmName)) {
+                if (hypervisorService.isVmRunning(vmName)) {
                     HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService, vmName);
                     hostStepRunner.run(host.reconfigureSteps);
                 }
