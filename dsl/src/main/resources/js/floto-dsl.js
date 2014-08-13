@@ -200,7 +200,7 @@
 			config.host = findHost(container.host);
 			if (image.definition.prepare) {
 				_currentHostName = config.host.name;
-				image.definition.prepare(config);
+				image.definition.prepare(config, container);
 				container.config = config;
 				_currentHostName = null;
 			}
@@ -215,7 +215,7 @@
 			var config = _.clone(container.config);
 			config.host = findHost(container.host);
 			_currentHostName = config.host.name;
-			image.definition.configure(config);
+			image.definition.configure(config, container);
 			_currentHostName = null;
 			delete container.config.host;
 		});
