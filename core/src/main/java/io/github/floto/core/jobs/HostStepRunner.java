@@ -58,6 +58,7 @@ public class HostStepRunner {
                     try {
                         ipFile = File.createTempFile("floto-", "-guestFile");
                         hypervisorService.runInVm(vmName, command + " > /ip.txt");
+                        hypervisorService.runInVm(vmName, "chmod 755 /ip.txt");
                         hypervisorService.copyFileFromGuest(vmName, "/ip.txt", ipFile);
                         String ipAddress = FileUtils.readFileToString(ipFile).replaceAll("\\s", "");
                         if (ipAddress.isEmpty()) {
