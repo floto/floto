@@ -1,5 +1,10 @@
 package io.github.floto.core.virtualization.esx;
 
+import io.github.floto.core.virtualization.HypervisorService;
+import io.github.floto.core.virtualization.VmDescription;
+import io.github.floto.core.virtualization.VmDescription.Disk;
+import io.github.floto.dsl.model.EsxHypervisorDescription;
+
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -8,7 +13,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.vmware.vim25.GuestProgramSpec;
@@ -17,19 +21,15 @@ import com.vmware.vim25.NamePasswordAuthentication;
 import com.vmware.vim25.VirtualDevice;
 import com.vmware.vim25.VirtualDisk;
 import com.vmware.vim25.VirtualDiskFlatVer2BackingInfo;
+import com.vmware.vim25.VirtualDiskMode;
+import com.vmware.vim25.VirtualDiskType;
 import com.vmware.vim25.VirtualMachinePowerState;
-import com.vmware.vim25.mo.FileManager;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Network;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
-
-import io.github.floto.core.virtualization.HypervisorService;
-import io.github.floto.core.virtualization.VmDescription;
-import io.github.floto.core.virtualization.VmDescription.Disk;
-import io.github.floto.dsl.model.EsxHypervisorDescription;
 
 public class EsxHypervisorService implements HypervisorService {
 
@@ -55,6 +55,10 @@ public class EsxHypervisorService implements HypervisorService {
 
     @Override
     public void deleteVm(String vmname) {
+    	this.deleteVm(vmname, false);
+    }
+    
+    private void deleteVm(String vmname, boolean purgeData) {
         try {
             log.info("deleteVm " + vmname);
 
@@ -65,11 +69,25 @@ public class EsxHypervisorService implements HypervisorService {
                 return;
             }			
 
-//            storeDataDisk(vm);
+			VirtualDiskManager vdm =  new VirtualDiskManager(vm);
+			
+			for (VirtualDevice vd : vdm.getAllVirtualDevices()) {
+				if (vd instanceof VirtualDisk) {					
+					VirtualDisk vDisk = (VirtualDisk)vd;
+					VirtualDiskFlatVer2BackingInfo fileBacking = ((VirtualDiskFlatVer2BackingInfo)vDisk.getBacking());
+					if (fileBacking.getDiskMode().equals(VirtualDiskMode.independent_persistent.toString())) {
+						Task task = vdm.removeDevice(vd, purgeData);
+			            if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
+			                log.info("removed virtual data disk "+fileBacking.fileName+" from vm.");
+			            } else {
+			                log.error("failed to remove virtual data disk "+fileBacking.fileName+" from vm.");
+			            }						
+					}
+				}
+			}
 
+			log.info("Launching the VM destroy task. Please wait ...");
             Task task = vm.destroy_Task();
-            log.info("Launching the VM destroy task. Please wait ...");
-
             if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
                 log.info("VM got destroyed successfully.");
             } else {
@@ -82,82 +100,7 @@ public class EsxHypervisorService implements HypervisorService {
 
     }
 
-    
-    private void storeDataDisk(VirtualMachine vm){
-    	// save the data disk, before deleting the vm
-		try {
-			VirtualDisk vd =  new VirtualDiskManager(vm).findHardDisk(10);
-			if (vd == null) {
-				log.error("data virtual disk not found.");
-				return;
-			}
-			
-			FileManager fileMgr = vmManager.getServiceInstance().getFileManager();
-			if (fileMgr == null) {
-				log.error("FileManager not available.");
-				return;
-			}
-
-			String fileName = ((VirtualDiskFlatVer2BackingInfo) vd.getBacking()).getFileName();
-//    					String fileName2 = fileName.substring(0, fileName.indexOf("]") + 1)
-//    							+ " " + fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
-			String fileName2 = fileName.substring(0, fileName.indexOf("]") + 1)
-					+ " " +vm.getName()+"_data.vmdk";
-
-			Task mTask = fileMgr.moveDatastoreFile_Task(fileName, vmManager.getDatacenter(), fileName2, vmManager.getDatacenter(), true);
-
-			if (mTask.waitForTask(200, 100) == Task.SUCCESS) {
-				log.info("moved " + fileName + " to " + fileName2);
-			} else {
-				log.info("move of " + fileName + " to " + fileName2 + " failed.");
-				return;
-			}
-		} catch (Exception e) {
-			log.error("failed to save the data virtual disk", e);
-		}
-    }
-    
-    
-    
-    private boolean restoreDataDisk(VirtualMachine vm){
-    	// save the data disk, before deleting the vm
-		try {
-			VirtualDisk vd =  new VirtualDiskManager(vm).findFirstHardDisk();
-			if (vd == null) {
-				log.error("data virtual disk not found.");
-				return false;
-			}
-			
-			FileManager fileMgr = vmManager.getServiceInstance().getFileManager();
-			if (fileMgr == null) {
-				log.error("FileManager not available.");
-				return false;
-			}
-
-			String fileName = ((VirtualDiskFlatVer2BackingInfo) vd.getBacking()).getFileName();
-//    					String fileName2 = fileName.substring(0, fileName.indexOf("]") + 1)
-//    							+ " " + fileName.substring(fileName.lastIndexOf("/") + 1, fileName.length());
-			String fileName2 = fileName.substring(0, fileName.indexOf("]") + 1)
-					+ " " +vm.getName()+"_data.vmdk";
-			String fileName3 = fileName.substring(0, fileName.indexOf("]") + 1)
-					+ " " +vm.getName()+"/"+vm.getName()+"_data.vmdk";
-
-			Task mTask = fileMgr.moveDatastoreFile_Task(fileName2, vmManager.getDatacenter(), fileName3, vmManager.getDatacenter(), true);
-
-			if (mTask.waitForTask(200, 100) == Task.SUCCESS) {
-				log.info("moved " + fileName2 + " to " + fileName3);
-				return true;
-			} else {
-				log.info("move of " + fileName2 + " to " + fileName3 + " failed.");
-				return false;
-			}
-		} catch (Exception e) {
-			log.error("failed to restore the saved data virtual disk", e);
-			return false;
-		}
-    }
-    
-    
+        
     @Override
     public VmDescription getVmDescription(String vmname) {
         try {
@@ -186,11 +129,11 @@ public class EsxHypervisorService implements HypervisorService {
             for (VirtualDevice dev : devs) {
                 if (dev instanceof VirtualDisk) {
                     VirtualDisk vDisk = (VirtualDisk) dev;
-                    Disk disk = new Disk();
-                    disk.sizeInMB = vDisk.capacityInKB / 1024;
-                    // TODO:
-                    // disk.path = vDisk.get
-                    // disk.thinProvisioned =
+                    Disk disk = new Disk(vmDesc);
+                    disk.sizeInGB = vDisk.capacityInKB / 1024;
+                    disk.path = ((VirtualDiskFlatVer2BackingInfo)vDisk.getBacking()).fileName;
+                    disk.thinProvisioned = ((VirtualDiskFlatVer2BackingInfo)vDisk.getBacking()).thinProvisioned.booleanValue();
+                    vmDesc.disks.add(disk);
                 }
             }
 
@@ -333,22 +276,21 @@ public class EsxHypervisorService implements HypervisorService {
             // reconfigure VM
             vmManager.reconfigureVm(vmDesc);
 
+            //create or readd data disk(s)
 			VirtualMachine vm = vmManager.getVm(vmDesc.vmName);
-
-			// try restore old data disk
-//			if (!restoreDataDisk(vm)) {
-//				// create new data disk
-//				try {
-//					VirtualDiskManager vmdm = new VirtualDiskManager(vm);
-//					vmdm.createHardDisk(102400, VirtualDiskType.thin,
-//							VirtualDiskMode.persistent, 10);
-////					VirtualDisk vd = vmdm.findHardDisk(10);
-////					log.info(((VirtualDiskFlatVer2BackingInfo)vd.getBacking()).getFileName());
-//				} catch (Exception e) {
-//					log.error("failed to create new virtual disk", e);
-//				}
-//			}
-			
+			VirtualDiskManager vdm =  new VirtualDiskManager(vm);
+			for (Disk disk : vmDesc.disks) {
+				fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
+				
+				try {
+					this.vmManager.getServiceInstance().getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, vmManager.getDatacenter());
+					log.info(fileName+" exits - will add it to virtual machine.");
+					vdm.addHardDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
+				} catch (Exception e) {
+					log.info(fileName+" does not exits - will create new virtual disk.");
+					vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, 10);
+				}
+			}
 
         } catch (Throwable t) {
             throw Throwables.propagate(t);

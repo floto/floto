@@ -3,12 +3,15 @@ package io.github.floto.core.tasks;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.util.TemplateHelper;
 import io.github.floto.core.virtualization.VmDescription;
+import io.github.floto.core.virtualization.VmDescription.Disk;
+import io.github.floto.dsl.model.DiskDescription;
 import io.github.floto.dsl.model.VmConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.util.ArrayList;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RedeployVmTask extends HypervisorTask<Void> {
     private Logger log = LoggerFactory.getLogger(RedeployVmTask.class);
@@ -31,7 +34,13 @@ public class RedeployVmTask extends HypervisorTask<Void> {
         vmDescription.numberOfCores = vmConfiguration.numberOfCores;
         vmDescription.memoryInMB = vmConfiguration.memoryInMB;
         vmDescription.vmNetworks = new ArrayList<>(vmConfiguration.networks);
-
+        for (DiskDescription diskDesc : vmConfiguration.disks) {
+        	Disk disk = new Disk(vmDescription);
+        	disk.sizeInGB = diskDesc.sizeInGB;
+        	disk.datastore = diskDesc.datastore;
+        	disk.slot = diskDesc.slot;
+        	vmDescription.disks.add(disk);
+        }
 
         log.info("Removing old VM");
         hypervisorService.stopVm(vmName);

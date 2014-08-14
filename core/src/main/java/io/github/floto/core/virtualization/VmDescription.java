@@ -12,9 +12,15 @@ public class VmDescription {
 	public List<Disk> disks = new ArrayList<>();
 
 	public static class Disk {
-		public long sizeInMB;
+		public long sizeInGB;
 		public String path;
+		public String datastore;
 		public boolean thinProvisioned;
+		public int slot;
+		public VmDescription vmDescription;
+		public Disk(VmDescription vmDescription){
+			this.vmDescription = vmDescription;
+		}
 	}
 
 	public String toString(){
@@ -38,7 +44,7 @@ public class VmDescription {
 			ret += "; Disk:";
 			String sep = "";
 			for (Disk disk:disks){
-				ret += sep + disk.path + " " + disk.sizeInMB + " thin="+disk.thinProvisioned;
+				ret += sep + disk.datastore + " " + disk.path + " " + disk.sizeInGB + " thin="+disk.thinProvisioned;
 				sep = ", ";
 			}
 		}

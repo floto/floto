@@ -1,5 +1,10 @@
 package io.github.floto.core.virtualization.esx;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.github.floto.core.virtualization.VmDescription.Disk;
+
 import com.vmware.vim25.VirtualController;
 import com.vmware.vim25.VirtualDevice;
 import com.vmware.vim25.VirtualDeviceConfigSpec;
@@ -17,6 +22,7 @@ import com.vmware.vim25.mo.VirtualMachine;
 import com.vmware.vim25.mox.VirtualMachineDeviceManager;
 
 public class VirtualDiskManager extends VirtualMachineDeviceManager {
+    private Logger log = LoggerFactory.getLogger(VirtualDiskManager.class);
 	private VirtualMachine vm;
 
 	public VirtualDiskManager(VirtualMachine vm) {
@@ -28,13 +34,14 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		return this.vm;
 	}
 
-	public void createHardDisk(int diskSizeMB, VirtualDiskType type, VirtualDiskMode mode, int unitNumber) throws Exception {
+	public void createHardDisk(Disk vmDiskDesc, VirtualDiskType type, VirtualDiskMode mode, int unitNumber) throws Exception {
+		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_data" + vmDiskDesc.slot + ".vmdk";
 		
 		VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
 		VirtualDeviceConfigSpec diskSpec = new VirtualDeviceConfigSpec();
 
 		VirtualDiskFlatVer2BackingInfo diskfileBacking = new VirtualDiskFlatVer2BackingInfo();
-		diskfileBacking.setFileName("");
+		diskfileBacking.setFileName(vmdkPath);
 		diskfileBacking.setDiskMode(mode.toString());
 		diskfileBacking.setThinProvisioned(type == VirtualDiskType.thin);
 
@@ -43,7 +50,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		disk.setControllerKey(scsiController.key);
 		disk.setUnitNumber(unitNumber);
 		disk.setBacking(diskfileBacking);
-		disk.setCapacityInKB(1024 * diskSizeMB);
+		disk.setCapacityInKB(1024l * 1024l * vmDiskDesc.sizeInGB);
 		disk.setKey(-1);
 		diskSpec.setOperation(VirtualDeviceConfigSpecOperation.add);
 		diskSpec.setFileOperation(VirtualDeviceConfigSpecFileOperation.create);
@@ -53,24 +60,69 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		vmConfigSpec.setDeviceChange(vdiskSpecArray);
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
 
-		task.waitForTask(200, 100);
+		if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
+            log.info("created new virtual disk "+ diskfileBacking.getFileName()+ " for "+vm.getName());
+        } else {
+        	log.error("failed to create new virtual disk "+ diskfileBacking.getFileName()+ " for "+vm.getName());
+        }
 	}
 
+	public void addHardDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int unitNumber) throws Exception {
+		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_data" + vmDiskDesc.slot + ".vmdk";
+		
+		VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
 
-	public void removeHardDisk(VirtualDisk virtualDisk, boolean destroyBacking) throws Exception {
+		VirtualDeviceConfigSpec diskSpec = new VirtualDeviceConfigSpec();
+		VirtualDeviceConfigSpec[] vdiskSpecArray = { diskSpec };
+		vmConfigSpec.setDeviceChange(vdiskSpecArray);
+
+		VirtualDiskFlatVer2BackingInfo diskfileBacking = new VirtualDiskFlatVer2BackingInfo();
+		diskfileBacking.setFileName(vmdkPath);
+		diskfileBacking.setDiskMode(diskMode.toString());
+
+		VirtualSCSIController scsiController = getFirstAvailableController(VirtualSCSIController.class);
+
+		VirtualDisk disk = new VirtualDisk();
+		disk.setControllerKey(scsiController.key);
+		disk.setUnitNumber(unitNumber);
+		disk.setBacking(diskfileBacking);
+		// Unlike required by API ref, the capacityKB is optional. So skip
+		// setCapacityInKB() method.
+		disk.setKey(-100);
+
+		diskSpec.setOperation(VirtualDeviceConfigSpecOperation.add);
+		diskSpec.setDevice(disk);
+
+		Task task = vm.reconfigVM_Task(vmConfigSpec);
+		if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
+            log.info("added "+vmdkPath+" to "+ vm.getName());
+        } else {
+        	log.error("failed to add "+vmdkPath+" to "+ vm.getName());
+        }
+	}
+	  
+	
+
+	public void removeVirtualDisk(VirtualDisk virtualDisk, boolean destroyBacking) throws Exception {
 		
 		VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
 
 		VirtualDeviceConfigSpec diskSpec = new VirtualDeviceConfigSpec();
 		diskSpec.setOperation(VirtualDeviceConfigSpecOperation.remove);
-		diskSpec.setFileOperation(VirtualDeviceConfigSpecFileOperation.destroy);
+		if (destroyBacking){
+			diskSpec.setFileOperation(VirtualDeviceConfigSpecFileOperation.destroy);
+		}
 		diskSpec.setDevice(virtualDisk);
 
 		VirtualDeviceConfigSpec[] vdiskSpecArray = { diskSpec };
 		vmConfigSpec.setDeviceChange(vdiskSpecArray);
 
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-		task.waitForTask(200, 100);
+		if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
+            log.info("removed virtual disk from "+ vm.getName());
+        } else {
+        	log.error("failed to remove virtual disk from "+ vm.getName());
+        }
 	}
 	
 	
