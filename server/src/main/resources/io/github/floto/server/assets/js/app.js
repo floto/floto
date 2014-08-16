@@ -45,4 +45,22 @@ var app;
         $rootScope.$state = $state;
         $rootScope.$stateParams = $stateParams;
     }]);
+
+    var ws = new WebSocket("ws://localhost:40004/events/");
+    ws.onopen = function()
+    {
+        // Web Socket is connected, send data using send()
+        ws.send("Message to send");
+        alert("Message is sent...");
+    };
+    ws.onmessage = function (evt)
+    {
+        var received_msg = evt.data;
+        alert("Message is received... "+evt.data);
+    };
+    ws.onclose = function()
+    {
+        // websocket is closed.
+        alert("Connection is closed...");
+    };
 })();

@@ -13,11 +13,14 @@ import io.github.floto.server.api.ManifestResource;
 import io.github.floto.server.api.TasksResource;
 import io.github.floto.server.util.ThrowableExceptionMapper;
 
+import io.github.floto.server.websocket.EventSocket;
 import io.github.floto.util.task.TaskService;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.websocket.jsr356.server.ServerContainer;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
@@ -102,8 +105,12 @@ public class FlotoServer {
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
+
 		context.addServlet(new ServletHolder(servletContainer), "/api/*");
 		try {
+            ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
+            // Add WebSocket endpoint to javax.websocket layer
+            wscontainer.addEndpoint(EventSocket.class);
 			server.start();
 			log.info("Floto Server started on port {}", parameters.port);
             if(parameters.developmentMode) {
