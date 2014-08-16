@@ -6,6 +6,7 @@ import io.github.floto.util.task.TaskService;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
@@ -54,6 +55,12 @@ public class TasksResource {
 
         result.put("tasks", tasks);
         return result;
+    }
+
+
+    @Path("{taskId}")
+    public TaskResource getTask(@PathParam("taskId") String taskId) {
+        return new TaskResource(taskService, taskId);
     }
 
 

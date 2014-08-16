@@ -1,4 +1,4 @@
-<div ng-controller="TasksController"    class="container-fluid">
+<div ng-controller="TasksController" class="container-fluid">
     <div class="row">
         <div class="col-md-5">
             <h2>Tasks
@@ -17,7 +17,9 @@
                 <th style="width: 10em">Started</th>
                 <th style="width: 10em">Completed</th>
                 <th style="width: 10em">Duration</th>
-                <tr ng-repeat="task in tasks" ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}">
+                <tr ng-repeat="task in tasks" ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}"
+                    ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer"
+                        >
                     <td>
                         {{task.title}}
                     </td>

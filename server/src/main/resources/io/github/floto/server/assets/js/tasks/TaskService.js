@@ -16,6 +16,10 @@
             });
         };
 
+        TaskService.getLogs = function getLogs(taskId) {
+            return $resource(app.urlPrefix + 'tasks/'+taskId+'/logs').get();
+        };
+
         return TaskService;
     });
 

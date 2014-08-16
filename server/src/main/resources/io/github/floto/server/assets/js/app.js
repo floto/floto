@@ -31,6 +31,10 @@ var app;
             }).state('tasks', {
                 url: "/tasks",
                 templateUrl: '/js/tasks/tasks.html'
+            }).state('task', {
+                parent: "tasks",
+                url: "/:taskId",
+                templateUrl: '/js/tasks/task.html'
             }).state('manifest', {
                 url: "/manifest",
                 templateUrl: '/js/manifest/manifest.html'

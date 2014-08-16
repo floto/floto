@@ -1,12 +1,15 @@
 package io.github.floto.util.task;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.AppenderBase;
 import com.google.common.base.Throwables;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -20,13 +23,31 @@ public class TaskInfo<RESULT_TYPE> {
     private Instant startDate;
     private Instant endDate;
     private Duration duration;
+    private List<LogEntry> logEntries = new ArrayList<>();
 
     public TaskInfo(String title, Callable<RESULT_TYPE> taskCallable) {
         creationDate = Instant.now();
         this.title = title;
-        this.id = UUID.randomUUID().toString();
+        this.id = getNextId();
         Class<?> clazz = taskCallable.getClass();
-        this.logger = LoggerFactory.getLogger(clazz.getPackage().getName());
+        this.logger = (Logger) LoggerFactory.getLogger(clazz.getPackage().getName() + ".<" + title + ">#" + id);
+        AppenderBase<ILoggingEvent> appender = new AppenderBase<ILoggingEvent>() {
+            @Override
+            protected void append(ILoggingEvent loggingEvent) {
+                logEntries.add(new LogEntry(loggingEvent.getMessage(), loggingEvent.getLevel().toString().toLowerCase()));
+            }
+        };
+        appender.setContext(logger.getLoggerContext());
+        appender.start();
+        logger.addAppender(appender);
+
+    }
+
+    static int nextId = 1;
+
+    static private String getNextId() {
+        // TODO: use UUID again
+        return "" + nextId++;
     }
 
     public void complete(RESULT_TYPE result) {
@@ -85,4 +106,9 @@ public class TaskInfo<RESULT_TYPE> {
     public Duration getDuration() {
         return duration;
     }
+
+    public List<LogEntry> getLogEntries() {
+        return logEntries;
+    }
+
 }

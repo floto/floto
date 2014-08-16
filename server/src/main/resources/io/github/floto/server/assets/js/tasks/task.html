@@ -1,0 +1,11 @@
+<div ng-controller="TaskController">
+    <h3>Task Log</h3>
+    <table class="table table-bordered table-striped table-hover table-condensed">
+        <tr ng-repeat="entry in logs.logs"
+            ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}">
+            <td>
+                {{entry.message}}
+            </td>
+        </tr>
+    </table>
+</div>
