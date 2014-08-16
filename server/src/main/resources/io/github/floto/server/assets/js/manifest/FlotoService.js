@@ -1,6 +1,6 @@
 (function () {
     "use strict";
-    app.factory('FlotoService', function ($resource, $http, $rootScope) {
+    app.factory('FlotoService', function ($resource, $http, $rootScope, TaskService) {
         var FlotoService = {};
 
         FlotoService.getManifest = function getManifest() {
@@ -22,8 +22,9 @@
         };
 
         FlotoService.compileManifest = function compileManifest() {
-            var recompilePromise = $http.post(app.urlPrefix + 'manifest/compile');
+            var recompilePromise = TaskService.httpPost(app.urlPrefix + 'manifest/compile');
             recompilePromise.finally(function () {
+                console.log("COMPILATION COMPLETE");
                 FlotoService.refreshManifest();
             });
             return  recompilePromise;

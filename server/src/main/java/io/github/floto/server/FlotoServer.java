@@ -1,8 +1,16 @@
 package io.github.floto.server;
 
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleSerializers;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.databind.type.SimpleType;
 import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.github.floto.core.FlotoService;
@@ -13,12 +21,15 @@ import io.github.floto.server.api.ManifestResource;
 import io.github.floto.server.api.TasksResource;
 import io.github.floto.server.util.ThrowableExceptionMapper;
 
-import io.github.floto.server.websocket.EventSocket;
+import io.github.floto.server.websocket.TasksWebSocket;
+import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.websocket.jsr356.server.AnnotatedServerEndpointConfig;
+import org.eclipse.jetty.websocket.jsr356.server.BasicServerEndpointConfigurator;
 import org.eclipse.jetty.websocket.jsr356.server.ServerContainer;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -27,6 +38,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.woelker.jimix.servlet.JimixServlet;
+
+import javax.websocket.DeploymentException;
+import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
 
 public class FlotoServer {
 	private Logger log = LoggerFactory.getLogger(FlotoServer.class);
@@ -76,6 +91,24 @@ public class FlotoServer {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.registerModule(new JSR310Module());
         mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        mapper.registerModule(new Module() {
+            @Override
+            public String getModuleName() {
+                return "floto";
+            }
+
+            @Override
+            public Version version() {
+                return Version.unknownVersion();
+            }
+
+            @Override
+            public void setupModule(SetupContext context) {
+                SimpleSerializers simpleSerializers = new SimpleSerializers();
+                simpleSerializers.addSerializer(new TaskInfoSerializer());
+                context.addSerializers(simpleSerializers);
+            }
+        });
 
         // create JsonProvider to provide custom ObjectMapper
         JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
@@ -108,9 +141,7 @@ public class FlotoServer {
 
 		context.addServlet(new ServletHolder(servletContainer), "/api/*");
 		try {
-            ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
-            // Add WebSocket endpoint to javax.websocket layer
-            wscontainer.addEndpoint(EventSocket.class);
+            registerWebsockets(context, taskService);
 			server.start();
 			log.info("Floto Server started on port {}", parameters.port);
             if(parameters.developmentMode) {
@@ -122,4 +153,35 @@ public class FlotoServer {
 
 		}
 	}
+
+    private void registerWebsockets(ServletContextHandler context, final TaskService taskService) throws DeploymentException {
+        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
+        // Add WebSocket endpoint to javax.websocket layer
+//            wscontainer.addEndpoint(EventSocket.class);
+        ServerEndpoint anno = TasksWebSocket.class.getAnnotation(ServerEndpoint.class);
+        wscontainer.addEndpoint(new AnnotatedServerEndpointConfig(TasksWebSocket.class, anno) {
+            @Override
+            public Configurator getConfigurator() {
+                return new BasicServerEndpointConfigurator() {
+                    @Override
+                    public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+                        return (T) new TasksWebSocket(taskService);
+                    }
+                };
+            }
+        });
+    }
+
+    private static class TaskInfoSerializer extends StdSerializer<TaskInfo<?>> {
+        public TaskInfoSerializer() {
+            super(SimpleType.construct(TaskInfo.class));
+        }
+
+        @Override
+        public void serialize(TaskInfo taskInfo, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonGenerationException {
+            jgen.writeStartObject();
+            jgen.writeStringField("taskId", taskInfo.getId());
+            jgen.writeEndObject();
+        }
+    }
 }

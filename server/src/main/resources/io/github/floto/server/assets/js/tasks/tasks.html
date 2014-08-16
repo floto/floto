@@ -13,13 +13,16 @@
             <br>
 
             <table class="table table-bordered table-striped table-hover table-condensed">
+                <th style="width: 3em">ID</th>
                 <th>Title</th>
                 <th style="width: 10em">Started</th>
                 <th style="width: 10em">Completed</th>
                 <th style="width: 10em">Duration</th>
                 <tr ng-repeat="task in tasks" ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}"
-                    ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer"
-                        >
+                    ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer" >
+                    <td class="text-muted">
+                        #{{task.id}}
+                    </td>
                     <td>
                         {{task.title}}
                     </td>

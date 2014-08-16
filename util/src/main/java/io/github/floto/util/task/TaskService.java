@@ -29,7 +29,7 @@ public class TaskService {
             @Override
             protected void append(ILoggingEvent loggingEvent) {
                 TaskInfo<?> taskInfo = threadTaskMap.get(loggingEvent.getThreadName());
-                if(taskInfo != null) {
+                if (taskInfo != null) {
                     taskInfo.getLogEntries().add(new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString().toLowerCase()));
                 }
             }
@@ -63,5 +63,13 @@ public class TaskService {
 
     public void unregisterThread(String threadName) {
         threadTaskMap.remove(threadName);
+    }
+
+    public TaskInfo getTaskInfo(String taskId) {
+        TaskInfo<?> taskInfo = taskMap.get(taskId);
+        if (taskInfo == null) {
+            throw new IllegalArgumentException("Task " + taskId + " not found");
+        }
+        return taskInfo;
     }
 }

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 
 public class TaskInfo<RESULT_TYPE> {
@@ -54,6 +55,10 @@ public class TaskInfo<RESULT_TYPE> {
     }
 
     public Future<RESULT_TYPE> getResultFuture() {
+        return resultFuture;
+    }
+
+    public CompletionStage<RESULT_TYPE> getCompletionStage() {
         return resultFuture;
     }
 
