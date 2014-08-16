@@ -1,5 +1,5 @@
 <table class="table table-bordered table-striped table-hover table-condensed">
-    <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name}">
+    <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name}" ng-click="$state.go('container', {containerName: container.name})" style="cursor: pointer">
         <td><span style="display: inline-block;width: 100px" class="label label-default"
                   ng-class="{'label-success': container.state==='running', 'label-warning': container.state==='stopped', 'label-danger': container.state === 'not-there'}">{{container.state}}</span>
         </td>
@@ -25,7 +25,11 @@
                     ng-click="purgeContainerData({containers: [container.name]})">Purge data
             </button>
         </td>
-        <td style="width: 100%"><a ui-sref="container({containerName: container.name})" ui-sref>{{container.name}}
+        <td>
+            <a ng-show="container.config.webUrl" href="{{container.config.webUrl}}" style="display: block;white-space:nowrap;" ng-click="$event.stopPropagation()"><span class="glyphicon glyphicon-globe"></span> Web UI</a>
+        </td>
+        <td style="width: 100%">
+            {{container.name}}
             ({{container.image}} @ {{container.host}})</a></td>
     </tr>
 </table>

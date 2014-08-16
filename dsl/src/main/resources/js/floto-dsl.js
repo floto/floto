@@ -196,7 +196,7 @@
 		manifest.containers.forEach(function (container) {
 			var image = findImage(container.image);
 			container.config = container.config || {};
-			var config = _.clone(container.config);
+			var config = container.config;
 			config.host = findHost(container.host);
 			if (image.definition.prepare) {
 				_currentHostName = config.host.name;
@@ -211,8 +211,7 @@
 			var image = findImage(container.image);
 			currentSteps = [];
 			container.configureSteps = currentSteps;
-			container.config = container.config || {};
-			var config = _.clone(container.config);
+			var config = container.config;
 			config.host = findHost(container.host);
 			_currentHostName = config.host.name;
 			image.definition.configure(config, container);
