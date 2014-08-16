@@ -15,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class TaskInfo<RESULT_TYPE> {
-    private final Logger logger;
     private final String id;
     private CompletableFuture<RESULT_TYPE> resultFuture = new CompletableFuture<>();
     private String title;
@@ -29,18 +28,6 @@ public class TaskInfo<RESULT_TYPE> {
         creationDate = Instant.now();
         this.title = title;
         this.id = getNextId();
-        Class<?> clazz = taskCallable.getClass();
-        this.logger = (Logger) LoggerFactory.getLogger(clazz.getPackage().getName() + ".<" + title + ">#" + id);
-        AppenderBase<ILoggingEvent> appender = new AppenderBase<ILoggingEvent>() {
-            @Override
-            protected void append(ILoggingEvent loggingEvent) {
-                logEntries.add(new LogEntry(loggingEvent.getMessage(), loggingEvent.getLevel().toString().toLowerCase()));
-            }
-        };
-        appender.setContext(logger.getLoggerContext());
-        appender.start();
-        logger.addAppender(appender);
-
     }
 
     static int nextId = 1;
@@ -78,10 +65,6 @@ public class TaskInfo<RESULT_TYPE> {
         return id;
     }
 
-    public Logger getLogger() {
-        return logger;
-    }
-
     public Instant getCreationDate() {
         return creationDate;
     }
@@ -111,4 +94,7 @@ public class TaskInfo<RESULT_TYPE> {
         return logEntries;
     }
 
+    public String getThreadName() {
+        return title + "#" + id;
+    }
 }

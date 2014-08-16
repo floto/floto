@@ -22,8 +22,4 @@ public class Task {
     public static TaskInfo<?> getCurrentTaskInfo() {
         return currentTaskInfo.get();
     }
-
-    public static Logger log() {
-            return getCurrentTaskInfo().getLogger();
-    }
 }
