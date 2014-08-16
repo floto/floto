@@ -28,6 +28,9 @@ var app;
             }).state('host.file', {
                 url: "/file/:file",
                 templateUrl: '/js/util/file.html'
+            }).state('tasks', {
+                url: "/tasks",
+                templateUrl: '/js/tasks/tasks.html'
             }).state('manifest', {
                 url: "/manifest",
                 templateUrl: '/js/manifest/manifest.html'

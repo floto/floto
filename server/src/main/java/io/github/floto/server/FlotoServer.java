@@ -6,8 +6,10 @@ import io.github.floto.core.HostService;
 import io.github.floto.server.api.ContainersResource;
 import io.github.floto.server.api.HostsResource;
 import io.github.floto.server.api.ManifestResource;
+import io.github.floto.server.api.TasksResource;
 import io.github.floto.server.util.ThrowableExceptionMapper;
 
+import io.github.floto.util.task.TaskService;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -61,7 +63,14 @@ public class FlotoServer {
 		context.addServlet(new ServletHolder(new JimixServlet()), "/jimix/*");
 		context.addServlet(new ServletHolder(new DefaultServlet()), "/*");
 		ResourceConfig resourceConfig = new ResourceConfig();
-		FlotoService flotoService = new FlotoService(parameters);
+        TaskService taskService = new TaskService();
+        taskService.startTask("Endless task", () -> {
+                    synchronized (this) {
+                        this.wait();
+                        return null;
+                    }
+                });
+        FlotoService flotoService = new FlotoService(parameters, taskService);
         try {
             flotoService.compileManifest();
         } catch(Throwable throwable) {
@@ -70,6 +79,7 @@ public class FlotoServer {
         }
         HostService hostService = new HostService(flotoService);
 
+		resourceConfig.register(new TasksResource(taskService));
 		resourceConfig.register(new ManifestResource(flotoService));
 		resourceConfig.register(new ContainersResource(flotoService));
 		resourceConfig.register(new HostsResource(flotoService, hostService));

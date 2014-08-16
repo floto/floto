@@ -19,6 +19,9 @@ import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.task.Task;
+import io.github.floto.util.task.TaskInfo;
+import io.github.floto.util.task.TaskService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
@@ -74,9 +77,11 @@ public class FlotoService implements Closeable {
 	}
 
 	private boolean buildOutputDumpEnabled = false;
+    private TaskService taskService;
 
-	public FlotoService(FlotoCommonParameters commonParameters) {
-		this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
+    public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
+        this.taskService = taskService;
+        this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
         this.useProxy = !commonParameters.noProxy;
         try {
             this.manifestString = new ObjectMapper().writer().writeValueAsString(manifest);
@@ -115,12 +120,15 @@ public class FlotoService implements Closeable {
         }
 	}
 
-	public void compileManifest() {
-		log.info("Compiling manifest");
-		String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
-		manifest = flotoDsl.toManifest(manifestString);
-        this.manifestString = manifestString;
-		log.info("Compiled manifest");
+	public TaskInfo<Void> compileManifest() {
+        return taskService.startTask("Compile manifest", () -> {
+            Task.log().info("Compiling manifest");
+            String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
+            manifest = flotoDsl.toManifest(manifestString);
+            this.manifestString = manifestString;
+            Task.log().info("Compiled manifest");
+            return null;
+        });
 	}
 
 	public String getManifestString() {
@@ -638,11 +646,10 @@ public class FlotoService implements Closeable {
     public void verifyTemplates() {
         try {
             new ManifestJob<Void>(manifest) {
-                
                 @Override
                 public Void execute() throws Exception {
                     for(Image image: manifest.images) {
-                        verifyTemplates(image.buildSteps);             
+                        verifyTemplates(image.buildSteps);
                     }
 
                     for(Container container: manifest.containers) {
