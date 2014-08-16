@@ -1,7 +1,7 @@
 var app;
 (function () {
     'use strict';
-    app = angular.module('floto', ['ngResource', 'ui.router', 'luegg.directives', 'gd.ui.jsonexplorer']);
+    app = angular.module('floto', ['ngResource', 'ui.router', 'luegg.directives', 'gd.ui.jsonexplorer', 'angularMoment']);
     app.urlPrefix = '/api/';
 
     app.config(function ($stateProvider, $urlRouterProvider) {

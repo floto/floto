@@ -1,6 +1,10 @@
 package io.github.floto.server;
 
 import com.beust.jcommander.JCommander;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
+import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
 import io.github.floto.server.api.ContainersResource;
@@ -63,6 +67,18 @@ public class FlotoServer {
 		context.addServlet(new ServletHolder(new JimixServlet()), "/jimix/*");
 		context.addServlet(new ServletHolder(new DefaultServlet()), "/*");
 		ResourceConfig resourceConfig = new ResourceConfig();
+
+// create custom ObjectMapper
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.registerModule(new JSR310Module());
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        // create JsonProvider to provide custom ObjectMapper
+        JacksonJaxbJsonProvider provider = new JacksonJaxbJsonProvider();
+        provider.setMapper(mapper);
+        resourceConfig.register(provider);
+
         TaskService taskService = new TaskService();
         taskService.startTask("Endless task", () -> {
                     synchronized (this) {

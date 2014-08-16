@@ -1,6 +1,6 @@
 <div ng-controller="TasksController"    class="container-fluid">
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-5">
             <h2>Tasks
             </h2>
             <div class="row">
@@ -13,13 +13,26 @@
             <br>
 
             <table class="table table-bordered table-striped table-hover table-condensed">
-                <tr ng-repeat="task in tasks.slice().reverse()" ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}">
+                <th>Title</th>
+                <th style="width: 10em">Started</th>
+                <th style="width: 10em">Completed</th>
+                <th style="width: 10em">Duration</th>
+                <tr ng-repeat="task in tasks" ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}">
                     <td>
-                        {{task.title}} {{task.status}}
+                        {{task.title}}
+                    </td>
+                    <td title="{{task.startDate}}">
+                        <span am-time-ago="task.startDate"></span>
+                    </td>
+                    <td title="{{task.endDate}}">
+                        <span am-time-ago="task.endDate"></span>
+                    </td>
+                    <td title="{{task.durationInMs | duration }}">
+                            {{task.durationInMs | humanDuration }}
                     </td>
                 </tr>
             </table>
         </div>
-        <div class="col-md-6" ui-view></div>
+        <div class="col-md-7" ui-view></div>
     </div>
 </div>

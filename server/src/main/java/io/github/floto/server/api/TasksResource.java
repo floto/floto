@@ -1,5 +1,6 @@
 package io.github.floto.server.api;
 
+import com.google.common.collect.Lists;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
@@ -11,7 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 @Path("tasks")
 public class TasksResource {
@@ -26,7 +26,7 @@ public class TasksResource {
     public Map<String, Object> getState() {
         Map<String, Object> result = new HashMap<>();
         ArrayList<Object> tasks = new ArrayList<>();
-        for(TaskInfo taskInfo: taskService.getTasks()) {
+        for(TaskInfo taskInfo: Lists.reverse(taskService.getTasks())) {
             Map<String, Object> task = new HashMap<>();
             task.put("id", taskInfo.getId());
             task.put("title", taskInfo.getTitle());
@@ -42,8 +42,16 @@ public class TasksResource {
                 }
             }
             task.put("status", status);
+            task.put("creationDate", taskInfo.getCreationDate());
+            task.put("startDate", taskInfo.getStartDate());
+            task.put("endDate", taskInfo.getEndDate());
+            if(taskInfo.getDuration() != null) {
+                task.put("durationInMs", taskInfo.getDuration().toMillis());
+            }
+
             tasks.add(task);
         }
+
         result.put("tasks", tasks);
         return result;
     }

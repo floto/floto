@@ -1,5 +1,6 @@
 package io.github.floto.util.task;
 
+import java.time.Instant;
 import java.util.concurrent.Callable;
 
 class TaskRunnable<RESULT_TYPE> implements Runnable {
@@ -20,6 +21,7 @@ class TaskRunnable<RESULT_TYPE> implements Runnable {
             oldThreadName = currentThread.getName();
             currentThread.setName(taskInfo.getTitle());
             Task.setCurrentTaskInfo(taskInfo);
+            taskInfo.setStartDate(Instant.now());
             RESULT_TYPE result = taskCallable.call();
             taskInfo.complete(result);
         } catch (Throwable throwable) {
@@ -30,6 +32,7 @@ class TaskRunnable<RESULT_TYPE> implements Runnable {
             if(oldThreadName != null) {
                 currentThread.setName(oldThreadName);
             }
+            taskInfo.setEndDate(Instant.now());
         }
     }
 }
