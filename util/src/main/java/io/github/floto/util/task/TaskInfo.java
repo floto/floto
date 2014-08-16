@@ -100,6 +100,6 @@ public class TaskInfo<RESULT_TYPE> {
     }
 
     public String getThreadName() {
-        return title + "#" + id;
+        return title + " #" + id;
     }
 }

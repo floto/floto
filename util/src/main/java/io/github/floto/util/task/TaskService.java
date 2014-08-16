@@ -1,6 +1,7 @@
 package io.github.floto.util.task;
 
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.pattern.RootCauseFirstThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import org.slf4j.LoggerFactory;
@@ -25,12 +26,19 @@ public class TaskService {
 
     private void initLogging() {
         Logger rootLogger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        RootCauseFirstThrowableProxyConverter throwableConverter = new RootCauseFirstThrowableProxyConverter();
+        throwableConverter.start();
         AppenderBase<ILoggingEvent> appender = new AppenderBase<ILoggingEvent>() {
+
             @Override
             protected void append(ILoggingEvent loggingEvent) {
                 TaskInfo<?> taskInfo = threadTaskMap.get(loggingEvent.getThreadName());
                 if (taskInfo != null) {
-                    taskInfo.getLogEntries().add(new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString().toLowerCase()));
+                    LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString().toLowerCase());
+                    if(loggingEvent.getThrowableProxy() != null) {
+                        logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
+                    }
+                    taskInfo.getLogEntries().add(logEntry);
                 }
             }
         };

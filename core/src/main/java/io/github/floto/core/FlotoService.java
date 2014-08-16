@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
@@ -126,7 +127,7 @@ public class FlotoService implements Closeable {
             String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
             manifest = flotoDsl.toManifest(manifestString);
             this.manifestString = manifestString;
-            log.info("Compiled manifest");
+            log.warn("Compiled manifest");
             return null;
         });
 	}
@@ -135,9 +136,12 @@ public class FlotoService implements Closeable {
 		return manifestString;
 	}
 
-	public void redeployContainers(List<String> containers) {
-		log.info("Redeploying containers {}", containers);
-		containers.forEach(this::redeployContainer);
+	public TaskInfo<Void> redeployContainers(List<String> containers) {
+        return taskService.startTask("Redeploy containers "+ Joiner.on(", ").join(containers), () -> {
+            log.info("Redeploying containers {}", containers);
+            containers.forEach(this::redeployContainer);
+            return null;
+        });
 	}
 
 	private void redeployContainer(String containerName) {

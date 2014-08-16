@@ -1,6 +1,7 @@
 package io.github.floto.server.api;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.util.task.TaskInfo;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -22,9 +23,8 @@ public class ContainersResource {
 	@POST
 	@Path("_redeploy")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String redeployContainers(ContainersRequest containersRequest) {
-		flotoService.redeployContainers(containersRequest.containers);
-		return "{\"result\": \"success\"}";
+	public TaskInfo<Void> redeployContainers(ContainersRequest containersRequest) {
+		return flotoService.redeployContainers(containersRequest.containers);
 	}
 
 	@POST

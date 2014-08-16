@@ -1,6 +1,6 @@
 (function () {
     "use strict";
-    app.factory('TaskService', function ($resource, $http, $rootScope, $q) {
+    app.factory('TaskService', function ($resource, $http, $rootScope, $q, NotificationService) {
         var TaskService = {};
 
         var tasks = TaskService.tasks = [];
@@ -17,7 +17,7 @@
         };
 
         TaskService.getLogs = function getLogs(taskId) {
-            return $resource(app.urlPrefix + 'tasks/'+taskId+'/logs').get();
+            return $resource(app.urlPrefix + 'tasks/' + taskId + '/logs').get();
         };
 
         TaskService.getTask = function getTask(taskId) {
@@ -36,7 +36,7 @@
         };
 
         function sendMessage(message) {
-            wsPromise.then(function(ws) {
+            wsPromise.then(function (ws) {
                 ws.send(JSON.stringify(message));
             });
         }
@@ -50,7 +50,6 @@
         }
         websocketUri += "//" + loc.host;
         websocketUri += loc.pathname + "tasks/_websocket";
-        console.log(websocketUri);
 
         var wsPromise;
 
@@ -58,29 +57,38 @@
             var deferred = $q.defer();
             var ws = new WebSocket(websocketUri);
 
-            ws.onopen = function()
-            {
+            ws.onopen = function () {
                 deferred.resolve(ws);
             };
-            ws.onmessage = function (evt)
-            {
+            ws.onmessage = function (evt) {
                 var message = JSON.parse(evt.data);
-                if(message.type === "taskComplete") {
+                if (message.type === "taskComplete") {
                     TaskService.refreshTasks();
-                    taskCompletionPromises[message.taskId].resolve(null);
+                    var taskId = message.taskId;
+                    var deferred = taskCompletionPromises[taskId];
+                    if (message.status === "success") {
+                        deferred.resolve(null);
+                    } else {
+                        NotificationService.notify({
+                            title: message.errorMessage,
+                            text: '<a href="#/tasks/' + taskId + '">Click for details (Task #' + taskId + ')</a>',
+                            type: 'error'
+                        });
+                        deferred.reject("TODO: Error");
+                    }
                 }
             };
-            ws.onclose = function()
-            {
+            ws.onclose = function () {
                 // websocket is closed.
                 console.log("Connection is closed...");
             };
             wsPromise = deferred.promise;
         }
+
         connectWebSocket();
 
         TaskService.httpPost = function httpPost(url, request) {
-            return $http.post(url, request).then(function(result) {
+            return $http.post(url, request).then(function (result) {
                 var taskId = result.data.taskId;
                 return TaskService.getTaskCompletionPromise(taskId);
             });

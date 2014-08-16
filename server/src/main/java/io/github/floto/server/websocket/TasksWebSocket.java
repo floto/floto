@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 
 @ClientEndpoint
@@ -42,9 +44,16 @@ public class TasksWebSocket {
             JsonNode jsonNode = objectMapper.reader().readTree(message);
             String command = jsonNode.get("command").asText();
             String taskId = jsonNode.get("taskId").asText();
-            if("registerCompletionListener".equals(command)) {
-                taskService.getTaskInfo(taskId).getCompletionStage().whenCompleteAsync((BiConsumer) (a,b) -> {
-                        sendMessage(ImmutableMap.of("type", "taskComplete", "taskId", taskId));
+            if ("registerCompletionListener".equals(command)) {
+                taskService.getTaskInfo(taskId).getCompletionStage().whenCompleteAsync((BiConsumer<Object, Throwable>) (a, error) -> {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("type", "taskComplete");
+                    result.put("taskId", taskId);
+                    result.put("status",  error == null ? "success" :  "error");
+                    if(error != null) {
+                        result.put("errorMessage", error.getMessage());
+                    }
+                    sendMessage(result);
                 });
             } else {
                 log.error("Unknown command {}", command);

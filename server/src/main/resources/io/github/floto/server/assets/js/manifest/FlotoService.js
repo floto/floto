@@ -24,7 +24,6 @@
         FlotoService.compileManifest = function compileManifest() {
             var recompilePromise = TaskService.httpPost(app.urlPrefix + 'manifest/compile');
             recompilePromise.finally(function () {
-                console.log("COMPILATION COMPLETE");
                 FlotoService.refreshManifest();
             });
             return  recompilePromise;
@@ -35,7 +34,7 @@
         };
 
         FlotoService.redeployContainers = function redeployContainers(request) {
-            return $http.post(app.urlPrefix + 'containers/_redeploy', request);
+            return TaskService.httpPost(app.urlPrefix + 'containers/_redeploy', request);
         };
 
         FlotoService.startContainers = function startContainers(request) {

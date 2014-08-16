@@ -1,5 +1,6 @@
 package io.github.floto.util.task;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ class TaskRunnable<RESULT_TYPE> implements Runnable {
             taskInfo.complete(result);
             log.info("Task completed: {}", taskInfo.getTitle());
         } catch (Throwable throwable) {
-            log.error("Task completed with exception", throwable);
+            log.error("Task completed with exception: {}", ExceptionUtils.getMessage(throwable), throwable);
             taskInfo.completeExceptionally(throwable);
         } finally {
             Task.setCurrentTaskInfo(null);

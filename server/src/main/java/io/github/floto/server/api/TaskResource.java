@@ -25,14 +25,7 @@ public class TaskResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, Object> getLogs() {
         Map<String, Object> result = new HashMap<>();
-        ArrayList<Object> logs = new ArrayList<>();
-        for(LogEntry logEntry: taskService.getLogEntries(taskId)) {
-            Map<String, Object> entry = new HashMap<>();
-            entry.put("message", logEntry.getMessage());
-            entry.put("level", logEntry.getLevel());
-            logs.add(entry);
-        }
-
+        ArrayList<Object> logs = new ArrayList<>(taskService.getLogEntries(taskId));
         result.put("logs", logs);
         return result;
     }
