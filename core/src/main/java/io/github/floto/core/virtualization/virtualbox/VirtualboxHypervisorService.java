@@ -74,26 +74,46 @@ public class VirtualboxHypervisorService implements HypervisorService {
         } catch (Throwable throwable) {
             Throwables.propagate(throwable);
         }
-        // Create VM
+        if(vmUrl.toExternalForm().endsWith(".iso")) {
+            deployFromIso(cachedFile, desc);
+        } else {
+            deployFromImage(cachedFile, desc);
+        }
+
+    }
+
+    private void deployFromImage(File cachedFile, VmDescription desc) {
+        // Import VM
         vBoxManage.run("import", cachedFile.getAbsolutePath(), "--vsys", "0", "--vmname", desc.vmName);
 
+        configureVm(desc);
+    }
+
+    private void deployFromIso(File cachedFile, VmDescription desc) {
+        // Create VM
+        vBoxManage.run("createvm", "--name", desc.vmName, "--register", "--basefolder", vmDirectory.getAbsolutePath());
+
+        // Create Storage Controller
+        vBoxManage.run("storagectl", desc.vmName, "--name", "sata", "--add", "sata", "--portcount", "4");
+
+        // Attach ISO
+        vBoxManage.run("storageattach", desc.vmName, "--storagectl", "sata", "--port", "1", "--type", "dvddrive", "--medium", cachedFile.getAbsolutePath());
+
+        // create and attach disk
+        String diskPath = new File(getVmDirectory(desc.vmName), "disk1.vdi").getAbsolutePath();
+        vBoxManage.run("createhd", "--filename", diskPath, "--format", "vdi", "--size", String.valueOf(20 * 1024));
+        vBoxManage.run("storageattach", desc.vmName, "--storagectl", "sata", "--port", "0", "--type", "hdd", "--medium", diskPath);
+
+        configureVm(desc);
+
+        // Setup networking
+        vBoxManage.run("modifyvm", desc.vmName, "--nic1", "hostonly", "--hostonlyadapter1", "vboxnet0");
+    }
+
+    private void configureVm(VmDescription desc) {
         // Set VM options
         vBoxManage.run("modifyvm", desc.vmName, "--memory", String.valueOf(desc.memoryInMB), "--cpus", String.valueOf(desc.numberOfCores), "--ostype", "Linux26_64", "--acpi", "on", "--ioapic", "on", "--vram", "32");
 
-        // Setup networking
-        vBoxManage.run("modifyvm", desc.vmName, "--nic1", "hostonly", "--hostonlyadapter1", "vboxnet6");
-
-
-        // Create Storage Controller
-//        vBoxManage.run("storagectl", desc.vmName, "--name", "sata", "--add", "sata", "--portcount", "4");
-
-        // Attach ISO
-//        vBoxManage.run("storageattach", desc.vmName, "--storagectl", "sata", "--port", "1", "--type", "dvddrive", "--medium", cachedFile.getAbsolutePath());
-
-        // create and attach disk
-//        String diskPath = new File(getVmDirectory(desc.vmName), "disk1.vdi").getAbsolutePath();
-//        vBoxManage.run("createhd", "--filename", diskPath, "--format", "vdi", "--size", String.valueOf(20 * 1024));
-//        vBoxManage.run("storageattach", desc.vmName, "--storagectl", "sata", "--port", "0", "--type", "hdd", "--medium", diskPath);
     }
 
     private File getVmDirectory(String vmName) {
