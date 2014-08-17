@@ -53,45 +53,49 @@
 
         var wsPromise;
 
-        function connectWebSocket() {
+        function connectWebSocket(timeout) {
             var deferred = $q.defer();
-            var ws = new WebSocket(websocketUri);
-
-            ws.onopen = function () {
-                deferred.resolve(ws);
-            };
-            ws.onmessage = function (evt) {
-                var message = JSON.parse(evt.data);
-                if (message.type === "taskComplete") {
-                    TaskService.refreshTasks();
-                    var taskId = message.taskId;
-                    var deferred = taskCompletionPromises[taskId];
-                    var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
-                    if (message.status === "success") {
-                        NotificationService.notify({
-                            title: "Success: " + message.taskTitle + linkText,
-                            type: 'success'
-                        });
-                        deferred.resolve(null);
-                    } else {
-                        NotificationService.notify({
-                            title: "Error: " + message.taskTitle + linkText,
-                            text: message.errorMessage,
-                            type: 'error',
-                            hide: false
-                        });
-                        deferred.reject(message.errorMessage);
-                    }
-                }
-            };
-            ws.onclose = function () {
-                // websocket is closed.
-                console.log("Connection is closed...");
-            };
             wsPromise = deferred.promise;
+            setTimeout(function () {
+                var ws = new WebSocket(websocketUri);
+
+                ws.onopen = function () {
+                    console.log("Connected")
+                    deferred.resolve(ws);
+                };
+                ws.onmessage = function (evt) {
+                    var message = JSON.parse(evt.data);
+                    if (message.type === "taskComplete") {
+                        TaskService.refreshTasks();
+                        var taskId = message.taskId;
+                        var deferred = taskCompletionPromises[taskId];
+                        var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
+                        if (message.status === "success") {
+                            NotificationService.notify({
+                                title: "Success: " + message.taskTitle + linkText,
+                                type: 'success'
+                            });
+                            deferred.resolve(null);
+                        } else {
+                            NotificationService.notify({
+                                title: "Error: " + message.taskTitle + linkText,
+                                text: message.errorMessage,
+                                type: 'error',
+                                hide: false
+                            });
+                            deferred.reject(message.errorMessage);
+                        }
+                    }
+                };
+                ws.onclose = function () {
+                    // websocket is closed.
+                    console.log("Connection is closed...");
+                    connectWebSocket(1000);
+                };
+            }, timeout);
         }
 
-        connectWebSocket();
+        connectWebSocket(0);
 
         TaskService.httpPost = function httpPost(url, request) {
             return $http.post(url, request).then(function (result) {
