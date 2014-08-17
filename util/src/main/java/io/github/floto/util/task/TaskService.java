@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -36,7 +37,7 @@ public class TaskService {
             protected void append(ILoggingEvent loggingEvent) {
                 TaskInfo<?> taskInfo = threadTaskMap.get(loggingEvent.getThreadName());
                 if (taskInfo != null) {
-                    LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString());
+                    LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString(), loggingEvent.getLoggerName(), Instant.ofEpochMilli(loggingEvent.getTimeStamp()));
                     if (loggingEvent.getThrowableProxy() != null) {
                         logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
                     }

@@ -35,7 +35,13 @@
                 if (entry.stackTrace) {
                     stackTracePart = "<pre>" + entry.stackTrace + "</pre>";
                 }
-                table.append("<tr" + classPart + "><td>" + entry.message + stackTracePart + "</td><td>" + entry.level + "</td></tr>");
+                var row = "<tr" + classPart + ">"
+                row += "<td>" + entry.timestamp.substring(11, 23) + "</td>";
+                row += "<td>" + entry.message + stackTracePart + "</td>";
+                row += "<td>" + entry.level + "</td>";
+                row += "<td>" + entry.logger + "</td>";
+                row += "</tr>"
+                table.append(row);
                 if (scope.autoScroll) {
                     scrollElement.scrollTop = scrollElement.scrollHeight;
                 }

@@ -1,13 +1,19 @@
 package io.github.floto.util.task;
 
+import java.time.Instant;
+
 public class LogEntry {
-    private String message;
-    private String level;
+    private final String message;
+    private final String level;
+    private final String logger;
+    private final Instant timestamp;
     private String stackTrace;
 
-    public LogEntry(String message, String level) {
+    public LogEntry(String message, String level, String logger, Instant timestamp) {
         this.message = message;
         this.level = level;
+        this.logger = logger;
+        this.timestamp = timestamp;
     }
 
     public String getMessage() {
@@ -24,5 +30,13 @@ public class LogEntry {
 
     public String getStackTrace() {
         return stackTrace;
+    }
+
+    public String getLogger() {
+        return logger;
+    }
+
+    public Instant getTimestamp() {
+        return timestamp;
     }
 }
