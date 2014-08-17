@@ -1,7 +1,7 @@
 (function () {
 	"use strict";
 
-	app.controller("HostsController", function ($scope, FlotoService, NotificationService) {
+	app.controller("HostsController", function ($scope, FlotoService) {
 		function update() {
 			$scope.manifest = FlotoService.getManifest();
 			$scope.hostStates = FlotoService.getHostStates();
@@ -31,33 +31,22 @@
 			return FlotoService.getManifest();
 		}, update);
 
-		function notifySuccess(title) {
-			return function () {
-				NotificationService.notify({
-					title: title,
-					type: 'success'
-				});
-			};
-		}
-
 		$scope.refresh = update;
 
 		$scope.redeployHosts = function redeployHosts(request) {
-			notifySuccess("Hosts redeploy started");
-			FlotoService.redeployHosts(request).then(notifySuccess("Hosts redeployed")).then(update);
+			FlotoService.redeployHosts(request).then(update);
 		};
 
 		$scope.startHosts = function startHosts(request) {
-			FlotoService.startHosts(request).then(notifySuccess("Hosts started")).then(update);
+			FlotoService.startHosts(request).then(update);
 		};
 
 		$scope.stopHosts = function stopHosts(request) {
-			FlotoService.stopHosts(request).then(notifySuccess("Hosts stopped")).then(update);
+			FlotoService.stopHosts(request).then(update);
 		};
 
 		$scope.deleteHosts = function destroyHosts(request) {
-			notifySuccess("Hosts delete started");
-			FlotoService.deleteHosts(request).then(notifySuccess("Hosts deleted")).then(update);
+			FlotoService.deleteHosts(request).then(update);
 		};
 
 

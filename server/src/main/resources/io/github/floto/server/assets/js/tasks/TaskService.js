@@ -66,10 +66,14 @@
                     TaskService.refreshTasks();
                     var taskId = message.taskId;
                     var deferred = taskCompletionPromises[taskId];
+                    var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
                     if (message.status === "success") {
+                        NotificationService.notify({
+                            title: "Success: " + message.taskTitle + linkText,
+                            type: 'success'
+                        });
                         deferred.resolve(null);
                     } else {
-                        var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
                         NotificationService.notify({
                             title: "Error: " + message.taskTitle + linkText,
                             text: message.errorMessage,

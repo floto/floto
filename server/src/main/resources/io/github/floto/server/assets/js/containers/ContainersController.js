@@ -1,7 +1,7 @@
 (function () {
 	"use strict";
 
-	app.controller("ContainersController", function ($scope, FlotoService, NotificationService, $state, $stateParams) {
+	app.controller("ContainersController", function ($scope, FlotoService, $state, $stateParams) {
 		$scope.groupings = {
 			host: {},
 			image: {}
@@ -67,29 +67,20 @@
 			return FlotoService.getManifest();
 		}, update);
 
-		function notifySuccess(title) {
-			return function () {
-				NotificationService.notify({
-					title: title,
-					type: 'success'
-				});
-			};
-		}
-
 		$scope.redeployContainers = function redeployContainers(request) {
-			FlotoService.redeployContainers(request).then(notifySuccess("Containers redeployed")).then(update);
+			FlotoService.redeployContainers(request).then(update);
 		};
 
 		$scope.startContainers = function startContainers(request) {
-			FlotoService.startContainers(request).then(notifySuccess("Containers started")).then(update);
+			FlotoService.startContainers(request).then(update);
 		};
 
 		$scope.stopContainers = function stopContainers(request) {
-			FlotoService.stopContainers(request).then(notifySuccess("Containers stopped")).then(update);
+			FlotoService.stopContainers(request).then(update);
 		};
 
 		$scope.purgeContainerData = function purgeContainerData(request) {
-			FlotoService.purgeContainerData(request).then(notifySuccess("Container data purged"));
+			FlotoService.purgeContainerData(request);
 		};
 
 		$scope.refresh = update;
