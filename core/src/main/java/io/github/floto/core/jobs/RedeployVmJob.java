@@ -1,4 +1,4 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.util.TemplateHelper;
@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RedeployVmTask extends HypervisorTask<Void> {
-    private Logger log = LoggerFactory.getLogger(RedeployVmTask.class);
-    private TemplateHelper templateHelper = new TemplateHelper(RedeployVmTask.class, "templates");
+public class RedeployVmJob extends HypervisorJob<Void> {
+    private Logger log = LoggerFactory.getLogger(RedeployVmJob.class);
+    private TemplateHelper templateHelper = new TemplateHelper(RedeployVmJob.class, "templates");
 
     private FlotoService flotoService;
     private final String vmName;
 
-    public RedeployVmTask(FlotoService flotoService, String vmName) {
+    public RedeployVmJob(FlotoService flotoService, String vmName) {
         super(flotoService.getManifest(), vmName);
         this.flotoService = flotoService;
         this.vmName = vmName;

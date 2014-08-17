@@ -1,4 +1,4 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.esx.EsxHypervisorService;
@@ -7,11 +7,11 @@ import io.github.floto.dsl.model.*;
 
 import java.io.File;
 
-public abstract class HypervisorTask<T> extends HostTask<T> {
+public abstract class HypervisorJob<T> extends HostJob<T> {
 
     protected final HypervisorService hypervisorService;
 
-    public HypervisorTask(Manifest manifest, String hostName) {
+    public HypervisorJob(Manifest manifest, String hostName) {
         super(manifest, hostName);
         this.hypervisorService = createHypervisorService();
     }

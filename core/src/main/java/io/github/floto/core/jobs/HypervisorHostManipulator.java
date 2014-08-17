@@ -1,4 +1,4 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 import io.github.floto.core.virtualization.HypervisorService;
 

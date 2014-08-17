@@ -1,13 +1,13 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
 
-public abstract class HostTask<T> extends ManifestTask<T> {
+public abstract class HostJob<T> extends ManifestJob<T> {
 
     protected final Host host;
 
-    public HostTask(Manifest manifest, String hostName) {
+    public HostJob(Manifest manifest, String hostName) {
         super(manifest);
         this.host = manifest.findHost(hostName);
     }

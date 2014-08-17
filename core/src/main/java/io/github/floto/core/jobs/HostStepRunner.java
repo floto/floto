@@ -1,4 +1,4 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Throwables;

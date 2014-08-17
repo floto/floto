@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Throwables;
+import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.ssh.SshService;
-import io.github.floto.core.tasks.ManifestTask;
 import io.github.floto.core.util.DockerfileHelper;
 import io.github.floto.core.util.ErrorClientResponseFilter;
 import io.github.floto.core.util.MavenHelper;
@@ -44,7 +44,6 @@ import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -638,7 +637,7 @@ public class FlotoService implements Closeable {
 
     public void verifyTemplates() {
         try {
-            new ManifestTask<Void>(manifest) {
+            new ManifestJob<Void>(manifest) {
                 
                 @Override
                 public Void execute() throws Exception {

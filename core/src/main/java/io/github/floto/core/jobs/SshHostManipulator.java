@@ -1,12 +1,6 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
-import com.google.common.base.Throwables;
 import io.github.floto.core.ssh.SshService;
-import io.github.floto.core.virtualization.HypervisorService;
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
-import java.io.IOException;
 
 public class SshHostManipulator implements HostManipulator {
 

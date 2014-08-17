@@ -1,12 +1,12 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 import com.google.common.base.Throwables;
 
-public class TaskRunner {
+public class JobRunner {
 
-    public <T> T runTask(Task<T> task) {
+    public <T> T runJob(Job<T> job) {
         try {
-            return task.execute();
+            return job.execute();
         } catch (Exception e) {
             throw Throwables.propagate(e);
         }

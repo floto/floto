@@ -1,4 +1,4 @@
-package io.github.floto.core.tasks;
+package io.github.floto.core.jobs;
 
 public interface HostManipulator {
     void run(String command);

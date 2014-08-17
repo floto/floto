@@ -1,7 +1,7 @@
 package io.github.floto.core;
 
 import com.google.common.base.Throwables;
-import io.github.floto.core.tasks.*;
+import io.github.floto.core.jobs.*;
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
@@ -15,7 +15,7 @@ import java.util.function.BiFunction;
 
 public class HostService {
     private Logger log = LoggerFactory.getLogger(HostService.class);
-    private TaskRunner taskRunner = new TaskRunner();
+    private JobRunner jobRunner = new JobRunner();
     private FlotoService flotoService;
 
     public HostService(FlotoService flotoService) {
@@ -70,7 +70,7 @@ public class HostService {
     }
 
     public void redeployVm(String vmName) {
-        runTask(new RedeployVmTask(flotoService, vmName));
+        runTask(new RedeployVmJob(flotoService, vmName));
     }
 
 
@@ -82,12 +82,12 @@ public class HostService {
         return flotoService.getManifest();
     }
 
-    private <T> T runTask(Task<T> task) {
-        return taskRunner.runTask(task);
+    private <T> T runTask(Job<T> job) {
+        return jobRunner.runJob(job);
     }
 
     private void runHypervisorTask(String vmName, BiConsumer<HypervisorService, String> method) {
-        runTask(new HypervisorTask<Object>(flotoService.getManifest(), vmName) {
+        runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
             @Override
             public Object execute() throws Exception {
                 try {
@@ -101,7 +101,7 @@ public class HostService {
     }
 
     private <T> T runHypervisorTask(String vmName, BiFunction<HypervisorService, String, T> method) {
-        return runTask(new HypervisorTask<T>(flotoService.getManifest(), vmName) {
+        return runTask(new HypervisorJob<T>(flotoService.getManifest(), vmName) {
             @Override
             public T execute() throws Exception {
                 try {
@@ -114,7 +114,7 @@ public class HostService {
     }
 
     private void reconfigure(String vmName) {
-        runTask(new HypervisorTask<Object>(flotoService.getManifest(), vmName) {
+        runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
             @Override
             public Object execute() throws Exception {
                 if (hypervisorService.isVmRunning(vmName)) {

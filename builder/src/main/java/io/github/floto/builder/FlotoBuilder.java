@@ -3,8 +3,8 @@ package io.github.floto.builder;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
 import io.github.floto.core.FlotoService;
-import io.github.floto.core.tasks.HypervisorTask;
-import io.github.floto.core.tasks.RedeployVmTask;
+import io.github.floto.core.jobs.HypervisorJob;
+import io.github.floto.core.jobs.RedeployVmJob;
 import io.github.floto.core.util.TemplateHelper;
 import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
@@ -75,7 +75,7 @@ public class FlotoBuilder {
             }
 
             Host host = manifest.hosts.get(0);
-            RedeployVmTask redeployVmTask = new RedeployVmTask(flotoService, host.name);
+            RedeployVmJob redeployVmTask = new RedeployVmJob(flotoService, host.name);
             redeployVmTask.execute();
 
             for (Container container : manifest.containers) {
@@ -85,7 +85,7 @@ public class FlotoBuilder {
             // TODO: delete intermediate images?
             // TODO: Zerofill disk?
 
-            new HypervisorTask<Void>(manifest, host.name) {
+            new HypervisorJob<Void>(manifest, host.name) {
 
                 @Override
                 public Void execute() throws Exception {
