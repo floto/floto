@@ -13,18 +13,18 @@
             <br>
 
             <table class="table table-bordered table-striped table-hover table-condensed">
-                <th style="width: 3em">ID</th>
+                <th style="width: 3em; text-align: right">ID</th>
                 <th>Title</th>
                 <th style="width: 10em">Started</th>
                 <th style="width: 10em">Completed</th>
                 <th style="width: 10em">Duration</th>
-                <tr ng-repeat="task in tasks" ng-class="{'success': task.status === 'success', 'danger': task.status === 'error'}"
+                <tr ng-repeat="task in tasks" ng-class="task.class"
                     ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer" >
-                    <td class="text-muted">
+                    <td class="text-muted" style="text-align: right">
                         #{{task.id}}
                     </td>
                     <td>
-                        {{task.title}}
+                        <span class="glyphicon" ng-class="task.icon" title="{{task.status}}"></span> {{task.title}}
                     </td>
                     <td title="{{task.startDate}}">
                         <span am-time-ago="task.startDate"></span>

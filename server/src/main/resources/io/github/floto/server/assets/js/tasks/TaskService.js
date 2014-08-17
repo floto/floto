@@ -72,7 +72,8 @@
                         NotificationService.notify({
                             title: message.errorMessage,
                             text: '<a href="#/tasks/' + taskId + '">Click for details (Task #' + taskId + ')</a>',
-                            type: 'error'
+                            type: 'error',
+                            hide: false
                         });
                         deferred.reject("TODO: Error");
                     }
