@@ -28,6 +28,7 @@
         };
 
         var taskCompletionPromises = {};
+        var logSubscriptions = {};
         TaskService.getTaskCompletionPromise = function getTaskCompletionPromise(taskId) {
             var deferred = taskCompletionPromises[taskId] = taskCompletionPromises[taskId] || $q.defer();
             var message = {
@@ -89,7 +90,13 @@
                             deferred.reject(message.errorMessage);
                         }
                         TaskService.refreshTasks();
+                    } else if (message.type === "logEntry") {
+                        var taskId = message.taskId;
+                        logSubscriptions[taskId].forEach(function(callback) {
+                            callback(message.entry);
+                        });
                     }
+
                 };
                 ws.onclose = function () {
                     // websocket is closed.
@@ -115,21 +122,29 @@
         };
 
         TaskService.subscribeToLog = function subscribeToLog(taskId, callback) {
-            setInterval(function() {
-                callback({
-                    message: "foobar",
-                    level: "warn"
-                });
-                callback({
-                    message: "foobar",
-                    level: "info"
-                });
-                callback({
-                    message: "foobar",
-                    level: "error"
-                });
-            }, 1000);
-
+            logSubscriptions[taskId] = logSubscriptions[taskId] || [];
+            logSubscriptions[taskId].push(callback);
+            var message = {
+                command: "registerLogListener",
+                taskId: taskId
+            };
+            sendMessage(message);
+            /*
+             setInterval(function() {
+             callback({
+             message: "foobar",
+             level: "warn"
+             });
+             callback({
+             message: "foobar",
+             level: "info"
+             });
+             callback({
+             message: "foobar",
+             level: "error"
+             });
+             }, 1000);
+             */
         }
 
         return TaskService;

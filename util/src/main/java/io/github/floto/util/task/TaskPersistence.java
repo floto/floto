@@ -177,4 +177,12 @@ public class TaskPersistence {
         }
 
     }
+
+    public InputStream getLogStream(String taskId) {
+        try {
+            return new FileInputStream(getLogFile(taskId));
+        } catch (FileNotFoundException e) {
+            throw Throwables.propagate(e);
+        }
+    }
 }

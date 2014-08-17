@@ -52,12 +52,17 @@ public class TasksWebSocket {
                     result.put("type", "taskComplete");
                     result.put("taskId", taskId);
                     result.put("taskTitle", taskInfo.getTitle());
-                    result.put("status",  error == null ? "success" :  "error");
-                    if(error != null) {
+                    result.put("status", error == null ? "success" : "error");
+                    if (error != null) {
                         result.put("errorMessage", error.getMessage());
                     }
                     sendMessage(result);
                 });
+            } else if ("registerLogListener".equals(command)) {
+                LogPusher logPusher = new LogPusher(taskService, taskId, (messageString) -> {
+                    sendTextMessage(messageString);
+                });
+                logPusher.start();
             } else {
                 log.error("Unknown command {}", command);
             }
@@ -72,6 +77,14 @@ public class TasksWebSocket {
             session.getAsyncRemote().sendText(objectMapper.writeValueAsString(message));
         } catch (Throwable throwable) {
             log.error("Unable to send message {}", message, throwable);
+        }
+    }
+
+    private void sendTextMessage(String textMessage) {
+        try {
+            session.getAsyncRemote().sendText(textMessage);
+        } catch (Throwable throwable) {
+            log.error("Unable to send message {}", textMessage, throwable);
         }
     }
 

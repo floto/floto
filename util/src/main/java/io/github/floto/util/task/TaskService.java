@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -87,5 +88,9 @@ public class TaskService {
 
     public void closeLogFile(String taskId) {
         taskPersistence.closeLogFile(taskId);
+    }
+
+    public InputStream getLogStream(String taskId) {
+        return taskPersistence.getLogStream(taskId);
     }
 }
