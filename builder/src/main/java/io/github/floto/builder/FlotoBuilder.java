@@ -10,6 +10,7 @@ import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.GitHelper;
+import io.github.floto.util.task.TaskService;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormat;
@@ -60,7 +61,8 @@ public class FlotoBuilder {
             log.info("Root definition file: {}", rootDefinitionFile);
             String gitDescription = new GitHelper(rootDefinitionFile.getParentFile()).describe();
             log.info("Git Description {}", gitDescription);
-            flotoService = new FlotoService(parameters);
+            TaskService taskService = new TaskService();
+            flotoService = new FlotoService(parameters, taskService);
             flotoService.compileManifest();
             flotoService.verifyTemplates();
 
