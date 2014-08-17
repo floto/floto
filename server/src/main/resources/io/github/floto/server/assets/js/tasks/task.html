@@ -1,17 +1,13 @@
 <div ng-controller="TaskController">
-    <h3>{{task.title}}<span class="text-muted pull-right">#{{taskId}}</span> </h3>
-    <div floto-fill-height scroll-glue>
-    <table class="table table-bordered table-striped table-hover table-condensed">
-        <tr ng-repeat="entry in logs" ng-class="entry.class">
-            <td>
-                {{entry.message}}
-                <pre ng-if="entry.stackTrace" ng-bind="entry.stackTrace">
-                </pre>
-            </td>
-            <td style="width: 5em;">
-                {{entry.level}}
-            </td>
-        </tr>
-    </table>
+    <h3>{{task.title}}<span class="text-muted pull-right">#{{taskId}}</span></h3>
+
+    <div class="checkbox pull-right">
+        <label>
+            <input type="checkbox" ng-model="autoScroll"> Auto-Scroll
+        </label>
+    </div>
+    <div class="clearfix"></div>
+    <div floto-fill-height>
+        <task-log task-id="taskId" auto-scroll="autoScroll"></task-log>
     </div>
 </div>

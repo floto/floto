@@ -17,5 +17,6 @@
             });
         });
         $scope.taskId = $stateParams.taskId;
+        $scope.autoScroll = true;
     });
 })();
