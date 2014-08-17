@@ -1,8 +1,8 @@
 (function () {
     "use strict";
     var classMap = {
-        error: "danger",
-        warn: "warning"
+        ERROR: "danger",
+        WARN: "warning"
     }
 
 

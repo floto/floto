@@ -12,19 +12,19 @@ import java.util.function.Consumer;
 
 public class LogPusher {
     private final Logger log = LoggerFactory.getLogger(LogPusher.class);
-    private TaskService taskService;
-    private String taskId;
+    private final InputStream inputStream;
+    private final String streamId;
     private Consumer<String> callback;
 
-    public LogPusher(TaskService taskService, String taskId, Consumer<String> callback) {
-        this.taskService = taskService;
-        this.taskId = taskId;
+    public LogPusher(InputStream inputStream, String streamId, Consumer<String> callback) {
+        this.inputStream = inputStream;
+        this.streamId = streamId;
         this.callback = callback;
     }
 
     public void start() {
         new Thread(() -> {
-            try(InputStream input = taskService.getLogStream(taskId)) {
+            try(InputStream input = inputStream) {
                 DataInputStream dataInput = new DataInputStream(input);
                 byte[] buffer = new byte[4*1024];
                 try {
@@ -41,7 +41,7 @@ public class LogPusher {
                         IOUtils.readFully(input, buffer, 0, length);
                         StringBuilder sb = new StringBuilder();
                         sb.append("{\n");
-                        sb.append("\"taskId\": \"").append(taskId).append("\",\n");
+                        sb.append("\"streamId\": \"").append(streamId).append("\",\n");
                         sb.append("\"type\": \"logEntry\",\n");
                         sb.append("\"entry\": ");
                         sb.append(new String(buffer, 0, length));
@@ -55,6 +55,6 @@ public class LogPusher {
             } catch(Throwable throwable) {
                 log.error("Error pushing logs", throwable);
             }
-        }, "LogPusher "+taskId).start();
+        }, "LogPusher "+streamId).start();
     }
 }

@@ -59,7 +59,8 @@ public class TasksWebSocket {
                     sendMessage(result);
                 });
             } else if ("registerLogListener".equals(command)) {
-                LogPusher logPusher = new LogPusher(taskService, taskId, (messageString) -> {
+                String streamId = jsonNode.get("streamId").asText();
+                LogPusher logPusher = new LogPusher(taskService.getLogStream(taskId), streamId, (messageString) -> {
                     sendTextMessage(messageString);
                 });
                 logPusher.start();

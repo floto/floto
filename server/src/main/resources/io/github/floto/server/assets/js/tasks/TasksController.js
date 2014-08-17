@@ -2,11 +2,11 @@
     "use strict";
     var classMap = {
         SUCCESS: "success",
-        ERRROR: "danger"
+        ERROR: "danger"
     }
     var iconMap = {
         SUCCESS: "glyphicon-ok",
-        ERRROR: "glyphicon-remove",
+        ERROR: "glyphicon-remove",
         RUNNING: "glyphicon-play"
     }
 

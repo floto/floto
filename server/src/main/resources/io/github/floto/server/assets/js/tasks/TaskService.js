@@ -91,10 +91,8 @@
                         }
                         TaskService.refreshTasks();
                     } else if (message.type === "logEntry") {
-                        var taskId = message.taskId;
-                        logSubscriptions[taskId].forEach(function(callback) {
-                            callback(message.entry);
-                        });
+                        var streamId = message.streamId;
+                        logSubscriptions[streamId](message.entry);
                     }
 
                 };
@@ -107,7 +105,6 @@
         }
 
         connectWebSocket(0);
-
         TaskService.httpPost = function httpPost(url, request) {
             return $http.post(url, request).then(function (result) {
                 var taskId = result.data.taskId;
@@ -121,12 +118,19 @@
             });
         };
 
+        var nextStreamId = 1;
+        function getNextStreamId() {
+            var streamId = nextStreamId;
+            nextStreamId++;
+            return streamId;
+        }
         TaskService.subscribeToLog = function subscribeToLog(taskId, callback) {
-            logSubscriptions[taskId] = logSubscriptions[taskId] || [];
-            logSubscriptions[taskId].push(callback);
+            var streamId = getNextStreamId();
+            logSubscriptions[ streamId] = callback;
             var message = {
                 command: "registerLogListener",
-                taskId: taskId
+                taskId: taskId,
+                streamId: streamId
             };
             sendMessage(message);
         }

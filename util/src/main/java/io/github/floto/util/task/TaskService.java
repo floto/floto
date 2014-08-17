@@ -36,7 +36,7 @@ public class TaskService {
             protected void append(ILoggingEvent loggingEvent) {
                 TaskInfo<?> taskInfo = threadTaskMap.get(loggingEvent.getThreadName());
                 if (taskInfo != null) {
-                    LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString().toLowerCase());
+                    LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString());
                     if (loggingEvent.getThrowableProxy() != null) {
                         logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
                     }
