@@ -19,7 +19,7 @@
 
             $scrollElement.bind('scroll', function () {
                 var activate = shouldActivateAutoScroll();
-                if(scope.autoScroll != activate) {
+                if (scope.autoScroll != activate) {
                     scope.autoScroll = activate;
                     scope.$apply();
                 }
@@ -31,8 +31,12 @@
                 if (cls) {
                     classPart = ' class="' + cls + '" '
                 }
-                table.append("<tr" + classPart + "><td>" + entry.message + "</td><td>" + entry.level + "</td></tr>");
-                if(scope.autoScroll) {
+                var stackTracePart = "";
+                if (entry.stackTrace) {
+                    stackTracePart = "<pre>" + entry.stackTrace + "</pre>";
+                }
+                table.append("<tr" + classPart + "><td>" + entry.message + stackTracePart + "</td><td>" + entry.level + "</td></tr>");
+                if (scope.autoScroll) {
                     scrollElement.scrollTop = scrollElement.scrollHeight;
                 }
             });

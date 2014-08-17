@@ -133,7 +133,7 @@
                 streamId: streamId
             };
             sendMessage(message);
-        }
+        };
 
         return TaskService;
     });
