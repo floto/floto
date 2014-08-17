@@ -134,7 +134,7 @@ public class FlotoServer {
 		resourceConfig.register(new TasksResource(taskService));
 		resourceConfig.register(new ManifestResource(flotoService));
 		resourceConfig.register(new ContainersResource(flotoService));
-		resourceConfig.register(new HostsResource(flotoService, hostService));
+		resourceConfig.register(new HostsResource(flotoService, hostService, taskService));
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);

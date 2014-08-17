@@ -54,19 +54,19 @@
         };
 
         FlotoService.redeployHosts = function redeployHosts(request) {
-            return $http.post(app.urlPrefix + 'hosts/_redeploy', request);
+            return TaskService.httpPost(app.urlPrefix + 'hosts/_redeploy', request);
         };
 
         FlotoService.startHosts = function startHosts(request) {
-            return $http.post(app.urlPrefix + 'hosts/_start', request);
+            return TaskService.httpPost(app.urlPrefix + 'hosts/_start', request);
         };
 
         FlotoService.stopHosts = function stopHosts(request) {
-            return $http.post(app.urlPrefix + 'hosts/_stop', request);
+            return TaskService.httpPost(app.urlPrefix + 'hosts/_stop', request);
         };
 
         FlotoService.deleteHosts = function deleteHosts(request) {
-            return $http.post(app.urlPrefix + 'hosts/_delete', request);
+            return TaskService.httpPost(app.urlPrefix + 'hosts/_delete', request);
         };
 
 

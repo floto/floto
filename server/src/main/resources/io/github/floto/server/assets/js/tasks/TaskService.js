@@ -69,9 +69,10 @@
                     if (message.status === "success") {
                         deferred.resolve(null);
                     } else {
+                        var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
                         NotificationService.notify({
-                            title: message.errorMessage,
-                            text: '<a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">Click for details (Task #' + taskId + ')</a>',
+                            title: "Error: " + message.taskTitle + linkText,
+                            text: message.errorMessage,
                             type: 'error',
                             hide: false
                         });

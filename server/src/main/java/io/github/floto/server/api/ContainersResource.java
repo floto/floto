@@ -30,21 +30,21 @@ public class ContainersResource {
 	@POST
 	@Path("_stop")
 	@Produces(MediaType.APPLICATION_JSON)
-	public TaskInfo<Void>  stopContainers(ContainersRequest containersRequest) {
+	public TaskInfo<Void> stopContainers(ContainersRequest containersRequest) {
 		return flotoService.stopContainers(containersRequest.containers);
 	}
 
 	@POST
 	@Path("_start")
 	@Produces(MediaType.APPLICATION_JSON)
-	public TaskInfo<Void>  startContainers(ContainersRequest containersRequest) {
+	public TaskInfo<Void> startContainers(ContainersRequest containersRequest) {
 		return flotoService.startContainers(containersRequest.containers);
 	}
 
 	@POST
 	@Path("_restart")
 	@Produces(MediaType.APPLICATION_JSON)
-	public TaskInfo<Void>  restartContainers(ContainersRequest containersRequest) {
+	public TaskInfo<Void> restartContainers(ContainersRequest containersRequest) {
 		return flotoService.restartContainers(containersRequest.containers);
 	}
 
@@ -60,7 +60,7 @@ public class ContainersResource {
 	@POST
 	@Path("_purgeData")
 	@Produces(MediaType.APPLICATION_JSON)
-	public TaskInfo<Void>  purgeData(ContainersRequest containersRequest) {
+	public TaskInfo<Void> purgeData(ContainersRequest containersRequest) {
 		return flotoService.purgeContainerData(containersRequest.containers);
 	}
 

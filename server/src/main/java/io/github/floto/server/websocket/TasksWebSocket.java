@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +46,12 @@ public class TasksWebSocket {
             String command = jsonNode.get("command").asText();
             String taskId = jsonNode.get("taskId").asText();
             if ("registerCompletionListener".equals(command)) {
-                taskService.getTaskInfo(taskId).getCompletionStage().whenCompleteAsync((BiConsumer<Object, Throwable>) (a, error) -> {
+                TaskInfo taskInfo = taskService.getTaskInfo(taskId);
+                taskInfo.getCompletionStage().whenCompleteAsync((BiConsumer<Object, Throwable>) (a, error) -> {
                     Map<String, Object> result = new HashMap<>();
                     result.put("type", "taskComplete");
                     result.put("taskId", taskId);
+                    result.put("taskTitle", taskInfo.getTitle());
                     result.put("status",  error == null ? "success" :  "error");
                     if(error != null) {
                         result.put("errorMessage", error.getMessage());
