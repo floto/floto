@@ -12,7 +12,8 @@
             <br>
 
             <table class="table table-bordered table-striped table-hover table-condensed">
-                <tr ng-repeat="host in manifest.hosts" ng-class="{'info': $stateParams.hostName === host.name}">
+                <tr ng-repeat="host in manifest.hosts" ng-class="{'info': $stateParams.hostName === host.name}"
+                    ng-click="$state.go('host', {hostName: host.name})" style="cursor: pointer" >
                     <td><span style="display: inline-block;width: 100px" class="label label-default"
                               ng-class="{'label-success': host.state==='running', 'label-warning': host.state==='stopped', 'label-danger': host.state === 'not-there'}">{{host.state || "unknown"}}</span>
                     </td>
@@ -39,7 +40,7 @@
                                 ng-click="deleteHosts({hosts: [host.name]})">Delete
                         </button>
                     </td>
-                    <td style="width: 100%"><a ui-sref="host({hostName: host.name})" ui-sref>{{host.name}} ( @ {{host.vmConfiguration.hypervisor.esxHost}})</a></td>
+                    <td style="width: 100%">{{host.name}} ( @ {{host.vmConfiguration.hypervisor.esxHost}})</td>
                 </tr>
             </table>
         </div>

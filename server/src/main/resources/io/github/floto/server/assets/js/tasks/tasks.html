@@ -18,7 +18,7 @@
                 <th style="width: 10em">Started</th>
                 <th style="width: 10em">Completed</th>
                 <th style="width: 10em">Duration</th>
-                <tr ng-repeat="task in tasks" ng-class="task.class"
+                <tr ng-repeat="task in tasks" ng-class="task.id == $stateParams.taskId ? 'info':task.class"
                     ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer" >
                     <td class="text-muted" style="text-align: right">
                         #{{task.id}}
