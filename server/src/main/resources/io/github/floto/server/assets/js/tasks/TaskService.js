@@ -88,6 +88,7 @@
                             });
                             deferred.reject(message.errorMessage);
                         }
+                        TaskService.refreshTasks();
                     }
                 };
                 ws.onclose = function () {
@@ -103,6 +104,12 @@
         TaskService.httpPost = function httpPost(url, request) {
             return $http.post(url, request).then(function (result) {
                 var taskId = result.data.taskId;
+                var linkText = ' <a href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
+                TaskService.refreshTasks();
+                NotificationService.notify({
+                    title: "Task started: " + result.data.title + linkText,
+                    type: 'info'
+                });
                 return TaskService.getTaskCompletionPromise(taskId);
             });
         }

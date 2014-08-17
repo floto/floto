@@ -181,6 +181,7 @@ public class FlotoServer {
         public void serialize(TaskInfo taskInfo, JsonGenerator jgen, SerializerProvider provider) throws IOException, JsonGenerationException {
             jgen.writeStartObject();
             jgen.writeStringField("taskId", taskInfo.getId());
+            jgen.writeStringField("title", taskInfo.getTitle());
             jgen.writeEndObject();
         }
     }
