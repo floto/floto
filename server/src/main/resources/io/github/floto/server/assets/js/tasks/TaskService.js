@@ -71,11 +71,11 @@
                     } else {
                         NotificationService.notify({
                             title: message.errorMessage,
-                            text: '<a href="#/tasks/' + taskId + '">Click for details (Task #' + taskId + ')</a>',
+                            text: '<a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">Click for details (Task #' + taskId + ')</a>',
                             type: 'error',
                             hide: false
                         });
-                        deferred.reject("TODO: Error");
+                        deferred.reject(message.errorMessage);
                     }
                 }
             };

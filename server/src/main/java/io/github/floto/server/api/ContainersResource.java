@@ -30,25 +30,22 @@ public class ContainersResource {
 	@POST
 	@Path("_stop")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String stopContainers(ContainersRequest containersRequest) {
-		flotoService.stopContainers(containersRequest.containers);
-		return "{\"result\": \"success\"}";
+	public TaskInfo<Void>  stopContainers(ContainersRequest containersRequest) {
+		return flotoService.stopContainers(containersRequest.containers);
 	}
 
 	@POST
 	@Path("_start")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String startContainers(ContainersRequest containersRequest) {
-		flotoService.startContainers(containersRequest.containers);
-		return "{\"result\": \"success\"}";
+	public TaskInfo<Void>  startContainers(ContainersRequest containersRequest) {
+		return flotoService.startContainers(containersRequest.containers);
 	}
 
 	@POST
 	@Path("_restart")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String restartContainers(ContainersRequest containersRequest) {
-		flotoService.restartContainers(containersRequest.containers);
-		return "{\"result\": \"success\"}";
+	public TaskInfo<Void>  restartContainers(ContainersRequest containersRequest) {
+		return flotoService.restartContainers(containersRequest.containers);
 	}
 
 	@GET
@@ -63,9 +60,8 @@ public class ContainersResource {
 	@POST
 	@Path("_purgeData")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String purgeData(ContainersRequest containersRequest) {
-		flotoService.purgeContainerData(containersRequest.containers);
-		return "{\"result\": \"success\"}";
+	public TaskInfo<Void>  purgeData(ContainersRequest containersRequest) {
+		return flotoService.purgeContainerData(containersRequest.containers);
 	}
 
 	@Path("{containerName}")

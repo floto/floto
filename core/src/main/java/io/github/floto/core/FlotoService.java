@@ -455,16 +455,29 @@ public class FlotoService implements Closeable {
 		throw new IllegalArgumentException("Unknown container: " + containerName);
 	}
 
-	public void stopContainers(List<String> containers) {
-		containers.forEach(runContainerCommand("stop"));
+	public TaskInfo<Void> stopContainers(List<String> containers) {
+        return taskService.startTask("Stop containers "+ Joiner.on(", ").join(containers), () -> {
+            log.info("Stopping containers {}", containers);
+            containers.forEach(runContainerCommand("stop"));
+            return null;
+        });
+
 	}
 
-	public void restartContainers(List<String> containers) {
-		containers.forEach(runContainerCommand("restart"));
+	public TaskInfo<Void> restartContainers(List<String> containers) {
+        return taskService.startTask("Restart containers "+ Joiner.on(", ").join(containers), () -> {
+            log.info("Restarting containers {}", containers);
+            containers.forEach(runContainerCommand("restart"));
+            return null;
+        });
 	}
 
-	public void startContainers(List<String> containers) {
-		containers.forEach(this::startContainer);
+	public TaskInfo<Void> startContainers(List<String> containers) {
+        return taskService.startTask("Start containers "+ Joiner.on(", ").join(containers), () -> {
+            log.info("Starting containers {}", containers);
+            containers.forEach(this::startContainer);
+            return null;
+        });
 	}
 
 	private void startContainer(String containerName) {
@@ -519,8 +532,13 @@ public class FlotoService implements Closeable {
 		return states;
 	}
 
-	public void purgeContainerData(List<String> containers) {
-		containers.forEach(this::purgeContainerData);
+	public TaskInfo<Void> purgeContainerData(List<String> containers) {
+        return taskService.startTask("Purge container data in " + Joiner.on(", ").join(containers), () -> {
+            log.info("Purging data in containers {}", containers);
+            containers.forEach(this::purgeContainerData);
+            return null;
+        });
+
 	}
 
 	private void purgeContainerData(String containerName) {

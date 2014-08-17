@@ -38,15 +38,15 @@
         };
 
         FlotoService.startContainers = function startContainers(request) {
-            return $http.post(app.urlPrefix + 'containers/_start', request);
+            return TaskService.httpPost(app.urlPrefix + 'containers/_start', request);
         };
 
         FlotoService.stopContainers = function stopContainers(request) {
-            return $http.post(app.urlPrefix + 'containers/_stop', request);
+            return TaskService.httpPost(app.urlPrefix + 'containers/_stop', request);
         };
 
         FlotoService.purgeContainerData = function purgeContainerData(request) {
-            return $http.post(app.urlPrefix + 'containers/_purgeData', request);
+            return TaskService.httpPost(app.urlPrefix + 'containers/_purgeData', request);
         };
 
         FlotoService.getHostStates = function getHostStates() {
