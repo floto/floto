@@ -63,7 +63,7 @@ public class FlotoBuilder {
             log.info("Git Description {}", gitDescription);
             TaskService taskService = new TaskService();
             flotoService = new FlotoService(parameters, taskService);
-            flotoService.compileManifest();
+            flotoService.compileManifest().getResultFuture().get();
             flotoService.verifyTemplates();
 
             flotoService.enableBuildOutputDump(true);
@@ -77,11 +77,11 @@ public class FlotoBuilder {
             }
 
             Host host = manifest.hosts.get(0);
-            RedeployVmJob redeployVmTask = new RedeployVmJob(flotoService, host.name);
-            redeployVmTask.execute();
+            RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, host.name);
+            redeployVmJob.execute();
 
             for (Container container : manifest.containers) {
-                flotoService.redeployContainers(Arrays.asList(container.name));
+                flotoService.redeployContainers(Arrays.asList(container.name)).getResultFuture().get();
             }
 
             // TODO: delete intermediate images?
