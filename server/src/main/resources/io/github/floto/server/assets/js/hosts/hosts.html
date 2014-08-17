@@ -1,48 +1,52 @@
-<div ng-controller="HostsController"    class="container-fluid">
+<div ng-controller="HostsController" class="container-fluid">
     <div class="row">
         <div class="col-md-6">
             <h2>Hosts
             </h2>
+
             <div class="row">
                 <div class="col-md-6">
-                    <button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>                </div>
+                    <button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>
+                </div>
                 <div class="col-md-6">
                 </div>
             </div>
             <br>
 
-            <table class="table table-bordered table-striped table-hover table-condensed">
-                <tr ng-repeat="host in manifest.hosts" ng-class="{'info': $stateParams.hostName === host.name}"
-                    ng-click="$state.go('host', {hostName: host.name})" style="cursor: pointer" >
-                    <td><span style="display: inline-block;width: 100px" class="label label-default"
-                              ng-class="{'label-success': host.state==='running', 'label-warning': host.state==='stopped', 'label-danger': host.state === 'not-there'}">{{host.state || "unknown"}}</span>
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-xs btn-primary"
-                                ng-click="redeployHosts({hosts: [host.name]})">Redeploy
-                        </button>
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-xs btn-success"
-                                ng-disabled="host.state != 'stopped'"
-                                ng-click="startHosts({hosts: [host.name]})">Start
-                        </button>
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-xs btn-danger"
-                                ng-disabled="host.state != 'running'"
-                                ng-click="stopHosts({hosts: [host.name]})">Stop
-                        </button>
-                    </td>
-                    <td>
-                        <button type="button" class="btn btn-xs btn-danger"
-                                ng-disabled="host.state != 'stopped'"
-                                ng-click="deleteHosts({hosts: [host.name]})">Delete
-                        </button>
-                    </td>
-                    <td style="width: 100%">{{host.name}} ( @ {{host.vmConfiguration.hypervisor.esxHost}})</td>
-                </tr>
-            </table>
+            <div floto-fill-height>
+                <table class="table table-bordered table-striped table-hover table-condensed">
+                    <tr ng-repeat="host in manifest.hosts" ng-class="{'info': $stateParams.hostName === host.name}"
+                        ng-click="$state.go('host', {hostName: host.name})" style="cursor: pointer">
+                        <td><span style="display: inline-block;width: 100px" class="label label-default"
+                                  ng-class="{'label-success': host.state==='running', 'label-warning': host.state==='stopped', 'label-danger': host.state === 'not-there'}">{{host.state || "unknown"}}</span>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-primary"
+                                    ng-click="redeployHosts({hosts: [host.name]})">Redeploy
+                            </button>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-success"
+                                    ng-disabled="host.state != 'stopped'"
+                                    ng-click="startHosts({hosts: [host.name]})">Start
+                            </button>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-danger"
+                                    ng-disabled="host.state != 'running'"
+                                    ng-click="stopHosts({hosts: [host.name]})">Stop
+                            </button>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-danger"
+                                    ng-disabled="host.state != 'stopped'"
+                                    ng-click="deleteHosts({hosts: [host.name]})">Delete
+                            </button>
+                        </td>
+                        <td style="width: 100%">{{host.name}} ( @ {{host.vmConfiguration.hypervisor.esxHost}})</td>
+                    </tr>
+                </table>
+            </div>
         </div>
         <div class="col-md-6" ui-view></div>
     </div>

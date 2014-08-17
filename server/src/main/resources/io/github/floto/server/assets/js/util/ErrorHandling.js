@@ -4,8 +4,11 @@
 		$httpProvider.interceptors.unshift(function ($injector, $q, NotificationService) {
 			return {
 				responseError: function (response) {
+                    if(response.status == 0) {
+                        return $q.reject(response);
+                    }
 					if (response.config &&  !response.config.suppressErrorNotfications) {
-						if(typeof response.data == "string") {
+						if(typeof response.data == "string" && res) {
 							response.data = JSON.parse(response.data);
 						}
 						console.log(response.data.message);
