@@ -129,22 +129,6 @@
                 taskId: taskId
             };
             sendMessage(message);
-            /*
-             setInterval(function() {
-             callback({
-             message: "foobar",
-             level: "warn"
-             });
-             callback({
-             message: "foobar",
-             level: "info"
-             });
-             callback({
-             message: "foobar",
-             level: "error"
-             });
-             }, 1000);
-             */
         }
 
         return TaskService;

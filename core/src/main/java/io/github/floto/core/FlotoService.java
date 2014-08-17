@@ -124,6 +124,10 @@ public class FlotoService implements Closeable {
 	public TaskInfo<Void> compileManifest() {
         return taskService.startTask("Compile manifest", () -> {
             log.info("Compiling manifest");
+            for(int i = 0; i < 20; i++) {
+                Thread.sleep(1000);
+                log.info("Waiting {}", i);
+            }
             String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
             manifest = flotoDsl.toManifest(manifestString);
             this.manifestString = manifestString;

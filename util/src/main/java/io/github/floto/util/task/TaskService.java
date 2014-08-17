@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.pattern.RootCauseFirstThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import org.apache.commons.io.input.Tailer;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
 
 public class TaskService {
     private Executor executor = Executors.newFixedThreadPool(8);
@@ -35,7 +37,7 @@ public class TaskService {
                 TaskInfo<?> taskInfo = threadTaskMap.get(loggingEvent.getThreadName());
                 if (taskInfo != null) {
                     LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString().toLowerCase());
-                    if(loggingEvent.getThrowableProxy() != null) {
+                    if (loggingEvent.getThrowableProxy() != null) {
                         logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
                     }
                     taskPersistence.addLogEntry(taskInfo.getId(), logEntry);
@@ -91,6 +93,15 @@ public class TaskService {
     }
 
     public InputStream getLogStream(String taskId) {
-        return taskPersistence.getLogStream(taskId);
+        InputStream inputStream = taskPersistence.getLogStream(taskId);
+        TaskInfo<?> taskInfo = activeTaskMap.get(taskId);
+        if (taskInfo != null) {
+            TailingInputStream tailingInputStream = new TailingInputStream(inputStream);
+            taskInfo.getCompletionStage().whenComplete((BiConsumer<Object, Throwable>) (a, b) -> {
+                tailingInputStream.setFileClosed();
+            });
+            inputStream = tailingInputStream;
+        }
+        return inputStream;
     }
 }
