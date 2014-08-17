@@ -1,13 +1,13 @@
 (function () {
     "use strict";
     var classMap = {
-        success: "success",
-        error: "danger"
+        SUCCESS: "success",
+        ERRROR: "danger"
     }
     var iconMap = {
-        success: "glyphicon-ok",
-        error: "glyphicon-remove",
-        running: "glyphicon-play"
+        SUCCESS: "glyphicon-ok",
+        ERRROR: "glyphicon-remove",
+        RUNNING: "glyphicon-play"
     }
 
     app.controller("TasksController", function ($scope, TaskService, NotificationService) {

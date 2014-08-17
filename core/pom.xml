@@ -176,7 +176,7 @@
         <dependency>
             <groupId>org.mapdb</groupId>
             <artifactId>mapdb</artifactId>
-            <version>1.0.5</version>
+            <version>${mapdb.version}</version>
         </dependency>
 
         <dependency>

@@ -10,14 +10,17 @@
         };
 
         TaskService.refreshTasks = function refreshTasks() {
-            $resource(app.urlPrefix + 'tasks').get().$promise.then(function (taskState) {
+            $resource(app.urlPrefix + 'tasks').query().$promise.then(function (serverTasks) {
+                serverTasks = _.sortBy(serverTasks, "startDate");
+                serverTasks.reverse();
                 tasks.length = 0;
-                Array.prototype.push.apply(tasks, taskState.tasks);
+                Array.prototype.push.apply(tasks, serverTasks);
+
             });
         };
 
         TaskService.getLogs = function getLogs(taskId) {
-            return $resource(app.urlPrefix + 'tasks/' + taskId + '/logs').get();
+            return $resource(app.urlPrefix + 'tasks/' + taskId + '/logs').query();
         };
 
         TaskService.getTask = function getTask(taskId) {

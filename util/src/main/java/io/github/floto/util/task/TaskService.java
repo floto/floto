@@ -6,22 +6,21 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.OutputStream;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class TaskService {
     private Executor executor = Executors.newFixedThreadPool(8);
-    private List<TaskInfo<?>> taskList = new ArrayList<>();
-    private Map<String, TaskInfo<?>> taskMap = new HashMap<>();
+    private Map<String, TaskInfo<?>> activeTaskMap = new HashMap<>();
     private Map<String, TaskInfo<?>> threadTaskMap = new HashMap<>();
+    private TaskPersistence taskPersistence;
 
     public TaskService() {
         initLogging();
+        taskPersistence = new TaskPersistence();
     }
 
     private void initLogging() {
@@ -38,6 +37,7 @@ public class TaskService {
                     if(loggingEvent.getThrowableProxy() != null) {
                         logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
                     }
+                    taskPersistence.addLogEntry(taskInfo.getId(), logEntry);
                     taskInfo.getLogEntries().add(logEntry);
                 }
             }
@@ -50,19 +50,11 @@ public class TaskService {
 
 
     public <RESULT_TYPE> TaskInfo<RESULT_TYPE> startTask(String title, Callable<RESULT_TYPE> taskCallable) {
-        TaskInfo<RESULT_TYPE> taskInfo = new TaskInfo<>(title, taskCallable);
-        taskList.add(taskInfo);
-        taskMap.put(taskInfo.getId(), taskInfo);
+        TaskInfo<RESULT_TYPE> taskInfo = new TaskInfo<>(taskPersistence.getNextTaskId(), title, taskCallable);
+        activeTaskMap.put(taskInfo.getId(), taskInfo);
+        taskPersistence.save(taskInfo);
         executor.execute(new TaskRunnable(this, taskInfo, taskCallable));
         return taskInfo;
-    }
-
-    public List<TaskInfo<?>> getTasks() {
-        return taskList;
-    }
-
-    public List<LogEntry> getLogEntries(String taskId) {
-        return taskMap.get(taskId).getLogEntries();
     }
 
     public void registerThread(String threadName, TaskInfo<?> taskInfo) {
@@ -74,10 +66,26 @@ public class TaskService {
     }
 
     public TaskInfo getTaskInfo(String taskId) {
-        TaskInfo<?> taskInfo = taskMap.get(taskId);
+        TaskInfo<?> taskInfo = activeTaskMap.get(taskId);
         if (taskInfo == null) {
             throw new IllegalArgumentException("Task " + taskId + " not found");
         }
         return taskInfo;
+    }
+
+    public void save(TaskInfo<?> taskInfo) {
+        taskPersistence.save(taskInfo);
+    }
+
+    public void writeTasks(OutputStream output) {
+        taskPersistence.writeTasks(output);
+    }
+
+    public void writeLogs(String taskId, OutputStream output) {
+        taskPersistence.writeLogs(taskId, output);
+    }
+
+    public void closeLogFile(String taskId) {
+        taskPersistence.closeLogFile(taskId);
     }
 }

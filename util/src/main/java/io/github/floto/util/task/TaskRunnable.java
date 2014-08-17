@@ -32,12 +32,16 @@ class TaskRunnable<RESULT_TYPE> implements Runnable {
             Task.setCurrentTaskInfo(taskInfo);
             taskInfo.setStartDate(Instant.now());
             log.info("Task started: {}", taskInfo.getTitle());
+            taskInfo.setStatus(TaskInfo.Status.RUNNING);
+            taskService.save(taskInfo);
             RESULT_TYPE result = taskCallable.call();
             taskInfo.complete(result);
             log.info("Task completed: {}", taskInfo.getTitle());
+            taskInfo.setStatus(TaskInfo.Status.SUCCESS);
         } catch (Throwable throwable) {
             log.error("Task completed with exception: {}", ExceptionUtils.getMessage(throwable), throwable);
             taskInfo.completeExceptionally(throwable);
+            taskInfo.setStatus(TaskInfo.Status.ERROR);
         } finally {
             Task.setCurrentTaskInfo(null);
             if(oldThreadName != null) {
@@ -45,6 +49,8 @@ class TaskRunnable<RESULT_TYPE> implements Runnable {
             }
             taskInfo.setEndDate(Instant.now());
             taskService.unregisterThread(threadName);
+            taskService.save(taskInfo);
+            taskService.closeLogFile(taskInfo.getId());
         }
     }
 }

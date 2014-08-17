@@ -4,11 +4,11 @@ import com.google.common.collect.Lists;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,37 +24,13 @@ public class TasksResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, Object> getState() {
-        Map<String, Object> result = new HashMap<>();
-        ArrayList<Object> tasks = new ArrayList<>();
-        for(TaskInfo taskInfo: Lists.reverse(taskService.getTasks())) {
-            Map<String, Object> task = new HashMap<>();
-            task.put("id", taskInfo.getId());
-            task.put("title", taskInfo.getTitle());
-            CompletableFuture resultFuture = (CompletableFuture) taskInfo.getResultFuture();
-            String status = "running";
-            if(resultFuture.isDone()) {
-                if(resultFuture.isCancelled()) {
-                    status = "cancelled";
-                } else if(resultFuture.isCompletedExceptionally()) {
-                    status = "error";
-                } else {
-                    status = "success";
-                }
+    public StreamingOutput getState() {
+        return new StreamingOutput() {
+            @Override
+            public void write(OutputStream output) throws IOException, WebApplicationException {
+                taskService.writeTasks(output);
             }
-            task.put("status", status);
-            task.put("creationDate", taskInfo.getCreationDate());
-            task.put("startDate", taskInfo.getStartDate());
-            task.put("endDate", taskInfo.getEndDate());
-            if(taskInfo.getDuration() != null) {
-                task.put("durationInMs", taskInfo.getDuration().toMillis());
-            }
-
-            tasks.add(task);
-        }
-
-        result.put("tasks", tasks);
-        return result;
+        };
     }
 
 

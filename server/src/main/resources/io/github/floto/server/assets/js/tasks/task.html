@@ -2,7 +2,7 @@
     <h3>{{task.title}}<span class="text-muted pull-right">#{{taskId}}</span> </h3>
     <div floto-fill-height scroll-glue>
     <table class="table table-bordered table-striped table-hover table-condensed">
-        <tr ng-repeat="entry in logs.logs" ng-class="entry.class">
+        <tr ng-repeat="entry in logs" ng-class="entry.class">
             <td>
                 {{entry.message}}
                 <pre ng-if="entry.stackTrace" ng-bind="entry.stackTrace">
