@@ -28,10 +28,16 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.routing.HttpRoute;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
+import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,12 +75,19 @@ public class FlotoService implements Closeable {
 
 	private Client client;
 	{
-        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder();
         ClientConfig clientConfig = new ClientConfig();
+        clientConfig.property(ClientProperties.READ_TIMEOUT, 0);
+        clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 2000);
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(100);
+        connectionManager.setDefaultMaxPerRoute(20);
+        clientConfig.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
+
+        ClientBuilder clientBuilder = JerseyClientBuilder.newBuilder();
         clientConfig.connectorProvider(new ApacheConnectorProvider());
         clientBuilder.withConfig(clientConfig);
         client = clientBuilder.build();
-		client.register(new ErrorClientResponseFilter());
+        client.register(new ErrorClientResponseFilter());
 	}
 
 	private boolean buildOutputDumpEnabled = false;
@@ -124,10 +137,6 @@ public class FlotoService implements Closeable {
 	public TaskInfo<Void> compileManifest() {
         return taskService.startTask("Compile manifest", () -> {
             log.info("Compiling manifest");
-            for(int i = 0; i < 20; i++) {
-                Thread.sleep(1000);
-                log.info("Waiting {}", i);
-            }
             String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
             manifest = flotoDsl.toManifest(manifestString);
             this.manifestString = manifestString;

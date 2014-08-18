@@ -20,22 +20,6 @@ public class HostService {
 
     public HostService(FlotoService flotoService) {
         this.flotoService = flotoService;
-        new Thread("Host reconfiguration") {
-            @Override
-            public void run() {
-                try {
-                    getManifest().hosts.forEach(host -> {
-                        try {
-                            reconfigure(host.name);
-                        } catch (Throwable throwable) {
-                            log.warn("Could not reconfigure host {}", host.name, throwable);
-                        }
-                    });
-                } catch (Throwable t) {
-                    log.error("Configuring hosts", t);
-                }
-            }
-        }.start();
     }
 
     public Map<String, String> getHostStates() {
@@ -64,6 +48,24 @@ public class HostService {
         reconfigure(vmName);
     }
 
+    public void reconfigureVms() {
+        new Thread("Host reconfiguration") {
+            @Override
+            public void run() {
+                try {
+                    getManifest().hosts.forEach(host -> {
+                        try {
+                            reconfigure(host.name);
+                        } catch (Throwable throwable) {
+                            log.warn("Could not reconfigure host {}", host.name, throwable);
+                        }
+                    });
+                } catch (Throwable t) {
+                    log.error("Configuring hosts", t);
+                }
+            }
+        }.start();
+    }
 
     public void stopVm(String vmName) {
         runHypervisorTask(vmName, HypervisorService::stopVm);

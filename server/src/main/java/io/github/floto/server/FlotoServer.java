@@ -116,20 +116,16 @@ public class FlotoServer {
         resourceConfig.register(provider);
 
         TaskService taskService = new TaskService();
-        taskService.startTask("Endless task", () -> {
-                    synchronized (this) {
-                        this.wait();
-                        return null;
-                    }
-                });
         FlotoService flotoService = new FlotoService(parameters, taskService);
+        HostService hostService = new HostService(flotoService);
         try {
-            flotoService.compileManifest();
+            flotoService.compileManifest().getCompletionStage().thenAccept((x)->{
+                hostService.reconfigureVms();
+            });
         } catch(Throwable throwable) {
             // Error compiling manifest, continue anyway
             log.error("Error compiling manifest", throwable);
         }
-        HostService hostService = new HostService(flotoService);
 
 		resourceConfig.register(new TasksResource(taskService));
 		resourceConfig.register(new ManifestResource(flotoService));

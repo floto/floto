@@ -51,7 +51,7 @@ public class LogPusher {
                 } catch(EOFException ignored) {
                     // EOF reached, terminate
                 }
-                log.info("Log Pusher terminated");
+                log.trace("Log Pusher terminated");
             } catch(Throwable throwable) {
                 log.error("Error pushing logs", throwable);
             }

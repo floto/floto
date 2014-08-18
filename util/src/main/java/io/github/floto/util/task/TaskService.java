@@ -2,6 +2,7 @@ package io.github.floto.util.task;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.pattern.RootCauseFirstThrowableProxyConverter;
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import org.apache.commons.io.input.Tailer;
@@ -32,12 +33,16 @@ public class TaskService {
         RootCauseFirstThrowableProxyConverter throwableConverter = new RootCauseFirstThrowableProxyConverter();
         throwableConverter.start();
         AppenderBase<ILoggingEvent> appender = new AppenderBase<ILoggingEvent>() {
-
+            TargetLengthBasedClassNameAbbreviator abbreviator = new TargetLengthBasedClassNameAbbreviator(14);
             @Override
             protected void append(ILoggingEvent loggingEvent) {
                 TaskInfo<?> taskInfo = threadTaskMap.get(loggingEvent.getThreadName());
                 if (taskInfo != null) {
-                    LogEntry logEntry = new LogEntry(loggingEvent.getFormattedMessage(), loggingEvent.getLevel().toString(), loggingEvent.getLoggerName(), Instant.ofEpochMilli(loggingEvent.getTimeStamp()));
+                    LogEntry logEntry = new LogEntry(
+                            loggingEvent.getFormattedMessage(),
+                            loggingEvent.getLevel().toString(),
+                            abbreviator.abbreviate(loggingEvent.getLoggerName()),
+                            Instant.ofEpochMilli(loggingEvent.getTimeStamp()));
                     if (loggingEvent.getThrowableProxy() != null) {
                         logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
                     }
