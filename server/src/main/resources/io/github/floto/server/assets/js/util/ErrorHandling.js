@@ -8,7 +8,7 @@
                         return $q.reject(response);
                     }
 					if (response.config &&  !response.config.suppressErrorNotfications) {
-						if(typeof response.data == "string" && res) {
+						if(typeof response.data == "string") {
 							response.data = JSON.parse(response.data);
 						}
 						console.log(response.data.message);
