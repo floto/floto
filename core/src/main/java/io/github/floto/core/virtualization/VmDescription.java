@@ -17,6 +17,7 @@ public class VmDescription {
 		public String datastore;
 		public boolean thinProvisioned;
 		public int slot;
+		public String mountpoint;
 		public VmDescription vmDescription;
 		public Disk(VmDescription vmDescription){
 			this.vmDescription = vmDescription;

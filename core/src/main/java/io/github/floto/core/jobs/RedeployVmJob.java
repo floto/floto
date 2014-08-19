@@ -1,7 +1,6 @@
 package io.github.floto.core.jobs;
 
 import io.github.floto.core.FlotoService;
-import io.github.floto.core.util.TemplateHelper;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.core.virtualization.VmDescription.Disk;
 import io.github.floto.dsl.model.DiskDescription;
@@ -15,8 +14,6 @@ import org.slf4j.LoggerFactory;
 
 public class RedeployVmJob extends HypervisorJob<Void> {
     private Logger log = LoggerFactory.getLogger(RedeployVmJob.class);
-    private TemplateHelper templateHelper = new TemplateHelper(RedeployVmJob.class, "templates");
-
     private FlotoService flotoService;
     private final String vmName;
 
@@ -39,6 +36,7 @@ public class RedeployVmJob extends HypervisorJob<Void> {
         	disk.sizeInGB = diskDesc.sizeInGB;
         	disk.datastore = diskDesc.datastore;
         	disk.slot = diskDesc.slot;
+        	disk.mountpoint = diskDesc.mountpoint;
         	vmDescription.disks.add(disk);
         }
 
