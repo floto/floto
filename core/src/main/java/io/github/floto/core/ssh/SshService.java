@@ -1,18 +1,5 @@
 package io.github.floto.core.ssh;
 
-import com.google.common.base.Throwables;
-import net.schmizz.sshj.DefaultConfig;
-import net.schmizz.sshj.SSHClient;
-import net.schmizz.sshj.connection.ConnectionException;
-import net.schmizz.sshj.connection.channel.direct.Session;
-import net.schmizz.sshj.transport.TransportException;
-import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
-import net.schmizz.sshj.userauth.UserAuthException;
-import net.schmizz.sshj.xfer.InMemorySourceFile;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +7,19 @@ import java.lang.reflect.Field;
 import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import net.schmizz.sshj.DefaultConfig;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.ConnectionException;
+import net.schmizz.sshj.connection.channel.direct.Session;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
+import net.schmizz.sshj.xfer.InMemorySourceFile;
+
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
 
 public class SshService {
     static private Logger log = LoggerFactory.getLogger(SshService.class);
@@ -43,7 +43,7 @@ public class SshService {
             try {
                 final Session.Command cmd = session.exec(command);
                 try {
-                    cmd.join(1, TimeUnit.MINUTES);
+                    cmd.join(10, TimeUnit.MINUTES);
                 } catch (ConnectionException ignored) {
 
                 }
