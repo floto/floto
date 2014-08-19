@@ -1,5 +1,8 @@
 package io.github.floto.core.virtualization.esx;
 
+import io.github.floto.core.virtualization.VmDescription;
+import io.github.floto.dsl.model.EsxHypervisorDescription;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,9 +51,6 @@ import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
-
-import io.github.floto.core.virtualization.VmDescription;
-import io.github.floto.dsl.model.EsxHypervisorDescription;
 
 public class VirtualMachineManager {
     private static final int CHUCK_LEN = 1 * 1024 * 1024 * 16;

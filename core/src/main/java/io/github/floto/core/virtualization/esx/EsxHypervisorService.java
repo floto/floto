@@ -288,7 +288,7 @@ public class EsxHypervisorService implements HypervisorService {
 					vdm.addHardDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
 				} catch (Exception e) {
 					log.info(fileName+" does not exits - will create new virtual disk.");
-					vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, 10);
+					vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, disk.slot);
 				}
 			}
 
