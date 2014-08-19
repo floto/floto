@@ -24,10 +24,14 @@ import com.vmware.vim25.VirtualDiskFlatVer2BackingInfo;
 import com.vmware.vim25.VirtualDiskMode;
 import com.vmware.vim25.VirtualDiskType;
 import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.mo.Datacenter;
+import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.GuestOperationsManager;
 import com.vmware.vim25.mo.GuestProcessManager;
+import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Network;
+import com.vmware.vim25.mo.ServiceInstance;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 
@@ -276,14 +280,18 @@ public class EsxHypervisorService implements HypervisorService {
             // reconfigure VM
             vmManager.reconfigureVm(vmDesc);
 
-            //create or readd data disk(s)
+            //create or reattach data disk(s)
 			VirtualMachine vm = vmManager.getVm(vmDesc.vmName);
 			VirtualDiskManager vdm =  new VirtualDiskManager(vm);
 			for (Disk disk : vmDesc.disks) {
 				fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
 				
 				try {
-					this.vmManager.getServiceInstance().getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, vmManager.getDatacenter());
+		            ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+					Folder rootFolder = si.getRootFolder();
+		            Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+		            
+					EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
 					log.info(fileName+" exits - will add it to virtual machine.");
 					vdm.addHardDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
 				} catch (Exception e) {
@@ -340,7 +348,7 @@ public class EsxHypervisorService implements HypervisorService {
         try {
             VirtualMachine vm = vmManager.getVm(vmname);
 
-            GuestOperationsManager gom = vmManager.getServiceInstance().getGuestOperationsManager();
+            GuestOperationsManager gom = EsxConnectionManager.getConnection(esxDesc).getGuestOperationsManager();
 
             isGuestToolsAvailable(vmname, 300);
 

@@ -59,84 +59,34 @@ public class VirtualMachineManager {
     private Logger log = LoggerFactory.getLogger(VirtualMachineManager.class);
     private EsxHypervisorDescription esxDesc;
     
-    ServiceInstance si;
-    Folder rootFolder;
-    Folder vmFolder;
-    HostSystem host;
-    Datacenter dc;
-    ResourcePool rp;
     String domainName;
     
     public VirtualMachineManager(EsxHypervisorDescription description, String domainName) {
     	this.esxDesc = description;
     	this.domainName = domainName;
-    	connect();
-    }
-    
-    
-    public void connect() {
+    	
         try {
-            log.info("connect()");
+			ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+			Folder rootFolder = si.getRootFolder();
+			Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
 
-            si = new ServiceInstance(new URL("https://" + esxDesc.vCenter + "/sdk"), esxDesc.username, esxDesc.password, true);
-            rootFolder = si.getRootFolder();
-            dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
-            rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
-
-            host = (HostSystem) si.getSearchIndex().findByIp(null, esxDesc.esxHost, false);
-            
-            if (host == null) {
-                ManagedEntity[] hosts = new InventoryNavigator(rootFolder).searchManagedEntities("HostSystem");
-                for(int i=0; i<hosts.length; i++) {
-                	if (hosts[i].getName().equals(esxDesc.esxHost)) {
-                		host = (HostSystem)hosts[i];
-                		break;
-                	}
-                }
-            }
-            if (host == null) {
-                throw new RuntimeException("Host " + esxDesc.esxHost + " not found");
-            }
-
-            rootFolder = dc.getVmFolder();
-            ManagedEntity me = new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
-            if (me != null) {
-            	vmFolder = (Folder)me;
-            } else {
-            	vmFolder = rootFolder.createFolder(domainName);
-            }
-            
-        } catch (Throwable e) {
-            disconnect();
-            Throwables.propagate(e);
-        }
+			rootFolder = dc.getVmFolder();
+			ManagedEntity me = new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+			if (me == null) {
+				rootFolder.createFolder(domainName);
+			}
+		} catch (Throwable e) {
+			Throwables.propagate(e);
+		}
     }
-    
-    public ServiceInstance getServiceInstance(){
-    	return this.si;
-    }
-
-    public Datacenter getDatacenter(){
-    	return this.dc;
-    }
-    
-    public void disconnect() {
-        log.info("disconnect()");
-        si.getServerConnection().logout();
-        si = null;
-        rootFolder = null;
-        host = null;
-        dc = null;
-        rp = null;
-    }
-    
     
 	public VirtualMachine getVm(String vmName) throws Exception {
-        return (VirtualMachine) new InventoryNavigator(rootFolder)
-                .searchManagedEntity("VirtualMachine", vmName);
+		Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
+        return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", vmName);
 	}
 	
 	public ManagedEntity[] getVms() throws Exception {
+		Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
 		return new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
 	}
 	
@@ -149,12 +99,17 @@ public class VirtualMachineManager {
     public void cloneVm(String templateVmName, VmDescription vmDesc,
 			boolean linked) throws Exception {
         log.info("cloneVm " + templateVmName + " -> " + vmDesc);
-
+        
+        Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
+        Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+        ResourcePool rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
+        Folder vmFolder = (Folder)new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        HostSystem host = EsxConnectionManager.getHost(esxDesc);
+        
         if (!existsVm(templateVmName)) {
             log.error("No VM " + templateVmName + " found");
             return;
         }
-
         VirtualMachine vm = (VirtualMachine) new InventoryNavigator(rootFolder)
                 .searchManagedEntity("VirtualMachine", templateVmName);
 
@@ -233,7 +188,9 @@ public class VirtualMachineManager {
 
 	public void reconfigureVm(VmDescription vmDesc) throws Exception {
         log.info("reconfigureVm(" + vmDesc.vmName + ")");
-
+        
+        HostSystem host = EsxConnectionManager.getHost(esxDesc);
+        
         VirtualMachine vm = getVm(vmDesc.vmName);;
 
         Network network = null;
@@ -286,6 +243,13 @@ public class VirtualMachineManager {
             throws Exception {
         log.info("deploy template " + vmUrl);
 
+        ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+        Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
+        Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+        ResourcePool rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
+        Folder vmFolder = (Folder)new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        HostSystem host = EsxConnectionManager.getHost(esxDesc);
+        
         // find the datastore
         Datastore datastore = host.getDatastores()[0];
         for (Datastore ds : host.getDatastores()) {
@@ -495,6 +459,8 @@ public class VirtualMachineManager {
 
     private boolean existsVm(String vmName) {
         try {
+            Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
+            
             VirtualMachine vm = (VirtualMachine) new InventoryNavigator(
                     rootFolder).searchManagedEntity("VirtualMachine", vmName);
             return (vm != null);
