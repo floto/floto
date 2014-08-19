@@ -107,14 +107,14 @@ public class VirtualMachineManager {
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
         
         if (!existsVm(templateVmName)) {
-            log.error("No VM " + templateVmName + " found");
+            log.error("template " + templateVmName + " not found");
             return;
         }
         VirtualMachine vm = (VirtualMachine) new InventoryNavigator(rootFolder)
                 .searchManagedEntity("VirtualMachine", templateVmName);
 
         if (existsVm(vmDesc.vmName)) {
-            log.error("VM " + vmDesc.vmName + " already exists");
+            log.error("virtual machine " + vmDesc.vmName + " allready exists");
             return;
         }
 
@@ -129,11 +129,11 @@ public class VirtualMachineManager {
 
         if (datastore == null) {
             datastore = host.getDatastores()[0];
-            log.warn("Datastore: " + esxDesc.defaultDatastore
+            log.warn("datastore: " + esxDesc.defaultDatastore
                     + " not found, using the first available: "
                     + datastore.getName());
         } else {
-            log.info("Datastore: " + datastore.getName());
+            log.info("datastore: " + datastore.getName());
         }
 
         // CustomizationSpec customSpec = new CustomizationSpec();
@@ -156,9 +156,9 @@ public class VirtualMachineManager {
                         true);
 
                 if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-                    log.info("VM got snapshoted successfully.");
+                    log.info("successfully created snapshot");
                 } else {
-                    log.error("Failure -: VM snapshot failed");
+                    log.error("failed craeting snapshot");
                 }
                 vm.markAsTemplate();
             }
@@ -174,12 +174,12 @@ public class VirtualMachineManager {
         cloneSpec.setTemplate(false);
 
         Task task = vm.cloneVM_Task(vmFolder, vmDesc.vmName, cloneSpec);
-        log.info("Launching the VM clone task. Please wait ...");
+        log.info("launching the virtual machine clone task ...");
 
         if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("VM got cloned successfully.");
+            log.info("successfully cloned virtual machine");
         } else {
-            log.error("Failure -: VM cannot be cloned");
+            log.error("failed cloning virtual machine");
         }
 
         ManagedEntity[] me = {(ManagedEntity)getVm(vmDesc.vmName)};
@@ -202,7 +202,7 @@ public class VirtualMachineManager {
         }
 
         if (network == null) {
-            log.error("network " + esxDesc.networks.get(0) + " not found.");
+            log.error("network " + esxDesc.networks.get(0) + " not found");
             return;
         }
 
@@ -233,9 +233,9 @@ public class VirtualMachineManager {
         Task task = vm.reconfigVM_Task(vmcs);
 
         if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("VM reconfigured successfully");
+            log.info("successfully reconfigured virtual machien");
         } else {
-            log.error("failed to reconfigure VM");
+            log.error("failed to reconfigure virtual machine");
         }
     }
 
@@ -258,10 +258,10 @@ public class VirtualMachineManager {
                 break;
             }
         }
-        log.info("Datastore:" + datastore.getName());
+        log.info("datastore:" + datastore.getName());
 
         if (existsVm(templateVmName)) {
-            log.warn("template " + templateVmName + " already exists");
+            log.warn("template " + templateVmName + " allready exists");
             return;
         }
 
@@ -391,7 +391,7 @@ public class VirtualMachineManager {
                         tis.close();
 
                         bytesAlreadyWritten += ovfFileItem.getSize();
-                        log.info("Completed uploading the VMDK file:"
+                        log.info("completed uploading the VMDK file:"
                                 + absoluteFile);
                     }
                 }

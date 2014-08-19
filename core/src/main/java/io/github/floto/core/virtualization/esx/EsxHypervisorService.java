@@ -69,7 +69,7 @@ public class EsxHypervisorService implements HypervisorService {
             VirtualMachine vm = vmManager.getVm(vmname);
 
             if (vm == null) {
-                log.error("No VM " + vmname + " found");
+                log.error("virtual machine " + vmname + " not found");
                 return;
             }			
 
