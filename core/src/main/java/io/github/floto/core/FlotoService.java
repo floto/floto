@@ -303,7 +303,6 @@ public class FlotoService implements Closeable {
 							}
 							String templated = new TemplateUtil().getTemplate(step, globalConfig);
 							TarEntry templateTarEntry = new TarEntry(source);
-							templateTarEntry.setModTime(0);
                             byte[] templateBytes = templated.getBytes(Charsets.UTF_8);
                             templateTarEntry.setSize(templateBytes.length);
 							out.putNextEntry(templateTarEntry);
