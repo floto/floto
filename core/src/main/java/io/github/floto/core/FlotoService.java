@@ -20,7 +20,6 @@ import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
-import io.github.floto.util.task.Task;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import org.apache.commons.io.FileUtils;
@@ -28,9 +27,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
@@ -107,8 +103,13 @@ public class FlotoService implements Closeable {
             proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
             proxy.start();
             try {
-                String ownAddress = Inet4Address.getLocalHost().getHostAddress();
-                if(ownAddress.startsWith("127.")) {
+                String ownAddress = null;
+                try {
+                    ownAddress = Inet4Address.getLocalHost().getHostAddress();
+                } catch(Throwable throwable) {
+                    log.warn("Unable to get own address", throwable);
+                }
+                if(ownAddress == null || ownAddress.startsWith("127.")) {
                     Enumeration e = NetworkInterface.getNetworkInterfaces();
                     while (e.hasMoreElements()) {
                         NetworkInterface n = (NetworkInterface) e.nextElement();

@@ -161,7 +161,7 @@
 		manifest.site.domainName = domainName;
 	};
 
-	var normalize = Java.type('io.github.floto.dsl.util.FilenameUtils').normalize;
+	var normalize = global.normalize = Java.type('io.github.floto.dsl.util.FilenameUtils').normalize;
 
 	global.include = function include(filename) {
 		var normalizedFile = normalize(filename);
