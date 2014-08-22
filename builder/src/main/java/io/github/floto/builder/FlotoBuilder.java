@@ -11,6 +11,7 @@ import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.GitHelper;
 import io.github.floto.util.task.TaskService;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormat;
@@ -99,7 +100,9 @@ public class FlotoBuilder {
                         exportName = host.name + "_" + gitDescription + ".ova";
                     }
 
-                    hypervisorService.exportVm(host.name, new File("vm/" + exportName).getAbsolutePath());
+                    File exportFile = new File("vm/" + exportName);
+                    FileUtils.forceMkdir(exportFile.getParentFile());
+                    hypervisorService.exportVm(host.name, exportFile.getAbsolutePath());
                     log.info("Exported to: {}", exportName);
                     return null;
                 }
