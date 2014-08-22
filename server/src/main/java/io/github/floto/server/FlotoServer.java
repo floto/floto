@@ -15,10 +15,7 @@ import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
-import io.github.floto.server.api.ContainersResource;
-import io.github.floto.server.api.HostsResource;
-import io.github.floto.server.api.ManifestResource;
-import io.github.floto.server.api.TasksResource;
+import io.github.floto.server.api.*;
 import io.github.floto.server.util.ThrowableExceptionMapper;
 
 import io.github.floto.server.websocket.TasksWebSocket;
@@ -131,6 +128,7 @@ public class FlotoServer {
 		resourceConfig.register(new ManifestResource(flotoService));
 		resourceConfig.register(new ContainersResource(flotoService));
 		resourceConfig.register(new HostsResource(flotoService, hostService, taskService));
+		resourceConfig.register(new ExportResource(flotoService));
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
