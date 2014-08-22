@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import io.github.floto.core.jobs.ManifestJob;
@@ -303,9 +304,10 @@ public class FlotoService implements Closeable {
 							String templated = new TemplateUtil().getTemplate(step, globalConfig);
 							TarEntry templateTarEntry = new TarEntry(source);
 							templateTarEntry.setModTime(0);
-							templateTarEntry.setSize(templated.length());
+                            byte[] templateBytes = templated.getBytes(Charsets.UTF_8);
+                            templateTarEntry.setSize(templateBytes.length);
 							out.putNextEntry(templateTarEntry);
-							IOUtils.write(templated, out);
+							IOUtils.write(templateBytes, out);
 							out.closeEntry();
 						} else if ("ADD_MAVEN".equals(type)) {
 							String coordinates = step.path("coordinates").asText();
