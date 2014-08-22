@@ -1,5 +1,6 @@
 package io.github.floto.core.virtualization.esx;
 
+import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,12 +60,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 
 		vmConfigSpec.setDeviceChange(vdiskSpecArray);
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-
-		if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("created new virtual disk "+ diskfileBacking.getFileName()+ " for "+vm.getName());
-        } else {
-        	log.error("failed to create new virtual disk "+ diskfileBacking.getFileName()+ " for "+vm.getName());
-        }
+        EsxUtils.waitForTask(task, "create new virtual disk "+ diskfileBacking.getFileName()+ " for "+vm.getName());
 	}
 
 	public void addHardDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int unitNumber) throws Exception {
@@ -94,11 +90,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		diskSpec.setDevice(disk);
 
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-		if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("added "+vmdkPath+" to "+ vm.getName());
-        } else {
-        	log.error("failed to add "+vmdkPath+" to "+ vm.getName());
-        }
+        EsxUtils.waitForTask(task, "add "+vmdkPath+" to "+ vm.getName());
 	}
 	  
 	
@@ -118,11 +110,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		vmConfigSpec.setDeviceChange(vdiskSpecArray);
 
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-		if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("removed virtual disk from "+ vm.getName());
-        } else {
-        	log.error("failed to remove virtual disk from "+ vm.getName());
-        }
+        EsxUtils.waitForTask(task, "remove virtual disk from "+ vm.getName());
 	}
 	
 	
@@ -138,7 +126,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 				}
 			}
 		}
-		return null;
+        throw new RuntimeException("Disk not found: "+unitNumber);
 	}
 
 	public VirtualDisk findFirstHardDisk() {
@@ -149,7 +137,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 				return (VirtualDisk) devices[i];
 			}
 		}
-		return null;
+        throw new RuntimeException("No disk found");
 	}
 	
 	private <T extends VirtualController> T getFirstAvailableController(
@@ -164,7 +152,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 				return controller;
 			}
 		}
-		return null;
+		throw new RuntimeException("No controller found");
 	}
 
 	private static int getMaxNodesPerControllerOfType(VirtualController controller) {
@@ -185,15 +173,11 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 	}
 
 	private <T extends VirtualController> VirtualController createControllerInstance(Class<T> clazz) {
-		VirtualController vc = null;
 		try {
-			vc = (T) clazz.newInstance();
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
+			return (T) clazz.newInstance();
+		} catch(Exception exception) {
+            throw Throwables.propagate(exception);
 		}
-		return vc;
 	}
 
 }
