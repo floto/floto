@@ -15,9 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TaskPersistence {
@@ -99,8 +97,19 @@ public class TaskPersistence {
         try {
             output.write("[\n".getBytes());
             boolean needComma = false;
-            for (File directory : tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter())) {
-                File infoFile = new File(directory, "info.json");
+            File[] files = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+            List<Integer> numbers = new ArrayList<>();
+            for (File directory : files) {
+                try {
+                    numbers.add(Integer.valueOf(directory.getName()));
+                } catch (Throwable ignored) {
+
+                }
+            }
+            numbers.sort(Comparator.<Integer>reverseOrder());
+            numbers = numbers.subList(0, Math.min(100, numbers.size()));
+            for (int taskId: numbers) {
+                File infoFile = new File(new File(tasksDirectory, String.valueOf(taskId)), "info.json");
                 if (!infoFile.exists()) {
                     continue;
                 }
