@@ -1,11 +1,8 @@
 package io.github.floto.server.websocket;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import org.slf4j.Logger;
@@ -14,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -96,6 +94,10 @@ public class TasksWebSocket {
 
     @OnError
     public void onWebSocketError(Throwable cause) {
+        if(cause instanceof SocketTimeoutException) {
+            // ignored
+            return;
+        }
         log.error("WebSocket error", cause);
     }
 }
