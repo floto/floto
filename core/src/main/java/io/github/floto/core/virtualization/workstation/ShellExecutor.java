@@ -1,6 +1,9 @@
 package io.github.floto.core.virtualization.workstation;
 
-import com.google.common.base.Throwables;
+import java.io.ByteArrayOutputStream;
+import java.time.Duration;
+import java.util.Arrays;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteWatchdog;
@@ -9,9 +12,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.time.Duration;
-import java.util.Arrays;
+import com.google.common.base.Throwables;
 
 public class ShellExecutor {
     private Logger log = LoggerFactory.getLogger(ShellExecutor.class);
@@ -64,5 +65,9 @@ public class ShellExecutor {
     public void setTimeout(Duration timeout) {
         timeoutInMs = timeout.toMillis();
     }
+
+    public static void main(String[] args) {
+		new ShellExecutor().execute(args[0], Arrays.copyOfRange(args, 1, args.length));
+	}
 
 }
