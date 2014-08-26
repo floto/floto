@@ -20,7 +20,7 @@ public class EsxConnectionManager {
 	
 	private static Logger log = LoggerFactory.getLogger(EsxConnectionManager.class);
 	
-	private static Map<EsxHypervisorDescription, ServiceInstance> connections = new HashMap<EsxHypervisorDescription, ServiceInstance>();
+	private static Map<String, ServiceInstance> connections = new HashMap<>();
 
 	private EsxConnectionManager() {
 	}
@@ -29,13 +29,11 @@ public class EsxConnectionManager {
 			EsxHypervisorDescription esxDesc) throws RemoteException,
 			MalformedURLException {
 		
-		log.info("create new connection for vcenter:" + esxDesc.vCenter + ", esx:" + esxDesc.esxHost);
-		
-		ServiceInstance si = new ServiceInstance(new URL("https://"
+		log.info("Create new connection for vCenter: " + esxDesc.vCenter);
+
+		return new ServiceInstance(new URL("https://"
 				+ esxDesc.vCenter + "/sdk"), esxDesc.username,
 				esxDesc.password, true);
-		
-		return si;
 	}
 
 	public static ServiceInstance getConnection(
@@ -44,17 +42,17 @@ public class EsxConnectionManager {
 
 		ServiceInstance si = null;
 
-		if (connections.containsKey(esxDesc)) {
-			si = connections.get(esxDesc);
+		if (connections.containsKey(esxDesc.vCenter)) {
+			si = connections.get(esxDesc.vCenter);
 			if (!checkConnection(si, esxDesc)) {
-				connections.remove(esxDesc);
+				connections.remove(esxDesc.vCenter);
 				si = null;
 			}
 		}
 
 		if (si == null) {
 			si = createNewConnection(esxDesc);
-			connections.put(esxDesc, si);
+			connections.put(esxDesc.vCenter, si);
 		}
 
 		return si;
@@ -66,17 +64,17 @@ public class EsxConnectionManager {
 			si.getEventManager().getLatestEvent();
 			return true;
 		} catch (Exception e) {
-			log.info("connection died to vcenter:" + esxDesc.vCenter + ", esx:" + esxDesc.esxHost);
+			log.info("Connection died to vCenter: " + esxDesc.vCenter);
 			return false;
 		}
 	}
 	
 	public static void closeAllConnections() {
-		for (EsxHypervisorDescription desc : connections.keySet()) {
+		for (String vCenter : connections.keySet()) {
 			try {
-				connections.get(desc).getServerConnection().logout();
+				connections.get(vCenter).getServerConnection().logout();
 			} catch (Exception e) {
-				log.debug("error closing connection for vcenter:" + desc.vCenter + ", esx:" + desc.esxHost);
+				log.debug("Error closing connection for vCenter: " + vCenter );
 			}
 		}
 		connections.clear();
@@ -90,18 +88,18 @@ public class EsxConnectionManager {
         
         if (host == null) {
             ManagedEntity[] hosts = new InventoryNavigator(si.getRootFolder()).searchManagedEntities("HostSystem");
-            for(int i=0; i<hosts.length; i++) {
-            	if (hosts[i].getName().equals(esxDesc.esxHost)) {
-            		host = (HostSystem)hosts[i];
-            		break;
-            	}
-            }
+	        for (ManagedEntity host1 : hosts) {
+		        if (host1.getName().equals(esxDesc.esxHost)) {
+			        host = (HostSystem) host1;
+			        break;
+		        }
+	        }
         } 
         
         if (host != null) {
             return host;
         } else {        
-        	throw new RuntimeException("host " + esxDesc.esxHost + " not found");
+        	throw new RuntimeException("Host " + esxDesc.esxHost + " not found");
         }
 	}
 	
