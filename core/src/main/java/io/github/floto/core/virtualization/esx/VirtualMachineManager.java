@@ -1,56 +1,22 @@
 package io.github.floto.core.virtualization.esx;
 
+import com.google.common.base.Throwables;
+import com.vmware.vim25.*;
+import com.vmware.vim25.mo.*;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.dsl.model.EsxHypervisorDescription;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Throwables;
-import com.vmware.vim25.HttpNfcLeaseDeviceUrl;
-import com.vmware.vim25.HttpNfcLeaseInfo;
-import com.vmware.vim25.HttpNfcLeaseState;
-import com.vmware.vim25.OvfCreateImportSpecParams;
-import com.vmware.vim25.OvfCreateImportSpecResult;
-import com.vmware.vim25.OvfFileItem;
-import com.vmware.vim25.OvfNetworkMapping;
-import com.vmware.vim25.VirtualDevice;
-import com.vmware.vim25.VirtualDeviceConfigSpec;
-import com.vmware.vim25.VirtualDeviceConfigSpecOperation;
-import com.vmware.vim25.VirtualEthernetCard;
-import com.vmware.vim25.VirtualEthernetCardNetworkBackingInfo;
-import com.vmware.vim25.VirtualMachineCloneSpec;
-import com.vmware.vim25.VirtualMachineConfigSpec;
-import com.vmware.vim25.VirtualMachineRelocateDiskMoveOptions;
-import com.vmware.vim25.VirtualMachineRelocateSpec;
-import com.vmware.vim25.mo.Datacenter;
-import com.vmware.vim25.mo.Datastore;
-import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.HostSystem;
-import com.vmware.vim25.mo.HttpNfcLease;
-import com.vmware.vim25.mo.InventoryNavigator;
-import com.vmware.vim25.mo.ManagedEntity;
-import com.vmware.vim25.mo.Network;
-import com.vmware.vim25.mo.ResourcePool;
-import com.vmware.vim25.mo.ServiceInstance;
-import com.vmware.vim25.mo.Task;
-import com.vmware.vim25.mo.VirtualMachine;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+import java.io.*;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class VirtualMachineManager {
     private static final int CHUCK_LEN = 1 * 1024 * 1024 * 16;
@@ -176,11 +142,7 @@ public class VirtualMachineManager {
         Task task = vm.cloneVM_Task(vmFolder, vmDesc.vmName, cloneSpec);
         log.info("launching the virtual machine clone task ...");
 
-        if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("successfully cloned virtual machine");
-        } else {
-            log.error("failed cloning virtual machine");
-        }
+        EsxUtils.waitForTask(task, "clone virtual machine "+ vm.getName());
 
         ManagedEntity[] me = {(ManagedEntity)getVm(vmDesc.vmName)};
         vmFolder.moveIntoFolder_Task(me);
@@ -231,12 +193,8 @@ public class VirtualMachineManager {
 
         vmcs.setDeviceChange(nicSpecArray);
         Task task = vm.reconfigVM_Task(vmcs);
+        EsxUtils.waitForTask(task, "reconfigure vm "+ vm.getName());
 
-        if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-            log.info("successfully reconfigured virtual machien");
-        } else {
-            log.error("failed to reconfigure virtual machine");
-        }
     }
 
 	public void deployTemplate(URL vmUrl, String templateVmName)
@@ -304,8 +262,7 @@ public class VirtualMachineManager {
                         importSpecParams);
 
         if (ovfImportResult == null) {
-            log.error("ovfImportResult=null");
-            return;
+            throw new RuntimeException("ovfImportResult=null");
         }
 
         // addTotalBytes

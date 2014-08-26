@@ -1,39 +1,20 @@
 package io.github.floto.core.virtualization.esx;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.vmware.vim25.*;
+import com.vmware.vim25.mo.*;
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.core.virtualization.VmDescription.Disk;
 import io.github.floto.dsl.model.EsxHypervisorDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.vmware.vim25.GuestProgramSpec;
-import com.vmware.vim25.InvalidPowerState;
-import com.vmware.vim25.NamePasswordAuthentication;
-import com.vmware.vim25.VirtualDevice;
-import com.vmware.vim25.VirtualDisk;
-import com.vmware.vim25.VirtualDiskFlatVer2BackingInfo;
-import com.vmware.vim25.VirtualDiskMode;
-import com.vmware.vim25.VirtualDiskType;
-import com.vmware.vim25.VirtualMachinePowerState;
-import com.vmware.vim25.mo.Datacenter;
-import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.GuestOperationsManager;
-import com.vmware.vim25.mo.GuestProcessManager;
-import com.vmware.vim25.mo.InventoryNavigator;
-import com.vmware.vim25.mo.ManagedEntity;
-import com.vmware.vim25.mo.Network;
-import com.vmware.vim25.mo.ServiceInstance;
-import com.vmware.vim25.mo.Task;
-import com.vmware.vim25.mo.VirtualMachine;
 
 public class EsxHypervisorService implements HypervisorService {
 
@@ -270,8 +251,7 @@ public class EsxHypervisorService implements HypervisorService {
                 try {
                     vmManager.deployTemplate(vmUrl, templateVmName);
                 } catch (Exception e) {
-                    log.error("failed to deploy template", e);
-                    return;
+                    throw new RuntimeException("failed to deploy template", e);
                 }
             }
 			
@@ -370,7 +350,7 @@ public class EsxHypervisorService implements HypervisorService {
             GuestProcessManager gpm = gom.getProcessManager(vm);
             gpm.startProgramInGuest(npa, spec);
         } catch (Exception e) {
-            log.error("failed to execute " + cmd + " on " + vmname, e);
+            throw new RuntimeException("failed to execute " + cmd + " on " + vmname, e);
         }
 
     }

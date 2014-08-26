@@ -2,13 +2,13 @@
 <html ng-app="floto" ng-controller="MainController">
 
 <head>
-	<link rel="stylesheet" href="/lib/bootstrap/css/bootstrap.css"/>
-	<link rel="stylesheet" href="/lib/bootstrap/css/bootstrap-theme.css"/>
-	<link rel="stylesheet" href="/lib/pnotify/jquery.pnotify.default.css"/>
-	<link rel="stylesheet" href="/lib/json-explorer/gd-ui-jsonexplorer.css"/>
+    <link rel="stylesheet" href="/lib/bootstrap/css/bootstrap.css"/>
+    <link rel="stylesheet" href="/lib/bootstrap/css/bootstrap-theme.css"/>
+    <link rel="stylesheet" href="/lib/pnotify/jquery.pnotify.default.css"/>
+    <link rel="stylesheet" href="/lib/json-explorer/gd-ui-jsonexplorer.css"/>
 
-	<link rel="icon" sizes="16x16 32x32" href="/img/floto-icon.png">
-	<title ng-bind="'floto' + titleSuffix">floto</title>
+    <link rel="icon" sizes="16x16 32x32" href="/img/floto-icon.png">
+    <title ng-bind="'floto' + titleSuffix">floto</title>
 
 
 </head>
@@ -17,37 +17,38 @@
 
 <div class="container-fluid ng-cloak">
 
-	<script src="/lib/lodash.js"></script>
-	<script src="/lib/jquery.js"></script>
-	<script src="/lib/jquery.form.js"></script>
+    <script src="/lib/lodash.js"></script>
+    <script src="/lib/jquery.js"></script>
+    <script src="/lib/jquery.form.js"></script>
+    <script src="/lib/bootstrap/js/bootstrap.js"></script>
 
-	<script src="/lib/angular/angular.js"></script>
-	<script src="/lib/angular/angular-route.js"></script>
-	<script src="/lib/angular/angular-resource.js"></script>
-	<script src="/lib/angular/angular-sanitize.js"></script>
-	<script src="/lib/angular/angular-animate.js"></script>
-	<script src="/lib/angular/angular-ui-router.js"></script>
+    <script src="/lib/angular/angular.js"></script>
+    <script src="/lib/angular/angular-route.js"></script>
+    <script src="/lib/angular/angular-resource.js"></script>
+    <script src="/lib/angular/angular-sanitize.js"></script>
+    <script src="/lib/angular/angular-animate.js"></script>
+    <script src="/lib/angular/angular-ui-router.js"></script>
 
     <script src="/lib/json-explorer/gd-ui-jsonexplorer.js"></script>
 
     <script src="/lib/angular/angular-scroll-glue.js"></script>
 
-	<script src="/lib/pnotify/jquery.pnotify.js"></script>
+    <script src="/lib/pnotify/jquery.pnotify.js"></script>
 
     <script src="/lib/moment/moment.js"></script>
     <script src="/lib/moment/angular-moment.js"></script>
 
-	<script src="/js/app.js"></script>
+    <script src="/js/app.js"></script>
 
-	<script src="/js/manifest/FlotoService.js"></script>
+    <script src="/js/manifest/FlotoService.js"></script>
 
     <script src="/js/manifest/ManifestController.js"></script>
 
     <script src="/js/main/MainController.js"></script>
 
     <script src="/js/containers/ContainersController.js"></script>
-	<script src="/js/containers/ContainerController.js"></script>
-	<script src="/js/util/FileController.js"></script>
+    <script src="/js/containers/ContainerController.js"></script>
+    <script src="/js/util/FileController.js"></script>
 
     <script src="/js/hosts/HostsController.js"></script>
     <script src="/js/hosts/HostController.js"></script>
@@ -57,31 +58,39 @@
     <script src="/js/tasks/TaskController.js"></script>
     <script src="/js/tasks/TaskLogDirective.js"></script>
 
-	<script src="/js/util/NotificationService.js"></script>
-	<script src="/js/util/ErrorHandling.js"></script>
-	<script src="/js/util/directives.js"></script>
+    <script src="/js/util/NotificationService.js"></script>
+    <script src="/js/util/ErrorHandling.js"></script>
+    <script src="/js/util/directives.js"></script>
 
 
-	<div class="navbar navbar-default navbar-fixed-top" bs-navbar>
-		<div class="navbar-inner" style="padding-left: 15px">
-			<a class="navbar-brand" href="#">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
+    <div class="navbar navbar-default navbar-fixed-top" bs-navbar>
+        <div class="navbar-inner" style="padding-left: 15px">
+            <a class="navbar-brand" href="#">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
 
-			</a>
+            </a>
+
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li ui-sref-active="active"><a ui-sref="containers">Containers</a></li>
                     <li ui-sref-active="active"><a ui-sref="hosts">Hosts</a></li>
                     <li ui-sref-active="active"><a ui-sref="tasks">Tasks</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Export <span class="caret"></span></a>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="api/export/container-logs">Container Logs</a></li>
+                        </ul>
+                    </li>
                     <li ui-sref-active="active"><a ui-sref="manifest">Manifest</a></li>
                 </ul>
                 <form class="navbar-form navbar-left" role="search">
                     <button type="button" class="btn btn-primary btn-sm" ng-click="compileManifest()">Recompile</button>
                 </form>
-                <span ng-show="domainName" class="navbar-brand pull-right" href="#"><strong>[{{domainName}}]</strong></span>
+                <span ng-show="domainName" class="navbar-brand pull-right"
+                      href="#"><strong>[{{domainName}}]</strong></span>
             </div>
             </a>
-		</div>
-	</div>
+        </div>
+    </div>
     <section style="margin-top: 64px" ui-view></section>
 </div>
 
