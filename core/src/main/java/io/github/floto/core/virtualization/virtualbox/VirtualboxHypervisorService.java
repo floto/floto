@@ -122,8 +122,6 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				"--port", "0", "--type", "hdd", "--medium", diskPath);
 
 		configureVm(desc);
-
-		this.setupNetworking(desc);
 	}
 
 	private void configureVm(final VmDescription desc) {
