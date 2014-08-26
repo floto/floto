@@ -69,6 +69,9 @@
             return TaskService.httpPost(app.urlPrefix + 'hosts/_delete', request);
         };
 
+        FlotoService.exportHosts = function exportHosts(request) {
+            return TaskService.httpPost(app.urlPrefix + 'hosts/_export', request);
+        };
 
         FlotoService.getFilePreview = function getFilePreview(url) {
             var result = {

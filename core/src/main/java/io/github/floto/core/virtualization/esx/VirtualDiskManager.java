@@ -1,5 +1,6 @@
 package io.github.floto.core.virtualization.esx;
 
+import com.vmware.vim25.*;
 import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,9 @@ import com.vmware.vim25.VirtualSCSIController;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import com.vmware.vim25.mox.VirtualMachineDeviceManager;
+import io.github.floto.core.virtualization.VmDescription.Disk;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class VirtualDiskManager extends VirtualMachineDeviceManager {
     private Logger log = LoggerFactory.getLogger(VirtualDiskManager.class);
@@ -60,10 +64,10 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 
 		vmConfigSpec.setDeviceChange(vdiskSpecArray);
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-        EsxUtils.waitForTask(task, "create new virtual disk "+ diskfileBacking.getFileName()+ " for "+vm.getName());
+		EsxUtils.waitForTask(task, "create new virtual disk " + diskfileBacking.getFileName() + " for "+vm.getName());
 	}
 
-	public void addHardDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int unitNumber) throws Exception {
+	public void addVirtualDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int unitNumber) throws Exception {
 		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_data" + vmDiskDesc.slot + ".vmdk";
 		
 		VirtualMachineConfigSpec vmConfigSpec = new VirtualMachineConfigSpec();
@@ -90,7 +94,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		diskSpec.setDevice(disk);
 
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-        EsxUtils.waitForTask(task, "add "+vmdkPath+" to "+ vm.getName());
+		EsxUtils.waitForTask(task, "add "+vmdkPath+" to "+ vm.getName());
 	}
 	  
 	
@@ -110,12 +114,12 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		vmConfigSpec.setDeviceChange(vdiskSpecArray);
 
 		Task task = vm.reconfigVM_Task(vmConfigSpec);
-        EsxUtils.waitForTask(task, "remove virtual disk from "+ vm.getName());
+		EsxUtils.waitForTask(task, "remove virtual disk from "+ vm.getName());
 	}
-	
-	
-	
-	public VirtualDisk findHardDisk(Integer unitNumber) {
+
+
+
+	public VirtualDisk findVirtualDisk(Integer unitNumber) {
 		VirtualDevice[] devices = getAllVirtualDevices();
 
 		for (int i = 0; i < devices.length; i++) {
@@ -126,10 +130,10 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 				}
 			}
 		}
-        throw new RuntimeException("Disk not found: "+unitNumber);
+		return null;
 	}
 
-	public VirtualDisk findFirstHardDisk() {
+	public VirtualDisk findFirstVirtualDisk() {
 		VirtualDevice[] devices = getAllVirtualDevices();
 
 		for (int i = 0; i < devices.length; i++) {
@@ -137,9 +141,18 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 				return (VirtualDisk) devices[i];
 			}
 		}
-        throw new RuntimeException("No disk found");
+		return null;
 	}
-	
+
+	private String getFileName(String path, boolean withExtension) {
+		String fileName = path.toString().substring(path.toString().lastIndexOf('/') + 1, path.toString().length());
+		if (withExtension) {
+			return fileName;
+		} else {
+			return fileName.substring(0, fileName.lastIndexOf('.'));
+		}
+	}
+
 	private <T extends VirtualController> T getFirstAvailableController(
 			Class<T> clazz) {
 		VirtualController vc = createControllerInstance(clazz);
@@ -152,7 +165,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 				return controller;
 			}
 		}
-		throw new RuntimeException("No controller found");
+		return null;
 	}
 
 	private static int getMaxNodesPerControllerOfType(VirtualController controller) {

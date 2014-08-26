@@ -15,19 +15,17 @@ import org.slf4j.LoggerFactory;
 public class RedeployVmJob extends HypervisorJob<Void> {
     private Logger log = LoggerFactory.getLogger(RedeployVmJob.class);
     private FlotoService flotoService;
-    private final String vmName;
 
     public RedeployVmJob(FlotoService flotoService, String vmName) {
         super(flotoService.getManifest(), vmName);
         this.flotoService = flotoService;
-        this.vmName = vmName;
     }
 
     @Override
     public Void execute() throws Exception {
         VmConfiguration vmConfiguration = host.vmConfiguration;
         VmDescription vmDescription = new VmDescription();
-        vmDescription.vmName = vmName;
+        vmDescription.vmName = host.name;
         vmDescription.numberOfCores = vmConfiguration.numberOfCores;
         vmDescription.memoryInMB = vmConfiguration.memoryInMB;
         vmDescription.vmNetworks = new ArrayList<>(vmConfiguration.networks);
@@ -41,27 +39,27 @@ public class RedeployVmJob extends HypervisorJob<Void> {
         }
 
         log.info("Removing old VM");
-        hypervisorService.stopVm(vmName);
-        hypervisorService.deleteVm(vmName);
+        hypervisorService.stopVm(host.name);
+        hypervisorService.deleteVm(host.name);
 
-        log.info("Deploying VM {}", vmName);
+        log.info("Deploying VM {}", host.name);
         URL ovaUrl = new URL(vmConfiguration.ovaUrl);
         hypervisorService.deployVm(ovaUrl, vmDescription);
 
-        log.info("Starting VM {}", vmName);
-        hypervisorService.startVm(vmName);
+        log.info("Starting VM {}", host.name);
+        hypervisorService.startVm(host.name);
 
         runPostDeploy();
 
-        log.info("Post-deploy completed on host {}", vmName);
+        log.info("Post-deploy completed on host {}", host.name);
         return null;
     }
 
     private void runPostDeploy() {
-        HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService, vmName);
-        log.info("Running post-deploy on {}", vmName);
+        HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService, host.name);
+        log.info("Running post-deploy on {}", host.name);
         hostStepRunner.run(host.postDeploySteps);
-        log.info("Running reconfigure on {}", vmName);
+        log.info("Running reconfigure on {}", host.name);
         hostStepRunner.run(host.reconfigureSteps);
     }
 

@@ -117,7 +117,7 @@ public class EsxHypervisorService implements HypervisorService {
                     Disk disk = new Disk(vmDesc);
                     disk.sizeInGB = vDisk.capacityInKB / 1024;
                     disk.path = ((VirtualDiskFlatVer2BackingInfo)vDisk.getBacking()).fileName;
-                    disk.thinProvisioned = ((VirtualDiskFlatVer2BackingInfo)vDisk.getBacking()).thinProvisioned.booleanValue();
+                    disk.thinProvisioned = ((VirtualDiskFlatVer2BackingInfo) vDisk.getBacking()).thinProvisioned;
                     vmDesc.disks.add(disk);
                 }
             }
@@ -232,7 +232,12 @@ public class EsxHypervisorService implements HypervisorService {
 
     @Override
     public void exportVm(String vmname, String Path) {
-
+		try {
+			vmManager.exportVM(vmname, Path);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			throw Throwables.propagate(t);
+		}
     }
 
     @Override
@@ -273,17 +278,15 @@ public class EsxHypervisorService implements HypervisorService {
 		            
 					EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
 					log.info(fileName+" exits - will add it to virtual machine.");
-					vdm.addHardDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
+					vdm.addVirtualDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
 				} catch (Exception e) {
 					log.info(fileName+" does not exits - will create new virtual disk.");
 					vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, disk.slot);
 				}
 			}
-
         } catch (Throwable t) {
             throw Throwables.propagate(t);
         }
-
     }
 
 	

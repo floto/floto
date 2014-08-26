@@ -75,6 +75,9 @@ public class HostService {
         runTask(new RedeployVmJob(flotoService, vmName));
     }
 
+	public void exportVm(String vmName) {
+		runTask(new ExportVmJob(flotoService, vmName));
+	}
 
     public void deleteVm(String vmName) {
         runHypervisorTask(vmName, HypervisorService::deleteVm);

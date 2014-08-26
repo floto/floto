@@ -41,6 +41,19 @@ public class HostsResource {
         });
     }
 
+	@POST
+	@Path("_export")
+	@Produces(MediaType.APPLICATION_JSON)
+	public TaskInfo<Void> exportHosts(HostsRequest hostsRequest) {
+		return taskService.startTask("Export hosts " + getHostsString(hostsRequest), () -> {
+			for (String host : hostsRequest.hosts) {
+				log.info("Exporting: {}", host);
+				hostService.exportVm(host);
+			}
+			return null;
+		});
+	}
+
     private String getHostsString(HostsRequest hostsRequest) {
         return Joiner.on(",").join(hostsRequest.hosts);
     }

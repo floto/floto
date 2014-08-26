@@ -49,6 +49,9 @@
 			FlotoService.deleteHosts(request).then(update);
 		};
 
+		$scope.exportHosts = function exportHosts(request) {
+			FlotoService.exportHosts(request).then(update);
+		};
 
 		});
 	})();

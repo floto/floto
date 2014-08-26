@@ -43,7 +43,13 @@
                                     ng-click="deleteHosts({hosts: [host.name]})">Delete
                             </button>
                         </td>
-                        <td style="width: 100%">{{host.name}} ( @ {{host.vmConfiguration.hypervisor.esxHost}})</td>
+                        <td>
+                            <button type="button" class="btn btn-xs btn-success"
+                                    ng-disabled="host.state == 'not-there'"
+                                    ng-click="exportHosts({hosts: [host.name]})">Export
+                            </button>
+                        </td>
+                        <td style="width: 100%">{{host.name}} ( @{{host.vmConfiguration.hypervisor.esxHost}})</td>
                     </tr>
                 </table>
             </div>

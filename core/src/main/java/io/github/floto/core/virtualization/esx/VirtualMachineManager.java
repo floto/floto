@@ -5,14 +5,16 @@ import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.dsl.model.EsxHypervisorDescription;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarInputStream;
+import org.apache.tools.tar.TarOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
@@ -21,16 +23,16 @@ import java.util.List;
 public class VirtualMachineManager {
     private static final int CHUCK_LEN = 1 * 1024 * 1024 * 16;
     private static LeaseProgressUpdater leaseUpdater;
-    
+
     private Logger log = LoggerFactory.getLogger(VirtualMachineManager.class);
     private EsxHypervisorDescription esxDesc;
-    
+
     String domainName;
-    
+
     public VirtualMachineManager(EsxHypervisorDescription description, String domainName) {
     	this.esxDesc = description;
     	this.domainName = domainName;
-    	
+
         try {
 			ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
 			Folder rootFolder = si.getRootFolder();
@@ -45,33 +47,43 @@ public class VirtualMachineManager {
 			Throwables.propagate(e);
 		}
     }
-    
+
 	public VirtualMachine getVm(String vmName) throws Exception {
 		Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
         return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", vmName);
 	}
-	
+
 	public ManagedEntity[] getVms() throws Exception {
 		Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
 		return new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
 	}
-	
+
     public static void markAsTemplate(VirtualMachine vm) throws Exception {
         vm.markAsTemplate();
     }
-    
-    
-    
+
+	private boolean existsVm(String vmName) {
+		try {
+			Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
+
+			VirtualMachine vm = (VirtualMachine) new InventoryNavigator(
+					rootFolder).searchManagedEntity("VirtualMachine", vmName);
+			return (vm != null);
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
     public void cloneVm(String templateVmName, VmDescription vmDesc,
 			boolean linked) throws Exception {
         log.info("cloneVm " + templateVmName + " -> " + vmDesc);
-        
+
         Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
         Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
         ResourcePool rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
         Folder vmFolder = (Folder)new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
-        
+
         if (!existsVm(templateVmName)) {
             log.error("template " + templateVmName + " not found");
             return;
@@ -144,16 +156,16 @@ public class VirtualMachineManager {
 
         EsxUtils.waitForTask(task, "clone virtual machine "+ vm.getName());
 
-        ManagedEntity[] me = {(ManagedEntity)getVm(vmDesc.vmName)};
+        ManagedEntity[] me = {getVm(vmDesc.vmName)};
         vmFolder.moveIntoFolder_Task(me);
     }
 
 	public void reconfigureVm(VmDescription vmDesc) throws Exception {
         log.info("reconfigureVm(" + vmDesc.vmName + ")");
-        
+
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
-        
-        VirtualMachine vm = getVm(vmDesc.vmName);;
+
+        VirtualMachine vm = getVm(vmDesc.vmName);
 
         Network network = null;
         for (Network net : host.getNetworks()) {
@@ -168,7 +180,7 @@ public class VirtualMachineManager {
             return;
         }
 
-        List<VirtualDeviceConfigSpec> vdcss = new ArrayList<VirtualDeviceConfigSpec>();
+        List<VirtualDeviceConfigSpec> vdcss = new ArrayList<>();
 
         for (VirtualDevice vd : vm.getConfig().getHardware().device) {
             if (vd instanceof VirtualEthernetCard) {
@@ -207,7 +219,7 @@ public class VirtualMachineManager {
         ResourcePool rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
         Folder vmFolder = (Folder)new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
-        
+
         // find the datastore
         Datastore datastore = host.getDatastores()[0];
         for (Datastore ds : host.getDatastores()) {
@@ -283,24 +295,20 @@ public class VirtualMachineManager {
         }
         log.info("Total bytes: " + totalBytes);
 
-        HttpNfcLease httpNfcLease;
-        httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(),
-                vmFolder, host);
+        HttpNfcLease httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(), vmFolder, host);
 
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
         for (; ; ) {
             hls = httpNfcLease.getState();
-            if (hls == HttpNfcLeaseState.ready
-                    || hls == HttpNfcLeaseState.error) {
+            if ((hls == HttpNfcLeaseState.ready) || (hls == HttpNfcLeaseState.error)) {
                 break;
             }
         }
 
         if (hls.equals(HttpNfcLeaseState.ready)) {
             // log.info("HttpNfcLeaseState: ready ");
-            HttpNfcLeaseInfo httpNfcLeaseInfo = (HttpNfcLeaseInfo) httpNfcLease
-                    .getInfo();
+            HttpNfcLeaseInfo httpNfcLeaseInfo = httpNfcLease.getInfo();
             // log.info("================ HttpNfcLeaseInfo ================");
             // HttpNfcLeaseDeviceUrl[] deviceUrlArr = httpNfcLeaseInfo
             // .getDeviceUrl();
@@ -358,7 +366,7 @@ public class VirtualMachineManager {
             httpNfcLease.httpNfcLeaseProgress(100);
             httpNfcLease.httpNfcLeaseComplete();
         }
-        
+
         markAsTemplate(getVm(templateVmName));
 
     }
@@ -366,22 +374,16 @@ public class VirtualMachineManager {
     private void uploadVmdkFile(boolean put, InputStream diskInputStream,
                                 String urlStr, long bytesAlreadyWritten, long totalBytes)
             throws IOException {
-        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-            public boolean verify(String urlHostName, SSLSession session) {
-                return true;
-            }
-        });
+        HttpsURLConnection.setDefaultHostnameVerifier((urlHostName, session) -> true);
 
-        HttpsURLConnection conn = (HttpsURLConnection) new URL(urlStr)
-                .openConnection();
+        HttpsURLConnection conn = (HttpsURLConnection) new URL(urlStr).openConnection();
         conn.setDoOutput(true);
         conn.setUseCaches(false);
         conn.setChunkedStreamingMode(CHUCK_LEN);
         conn.setRequestMethod(put ? "PUT" : "POST"); // Use a post method to
         // write the file.
         conn.setRequestProperty("Connection", "Keep-Alive");
-        conn.setRequestProperty("Content-Type",
-                "application/x-vnd.vmware-streamVmdk");
+        conn.setRequestProperty("Content-Type", "application/x-vnd.vmware-streamVmdk");
         // conn.setRequestProperty("Content-Length",
         // Long.toString(diskFilePath.));
 
@@ -414,17 +416,169 @@ public class VirtualMachineManager {
         conn.disconnect();
     }
 
-    private boolean existsVm(String vmName) {
-        try {
-            Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-            
-            VirtualMachine vm = (VirtualMachine) new InventoryNavigator(
-                    rootFolder).searchManagedEntity("VirtualMachine", vmName);
-            return (vm != null);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-    
-    
+	public void exportVM(String vmname, String targetFile) throws Exception {
+		log.info("Export virtual machine " + vmname + " to " + targetFile);
+
+		File exportDir = (new File(new File(targetFile).getParent() + "/" + vmname));
+		FileUtils.forceMkdir(exportDir);
+
+		ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+		HttpNfcLease hnLease = getVm(vmname).exportVm();
+
+		// Wait until the HttpNfcLeaseState is ready
+		HttpNfcLeaseState hls;
+		for(;;) {
+			hls = hnLease.getState();
+			if(hls == HttpNfcLeaseState.ready) {
+				log.info("HttpNfcLeaseState: ready");
+				break;
+			}
+			if(hls == HttpNfcLeaseState.error) {
+				log.error("HttpNfcLeaseState error");
+				return;
+			}
+		}
+
+		HttpNfcLeaseInfo httpNfcLeaseInfo = hnLease.getInfo();
+		httpNfcLeaseInfo.setLeaseTimeout(300*1000*1000);
+		printHttpNfcLeaseInfo(httpNfcLeaseInfo);
+
+		//Note: the diskCapacityInByte could be many time bigger than
+		//the total size of VMDK files downloaded.
+		//As a result, the progress calculated could be much less than reality.
+		long diskCapacityInByte = httpNfcLeaseInfo.getTotalDiskCapacityInKB() * 1024;
+
+		LeaseProgressUpdater leaseProgUpdater = new LeaseProgressUpdater(hnLease, 5000);
+		leaseProgUpdater.start();
+
+		long alredyWrittenBytes = 0;
+		HttpNfcLeaseDeviceUrl[] deviceUrls = httpNfcLeaseInfo.getDeviceUrl();
+		if (deviceUrls != null)
+		{
+			OvfFile[] ovfFiles = new OvfFile[deviceUrls.length];
+			log.info("Downloading Files:");
+			for (int i = 0; i < deviceUrls.length; i++)
+			{
+				String deviceId = deviceUrls[i].getKey();
+				String deviceUrlStr = deviceUrls[i].getUrl();
+				String diskFileName = deviceUrlStr.substring(deviceUrlStr.lastIndexOf("/") + 1);
+				String diskUrlStr = deviceUrlStr.replace("*", esxDesc.esxHost);
+				log.info("File Name: " + diskFileName);
+				log.info("VMDK URL: " + diskUrlStr);
+				String cookie = si.getServerConnection().getVimService().getWsc().getCookie();
+
+				FileOutputStream fos = new FileOutputStream(exportDir + "/" + diskFileName);
+				long lengthOfDiskFile = writeVMDKFile(fos, diskUrlStr, cookie, alredyWrittenBytes, diskCapacityInByte, leaseProgUpdater);
+				fos.close();
+
+				alredyWrittenBytes += lengthOfDiskFile;
+				OvfFile ovfFile = new OvfFile();
+				ovfFile.setPath(diskFileName);
+				ovfFile.setDeviceId(deviceId);
+				ovfFile.setSize(lengthOfDiskFile);
+				ovfFiles[i] = ovfFile;
+			}
+
+			OvfCreateDescriptorParams ovfDescParams = new OvfCreateDescriptorParams();
+			ovfDescParams.setOvfFiles(ovfFiles);
+			OvfCreateDescriptorResult ovfCreateDescriptorResult = si.getOvfManager().createDescriptor(getVm(vmname), ovfDescParams);
+
+			String ovfFileName = vmname + ".ovf";
+			FileWriter out = new FileWriter(exportDir + "/" +ovfFileName);
+			out.write(ovfCreateDescriptorResult.getOvfDescriptor());
+			out.close();
+			log.info("OVF Desriptor Written to file: " + exportDir + "/" + ovfFileName);
+		}
+
+		log.info("Completed Downloading the files, now make ova(tar)");
+		leaseProgUpdater.interrupt();
+		hnLease.httpNfcLeaseProgress(100);
+		hnLease.httpNfcLeaseComplete();
+
+		// tar the ovf to the ova
+		// first entry has to be the ovf!
+		TarOutputStream tos = new TarOutputStream(new FileOutputStream(targetFile));
+		for (File file : exportDir.listFiles()) {
+			if (file.toString().toLowerCase().endsWith(".ovf")) {
+				TarEntry entry = new TarEntry(file, file.getName());
+				tos.putNextEntry(entry);
+				FileInputStream fis = new FileInputStream(file);
+				BufferedInputStream bif = new BufferedInputStream(fis);
+				IOUtils.copy(bif, tos);
+				bif.close();
+				fis.close();
+				tos.closeEntry();
+			}
+		}
+		for (File file : exportDir.listFiles()) {
+			if (file.toString().toLowerCase().endsWith(".ovf")) {
+				continue;
+			}
+			TarEntry entry = new TarEntry(file, file.getName());
+			tos.putNextEntry(entry);
+			FileInputStream fis = new FileInputStream(file);
+			BufferedInputStream bif = new BufferedInputStream(fis);
+			IOUtils.copy(bif, tos);
+			bif.close();
+			fis.close();
+			tos.closeEntry();
+		}
+		tos.close();
+
+		log.info("Created " + targetFile);
+
+		// remove the ovf directory
+		FileUtils.forceDelete(exportDir);
+	}
+
+	private long writeVMDKFile(OutputStream outputStream, String diskUrlStr, String cookieStr,
+	                                  long bytesAlreadyWritten, long totalBytes, LeaseProgressUpdater leaseProgUpdater) throws IOException
+	{
+		HostnameVerifier hv = (urlHostName, session) -> true;
+		HttpsURLConnection.setDefaultHostnameVerifier(hv);
+		URL url = new URL(diskUrlStr);
+		HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+		conn.setDoInput(true);
+		conn.setDoOutput(true);
+		conn.setAllowUserInteraction(true);
+		conn.setRequestProperty("Cookie",  cookieStr);
+		conn.connect();
+
+		InputStream in = conn.getInputStream();
+		byte[] buf = new byte[CHUCK_LEN];
+		int len;
+		long bytesWritten = 0;
+		while ((len = in.read(buf)) > 0) {
+			outputStream.write(buf, 0, len);
+			bytesWritten += len;
+            int percent = (int)(((bytesAlreadyWritten + bytesWritten) * 100) / totalBytes);
+			leaseProgUpdater.setPercent(percent);
+//			log.info("bytes written: " + bytesWritten);
+		}
+		in.close();
+		return bytesWritten;
+	}
+
+	private void printHttpNfcLeaseInfo(HttpNfcLeaseInfo info)
+	{
+		log.info("########################  HttpNfcLeaseInfo  ###########################");
+		log.info("Lease Timeout: " + info.getLeaseTimeout());
+		log.info("Total Disk capacity: " + info.getTotalDiskCapacityInKB());
+		HttpNfcLeaseDeviceUrl[] deviceUrlArr = info.getDeviceUrl();
+		if (deviceUrlArr != null)
+		{
+			int deviceUrlCount = 1;
+			for (HttpNfcLeaseDeviceUrl durl : deviceUrlArr) {
+				log.info("HttpNfcLeaseDeviceUrl : " + deviceUrlCount++);
+//				log.info("  Device URL Import Key: " + durl.getImportKey());
+//				log.info("  Device URL Key: " + durl.getKey());
+				log.info("  Device URL : " + durl.getUrl());
+//				log.info("  SSL Thumbprint : " + durl.getSslThumbprint());
+			}
+		}
+		else {
+			log.warn("No Device URLS Found");
+		}
+	}
 }
