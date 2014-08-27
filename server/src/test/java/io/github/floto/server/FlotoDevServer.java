@@ -4,7 +4,7 @@ public class FlotoDevServer {
 
 	public static void main(final String args[]) {
 		String definition = "definitions/floto-dev/floto-dev.js";
-		if(args.length >= 0) {
+		if(args.length >= 1) {
 			definition = args[0];
 		}
 		FlotoServer
