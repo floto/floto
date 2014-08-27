@@ -104,27 +104,29 @@ public class FlotoService implements Closeable {
             proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
             proxy.start();
             try {
-                String ownAddress = null;
-                try {
-                    ownAddress = Inet4Address.getLocalHost().getHostAddress();
-                } catch(Throwable throwable) {
-                    log.warn("Unable to get own address", throwable);
-                }
-                if(ownAddress == null || ownAddress.startsWith("127.")) {
-                    Enumeration e = NetworkInterface.getNetworkInterfaces();
-                    while (e.hasMoreElements()) {
-                        NetworkInterface n = (NetworkInterface) e.nextElement();
-                        if(n.getDisplayName().startsWith("eth")) {
-                            Enumeration ee = n.getInetAddresses();
-                            while (ee.hasMoreElements()) {
-                                InetAddress i = (InetAddress) ee.nextElement();
-                                if(i instanceof Inet4Address) {
-                                    ownAddress = i.getHostAddress();
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                String ownAddress = commonParameters.proxyUrl;
+                if(ownAddress == null || ownAddress.isEmpty()) {
+                	try {
+                		ownAddress = Inet4Address.getLocalHost().getHostAddress();
+                	} catch(Throwable throwable) {
+                		log.warn("Unable to get own address", throwable);
+                	}
+                	if(ownAddress == null || ownAddress.startsWith("127.")) {
+                		Enumeration e = NetworkInterface.getNetworkInterfaces();
+                		while (e.hasMoreElements()) {
+                			NetworkInterface n = (NetworkInterface) e.nextElement();
+                			if(n.getDisplayName().startsWith("eth")) {
+                				Enumeration ee = n.getInetAddresses();
+                				while (ee.hasMoreElements()) {
+                					InetAddress i = (InetAddress) ee.nextElement();
+                					if(i instanceof Inet4Address) {
+                						ownAddress = i.getHostAddress();
+                						break;
+                					}
+                				}
+                			}
+                		}
+                	}
                 }
                 log.info("Using proxy address: {}", ownAddress);
                 httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";

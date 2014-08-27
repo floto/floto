@@ -8,4 +8,7 @@ public class FlotoCommonParameters {
 
     @Parameter(names = "--no-proxy", description = "Disable HTTP proxy")
     public boolean noProxy = false;
+
+    @Parameter(names = "--proxy-url", description = "Set custom HTTP-proxy address")
+    public String proxyUrl;
 }
