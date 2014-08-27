@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -308,6 +310,11 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				function.get();
 				return;
 			} catch (final Throwable throwable) {
+				if (!ExceptionUtils.getStackTrace(throwable).contains(
+						"The guest execution service is not ready")) {
+					throw throwable;
+				}
+
 				if (i < NUM_ATTEMPTS) {
 					try {
 						log.info("guest execution service may not be ready. Will wait a bit...");
