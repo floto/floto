@@ -10,3 +10,4 @@ target/
 *.iml
 .gradle
 .idea
+server/vm
