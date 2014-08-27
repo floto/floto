@@ -138,6 +138,7 @@ public class VirtualboxHypervisorService implements HypervisorService {
 		// Setup networking
 		vBoxManage.run("modifyvm", desc.vmName, "--nic1", "hostonly",
 				"--hostonlyadapter1", "vboxnet0");
+		vBoxManage.run("modifyvm", desc.vmName, "--nic2", "nat");
 	}
 
 	private File getVmDirectory(final String vmName) {
