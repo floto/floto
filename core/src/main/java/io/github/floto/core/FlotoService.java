@@ -1,15 +1,5 @@
 package io.github.floto.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.ssh.SshService;
@@ -25,12 +15,50 @@ import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.message.BasicHeader;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
@@ -41,24 +69,15 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-
-import java.io.*;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.*;
-import java.util.function.Consumer;
-
-import jersey.repackaged.com.google.common.collect.Lists;
-import jersey.repackaged.com.google.common.collect.Maps;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 
 public class FlotoService implements Closeable {
     private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -73,6 +92,12 @@ public class FlotoService implements Closeable {
     private final boolean useProxy;
     private String httpProxyUrl;
     private HttpProxy proxy;
+    
+    // --------- JUST TESTING STUFF!!! ---------
+    private CloseableHttpClient httpClient = HttpClients.createDefault();
+    Header header1 = new BasicHeader("Content-Type", "application/json");
+	Header header2 = new BasicHeader("Accept-Encoding", "gzip,deflate");
+	// -----------------------------------------
 
     private Map<String, String> externalHostIpMap = new HashMap<>();
 
@@ -263,10 +288,22 @@ public class FlotoService implements Closeable {
 		
 		String startJson = "{\"Binds\":[\"/var/log/nginx:/data/web/log\"],\"ContainerIDFile\":\"\",\"LxcConf\":[],\"Privileged\":false,\"PortBindings\":{},\"Links\":null,\"PublishAllPorts\":false,\"Dns\":null,\"DnsSearch\":null,\"VolumesFrom\":null,\"Devices\":[],\"NetworkMode\":\"host\",\"CapAdd\":null,\"CapDrop\":null,\"RestartPolicy\":{\"Name\":\"\",\"MaximumRetryCount\":0}}";
 		
-		WebTarget dockerTarget = createDockerTarget(host);
-		///v1.14/containers/2cd0c5e816a08df4c5c9a8846a7caa00127f0181e9d7500d9af377e816e77b12/start
-		Response createResponse = dockerTarget.path("/v1.14/containers/" + container.name + "/start").request().post(Entity.entity(startJson, MediaType.APPLICATION_JSON_TYPE));
-		createResponse.close();
+		HttpPost start = new HttpPost("http://192.168.92.100:2375/containers/web/start");
+		start.setHeader(header1);
+		start.setHeader(header2);
+		HttpEntity entity2 = new StringEntity(startJson, "utf-8");
+		start.setEntity(entity2);
+		
+		try {
+			httpClient.execute(start);
+		} catch (IOException e) {
+			Throwables.propagate(e);
+		}
+		
+		
+//		WebTarget dockerTarget = createDockerTarget(host);
+//		Response createResponse = dockerTarget.path("/v1.14/containers/" + container.name + "/start").request().post(Entity.entity(startJson, MediaType.APPLICATION_JSON_TYPE));
+//		createResponse.close();
 		
 //		Response startResponse = dockerTarget.path("/containers/" + container.name + "/start").request().post(Entity.entity(startConfig, MediaType.APPLICATION_JSON_TYPE));
 //		startResponse.close();
@@ -294,12 +331,21 @@ public class FlotoService implements Closeable {
 	private void createContainer(Container container, Host host) {
 		
 		String createJson = "{\"Hostname\":\"\",\"Domainname\":\"\",\"User\":\"\",\"Memory\":0,\"MemorySwap\":0,\"CpuShares\":0,\"Cpuset\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,\"AttachStderr\":false,\"PortSpecs\":null,\"ExposedPorts\":{},\"Tty\":false,\"OpenStdin\":false,\"StdinOnce\":false,\"Env\":[],\"Cmd\":null,\"Image\":\"web:latest\",\"Volumes\":{},\"WorkingDir\":\"\",\"Entrypoint\":null,\"NetworkDisabled\":false,\"OnBuild\":null}";
-
-		String startJson = "{\"Binds\":[\"/var/log/nginx:/data/web/log\"],\"ContainerIDFile\":\"\",\"LxcConf\":[],\"Privileged\":false,\"PortBindings\":{},\"Links\":null,\"PublishAllPorts\":false,\"Dns\":null,\"DnsSearch\":null,\"VolumesFrom\":null,\"Devices\":[],\"NetworkMode\":\"host\",\"CapAdd\":null,\"CapDrop\":null,\"RestartPolicy\":{\"Name\":\"\",\"MaximumRetryCount\":0}}";
 		
-		WebTarget dockerTarget = createDockerTarget(host);
-		///v1.14/containers/create?name=web
-		Response createResponse = dockerTarget.path("/v1.14/containers/create").queryParam("name", container.name).request().post(Entity.entity(createJson, MediaType.APPLICATION_JSON_TYPE));
+		HttpPost create = new HttpPost("http://192.168.92.100:2375/containers/create?name=web");
+		create.setHeader(header1);
+		create.setHeader(header2);
+		HttpEntity entity1 = new StringEntity(createJson, "utf-8");
+		create.setEntity(entity1);
+		
+		try {
+			httpClient.execute(create);
+		} catch (IOException e) {
+			Throwables.propagate(e);
+		}
+		
+//		WebTarget dockerTarget = createDockerTarget(host);
+//		Response createResponse = dockerTarget.path("/v1.14/containers/create").queryParam("name", container.name).request().post(Entity.entity(createJson, MediaType.APPLICATION_JSON_TYPE));
 		
 		
 //		Map<String, Object> createConfig = new HashMap<>();
@@ -308,7 +354,7 @@ public class FlotoService implements Closeable {
 //		createConfig.put("PortSpecs", null);
 //		createConfig.put("ExposedPorts", Maps.newHashMap());
 //		Response createResponse = dockerTarget.path("/containers/create").queryParam("name", container.name).request().post(Entity.entity(createConfig, MediaType.APPLICATION_JSON_TYPE));
-		createResponse.close();
+//		createResponse.close();
 	}
 
 	private void destroyContainer(String containerName, Host host) {
