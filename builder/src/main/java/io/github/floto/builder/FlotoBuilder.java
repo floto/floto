@@ -94,6 +94,8 @@ public class FlotoBuilder {
                 public Void execute() throws Exception {
                     // Stop VM
                     hypervisorService.stopVm(host.name);
+                    // HACK: Sleep a bit to give vmware workstation time to clean up its lock file
+                    Thread.sleep(1000);
                     // Export Image
                     String exportName = host.exportName;
                     if(exportName == null) {
