@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.ssh.SshService;
@@ -23,6 +24,7 @@ import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
@@ -47,12 +49,16 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+
 import java.io.*;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.*;
 import java.util.function.Consumer;
+
+import jersey.repackaged.com.google.common.collect.Lists;
+import jersey.repackaged.com.google.common.collect.Maps;
 
 public class FlotoService implements Closeable {
     private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -218,21 +224,52 @@ public class FlotoService implements Closeable {
 	}
 
 	private void startContainer(Image image, Container container, Host host) {
-		WebTarget dockerTarget = createDockerTarget(host);
-		Map<String, Object> startConfig = new HashMap<>();
+//		WebTarget dockerTarget = createDockerTarget(host);
+//		Map<String, Object> startConfig = new HashMap<>();
 
 		// Host networking
-		startConfig.put("NetworkMode", "host");
+		
+//		startConfig.put("ContainerIDFile:", "");
+//		startConfig.put("Privileged", Boolean.FALSE);
+//		startConfig.put("PortBindings", Maps.newHashMap());
+//		startConfig.put("Links", null);
+//		startConfig.put("PublishAllPorts", Boolean.FALSE);
+//		startConfig.put("Dns", null);
+//		startConfig.put("DnsSearch", null);
+//		startConfig.put("VolumesFrom", null);
+//		startConfig.put("Devices", new Object[]{});
+//		startConfig.put("NetworkMode", "host");
+//		startConfig.put("CapAdd", null);
+//		startConfig.put("CapDrop", null);
+//		startConfig.put("LxcConf", new Object[]{});
+		
+//		List<String> networkSettings = Lists.newArrayList();
+//		networkSettings.add("Bridge:\"\"");
+//		networkSettings.add("Gateway:\"\"");
+//		networkSettings.add("IPAddress:\"\"");
+//		networkSettings.add("IPPrefixLen:0");
+//		networkSettings.add("PortMappings:");
+//		networkSettings.add("Ports:");
+//		startConfig.put("NetworkSettings", networkSettings);
 
 		// Host mount directories
-		ArrayList<String> binds = new ArrayList<>();
-		for (Map.Entry<String, String> entry : getContainerVolumes(image, container).entrySet()) {
-			binds.add(entry.getKey() + ":" + entry.getValue());
-		}
-		startConfig.put("Binds", binds);
-
-		Response startResponse = dockerTarget.path("/containers/" + container.name + "/start").request().post(Entity.entity(startConfig, MediaType.APPLICATION_JSON_TYPE));
-		startResponse.close();
+//		ArrayList<String> binds = new ArrayList<>();
+//		for (Map.Entry<String, String> entry : getContainerVolumes(image, container).entrySet()) {
+//			binds.add(entry.getKey() + ":" + entry.getValue());
+//		}
+//		startConfig.put("Binds", binds);
+//		
+//		log.info("StartConfig=" + startConfig);
+		
+		String startJson = "{\"Binds\":[\"/var/log/nginx:/data/web/log\"],\"ContainerIDFile\":\"\",\"LxcConf\":[],\"Privileged\":false,\"PortBindings\":{},\"Links\":null,\"PublishAllPorts\":false,\"Dns\":null,\"DnsSearch\":null,\"VolumesFrom\":null,\"Devices\":[],\"NetworkMode\":\"host\",\"CapAdd\":null,\"CapDrop\":null,\"RestartPolicy\":{\"Name\":\"\",\"MaximumRetryCount\":0}}";
+		
+		WebTarget dockerTarget = createDockerTarget(host);
+		///v1.14/containers/2cd0c5e816a08df4c5c9a8846a7caa00127f0181e9d7500d9af377e816e77b12/start
+		Response createResponse = dockerTarget.path("/v1.14/containers/" + container.name + "/start").request().post(Entity.entity(startJson, MediaType.APPLICATION_JSON_TYPE));
+		createResponse.close();
+		
+//		Response startResponse = dockerTarget.path("/containers/" + container.name + "/start").request().post(Entity.entity(startConfig, MediaType.APPLICATION_JSON_TYPE));
+//		startResponse.close();
 	}
 
 	private Map<String, String> getContainerVolumes(Image image, Container container) {
@@ -255,10 +292,22 @@ public class FlotoService implements Closeable {
 	}
 
 	private void createContainer(Container container, Host host) {
+		
+		String createJson = "{\"Hostname\":\"\",\"Domainname\":\"\",\"User\":\"\",\"Memory\":0,\"MemorySwap\":0,\"CpuShares\":0,\"Cpuset\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,\"AttachStderr\":false,\"PortSpecs\":null,\"ExposedPorts\":{},\"Tty\":false,\"OpenStdin\":false,\"StdinOnce\":false,\"Env\":[],\"Cmd\":null,\"Image\":\"web:latest\",\"Volumes\":{},\"WorkingDir\":\"\",\"Entrypoint\":null,\"NetworkDisabled\":false,\"OnBuild\":null}";
+
+		String startJson = "{\"Binds\":[\"/var/log/nginx:/data/web/log\"],\"ContainerIDFile\":\"\",\"LxcConf\":[],\"Privileged\":false,\"PortBindings\":{},\"Links\":null,\"PublishAllPorts\":false,\"Dns\":null,\"DnsSearch\":null,\"VolumesFrom\":null,\"Devices\":[],\"NetworkMode\":\"host\",\"CapAdd\":null,\"CapDrop\":null,\"RestartPolicy\":{\"Name\":\"\",\"MaximumRetryCount\":0}}";
+		
 		WebTarget dockerTarget = createDockerTarget(host);
-		Map<String, Object> createConfig = new HashMap<>();
-		createConfig.put("Image", container.name);
-		Response createResponse = dockerTarget.path("/containers/create").queryParam("name", container.name).request().post(Entity.entity(createConfig, MediaType.APPLICATION_JSON_TYPE));
+		///v1.14/containers/create?name=web
+		Response createResponse = dockerTarget.path("/v1.14/containers/create").queryParam("name", container.name).request().post(Entity.entity(createJson, MediaType.APPLICATION_JSON_TYPE));
+		
+		
+//		Map<String, Object> createConfig = new HashMap<>();
+//		createConfig.put("Image", container.name);
+//		createConfig.put("NetworkDisabled", Boolean.FALSE);
+//		createConfig.put("PortSpecs", null);
+//		createConfig.put("ExposedPorts", Maps.newHashMap());
+//		Response createResponse = dockerTarget.path("/containers/create").queryParam("name", container.name).request().post(Entity.entity(createConfig, MediaType.APPLICATION_JSON_TYPE));
 		createResponse.close();
 	}
 
