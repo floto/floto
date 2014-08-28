@@ -68,7 +68,7 @@ public class WorkstationHypervisorService implements HypervisorService {
         //workaround for windows ovftool - it creates unnecessary subdirectory
         //so move the files one level up        
         File dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName);
-        if (System.getProperty("os.name").contains("Windows") && dir.isDirectory()) {
+        if (dir.isDirectory()) {
             File[] files = dir.listFiles();
             for (File file: files){
 
