@@ -85,8 +85,11 @@
                 <form class="navbar-form navbar-left" role="search">
                     <button type="button" class="btn btn-primary btn-sm" ng-click="compileManifest()">Recompile</button>
                 </form>
-                <span ng-show="domainName" class="navbar-brand pull-right"
-                      href="#"><strong>[{{domainName}}]</strong></span>
+                <span class="navbar-brand pull-right" href="#" style="text-align: center; padding: 5px 20px">
+                    <strong ng-show="domainName" >[{{domainName}}]</strong><br>
+                    <span style="font-size: 80%">{{site.projectRevision}}</span>
+                </span>
+
             </div>
             </a>
         </div>

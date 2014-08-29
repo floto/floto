@@ -12,11 +12,13 @@
             this.manifest.$promise.then(function (manifest) {
                 if (manifest.site) {
                     $rootScope.domainName = manifest.site.domainName;
+                    $rootScope.site = manifest.site;
                     $rootScope.titleSuffix = " - " + manifest.site.domainName;
 
                 } else {
                     $rootScope.domainName = null;
                     $rootScope.titleSuffix = null;
+                    $rootScope.site = null;
                 }
             });
         };
