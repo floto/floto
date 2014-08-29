@@ -62,10 +62,9 @@
     <script src="/js/util/ErrorHandling.js"></script>
     <script src="/js/util/directives.js"></script>
 
-
     <div class="navbar navbar-default navbar-fixed-top" bs-navbar>
         <div class="navbar-inner" style="padding-left: 15px">
-            <a class="navbar-brand" href="#">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
+            <a class="navbar-brand" href="#" title="{{flotoVersion}}">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
 
             </a>
 
@@ -95,7 +94,9 @@
         </div>
     </div>
     <section style="margin-top: 64px" ui-view></section>
+
 </div>
+<div style="position: fixed; bottom; -30px; right: 10px; font-size: 80%" class="text-muted">{{flotoRevision}}</div>
 
 </body>
 </html>

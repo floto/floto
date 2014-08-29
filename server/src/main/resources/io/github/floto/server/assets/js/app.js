@@ -46,4 +46,11 @@ var app;
         $rootScope.$stateParams = $stateParams;
     }]);
 
+    app.run(function($rootScope, $http) {
+        $http.get(app.urlPrefix+"info").then(function (result) {
+            $rootScope.flotoRevision = result.data.flotoRevision;
+            $rootScope.flotoVersion = result.data.flotoVersion;
+        });
+    });
+
 })();
