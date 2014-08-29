@@ -59,8 +59,17 @@ public class VirtualMachineManager {
 	}
 
     public static void markAsTemplate(VirtualMachine vm) throws Exception {
-        vm.markAsTemplate();
+		if (vm.getResourcePool() != null) {
+			vm.markAsTemplate();
+		}
     }
+
+
+	public static void markAsVirtualMachine(VirtualMachine vm, ResourcePool rp, HostSystem host) throws Exception {
+		if (vm.getResourcePool() == null) {
+			vm.markAsVirtualMachine(rp, host);
+		}
+	}
 
 	private boolean existsVm(String vmName) {
 		try {
@@ -76,7 +85,7 @@ public class VirtualMachineManager {
 
     public void cloneVm(String templateVmName, VmDescription vmDesc,
 			boolean linked) throws Exception {
-        log.info("cloneVm " + templateVmName + " -> " + vmDesc);
+        log.info("Clone vm " + templateVmName + " -> " + vmDesc);
 
         Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
         Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
@@ -85,14 +94,14 @@ public class VirtualMachineManager {
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
 
         if (!existsVm(templateVmName)) {
-            log.error("template " + templateVmName + " not found");
+            log.error("Template " + templateVmName + " not found");
             return;
         }
         VirtualMachine vm = (VirtualMachine) new InventoryNavigator(rootFolder)
                 .searchManagedEntity("VirtualMachine", templateVmName);
 
         if (existsVm(vmDesc.vmName)) {
-            log.error("virtual machine " + vmDesc.vmName + " allready exists");
+            log.error("Vm " + vmDesc.vmName + " already exists");
             return;
         }
 
@@ -107,11 +116,11 @@ public class VirtualMachineManager {
 
         if (datastore == null) {
             datastore = host.getDatastores()[0];
-            log.warn("datastore: " + esxDesc.defaultDatastore
+            log.warn("Datastore: " + esxDesc.defaultDatastore
                     + " not found, using the first available: "
                     + datastore.getName());
         } else {
-            log.info("datastore: " + datastore.getName());
+            log.info("Datastore: " + datastore.getName());
         }
 
         // CustomizationSpec customSpec = new CustomizationSpec();
@@ -126,19 +135,13 @@ public class VirtualMachineManager {
                             .name());
 
             if (vm.getSnapshot() == null) {
-                if (vm.getResourcePool() == null) {
-                    vm.markAsVirtualMachine(rp, host);
-                }
-                Task task = vm.createSnapshot_Task("snap1",
-                        "snapshot for creating linked virtual machines", false,
-                        true);
+	            markAsVirtualMachine(vm, rp, host);
 
-                if (task.waitForTask(200, 100).equals(Task.SUCCESS)) {
-                    log.info("successfully created snapshot");
-                } else {
-                    log.error("failed craeting snapshot");
-                }
-                vm.markAsTemplate();
+	            Task task = vm.createSnapshot_Task("snap1", "Snapshot for linked clones", false, true);
+
+	            EsxUtils.waitForTask(task, "Create snapshot");
+
+				markAsTemplate(getVm(templateVmName));
             }
 
             cloneSpec.snapshot = vm.getSnapshot().currentSnapshot;
@@ -152,16 +155,16 @@ public class VirtualMachineManager {
         cloneSpec.setTemplate(false);
 
         Task task = vm.cloneVM_Task(vmFolder, vmDesc.vmName, cloneSpec);
-        log.info("launching the virtual machine clone task ...");
+        log.info("Launching the vm clone task ...");
 
-        EsxUtils.waitForTask(task, "clone virtual machine "+ vm.getName());
+        EsxUtils.waitForTask(task, "Clone vm "+ vm.getName());
 
         ManagedEntity[] me = {getVm(vmDesc.vmName)};
         vmFolder.moveIntoFolder_Task(me);
     }
 
 	public void reconfigureVm(VmDescription vmDesc) throws Exception {
-        log.info("reconfigureVm(" + vmDesc.vmName + ")");
+        log.info("Reconfigure vm " + vmDesc.vmName);
 
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
 
@@ -176,8 +179,7 @@ public class VirtualMachineManager {
         }
 
         if (network == null) {
-            log.error("network " + esxDesc.networks.get(0) + " not found");
-            return;
+            throw new RuntimeException("Network " + esxDesc.networks.get(0) + " not found");
         }
 
         List<VirtualDeviceConfigSpec> vdcss = new ArrayList<>();
@@ -205,13 +207,11 @@ public class VirtualMachineManager {
 
         vmcs.setDeviceChange(nicSpecArray);
         Task task = vm.reconfigVM_Task(vmcs);
-        EsxUtils.waitForTask(task, "reconfigure vm "+ vm.getName());
-
+        EsxUtils.waitForTask(task, "Reconfigure vm "+ vm.getName());
     }
 
-	public void deployTemplate(URL vmUrl, String templateVmName)
-            throws Exception {
-        log.info("deploy template " + vmUrl);
+	public void deployTemplate(URL vmUrl, String templateVmName) throws Exception {
+        log.info("Deploy template " + vmUrl + " to " + esxDesc);
 
         ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
         Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
@@ -228,10 +228,10 @@ public class VirtualMachineManager {
                 break;
             }
         }
-        log.info("datastore:" + datastore.getName());
+        log.info("Using datastore: " + datastore.getName());
 
         if (existsVm(templateVmName)) {
-            log.warn("template " + templateVmName + " allready exists");
+            log.warn("Template " + templateVmName + " already exists");
             return;
         }
 
@@ -367,7 +367,12 @@ public class VirtualMachineManager {
             httpNfcLease.httpNfcLeaseComplete();
         }
 
-        markAsTemplate(getVm(templateVmName));
+		VirtualMachine vm = getVm(templateVmName);
+
+		Task task = vm.createSnapshot_Task("snap1", "Snapshot for linked clones", false, true);
+		EsxUtils.waitForTask(task, "Create snapshot");
+
+        markAsTemplate(vm);
 
     }
 
@@ -417,7 +422,7 @@ public class VirtualMachineManager {
     }
 
 	public void exportVM(String vmname, String targetFile) throws Exception {
-		log.info("Export virtual machine " + vmname + " to " + targetFile);
+		log.info("Export vm " + vmname + " to " + targetFile);
 
 		File exportDir = (new File(new File(targetFile).getParent() + "/" + vmname));
 		FileUtils.forceMkdir(exportDir);
