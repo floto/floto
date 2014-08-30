@@ -77,10 +77,14 @@
 
         FlotoService.getFilePreview = function getFilePreview(url) {
             var result = {
-                content: "Loading..."
+                loading: true
             };
             $http.get(app.urlPrefix + url, {transformResponse: function(x) {return x;}}).then(function (response) {
+                result.loading = false;
                 result.content = response.data;
+            }).catch(function (error) {
+                result.loading = false;
+                result.error = error.data.message;
             });
             return  result;
 
