@@ -18,10 +18,8 @@
 			name: hostName
 		};
 		$scope.fileTargets = [
-//			{name: "Log", file: "log"},
-//			{name: "Buildlog", file: "buildlog"},
-//			{name: "Image", file: "dockerfile%2Fimage"},
-			//{name: "Container", file: "dockerfile%2Fcontainer"}
+			{name: "PostDeploy", file: encodeURIComponent("script/postDeploy")},
+			{name: "Reconfigure", file: encodeURIComponent("script/reconfigure")}
 		];
 
 		FlotoService.getHostTemplates(hostName).then(function (templates) {

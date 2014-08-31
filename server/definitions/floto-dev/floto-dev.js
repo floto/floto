@@ -4,7 +4,15 @@ setDomain("virtualbox.site")
 site.projectRevision = "1.2.3-foo";
 
 
-host("localhost", {});
+host("localhost", {
+    postDeploy: function() {
+        run("foobar");
+        addTemplate(__DIR__ + "templates/foobar.txt", "/foo", {"foo": "bar"});
+        addTemplate(__DIR__ + "templates/broken-template.txt", "/broken");
+    },
+    reconfigure: function() {
+    }
+});
 
 image("elasticsearch", {
     build: function() {

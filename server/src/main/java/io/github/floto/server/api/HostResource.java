@@ -17,8 +17,15 @@ public class HostResource {
 		this.hostName = hostName;
 	}
 
+    @GET
+    @Path("script/{type:.*}")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getHostScript(@PathParam("type") String type) {
+        return flotoService.getHostScript(hostName, type);
+    }
 
-	@GET
+
+    @GET
 	@Path("template/{path:.*}")
 	@Produces(MediaType.TEXT_PLAIN)
 	public String getTemplate(@PathParam("path") String path) {
