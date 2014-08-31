@@ -74,7 +74,7 @@
                     <li ui-sref-active="active"><a ui-sref="hosts">Hosts</a></li>
                     <li ui-sref-active="active"><a ui-sref="tasks">Tasks</a></li>
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Export <span class="caret"></span></a>
+                        <a style="cursor: pointer" class="dropdown-toggle" data-toggle="dropdown">Export <span class="caret"></span></a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="api/export/container-logs">Container Logs</a></li>
                         </ul>
@@ -86,7 +86,7 @@
                 </form>
                 <span class="navbar-brand pull-right" href="#" style="text-align: center; padding: 5px 20px">
                     <strong ng-show="domainName" >[{{domainName}}]</strong><br>
-                    <span style="font-size: 80%">{{site.projectRevision}}</span>
+                    <span style="font-size: 80%" class="text-muted">{{site.projectRevision}}</span>
                 </span>
 
             </div>
