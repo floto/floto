@@ -5,6 +5,7 @@ import ch.qos.logback.classic.pattern.RootCauseFirstThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.io.input.Tailer;
 import org.slf4j.LoggerFactory;
 
@@ -15,10 +16,11 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.function.BiConsumer;
 
 public class TaskService {
-    private Executor executor = Executors.newFixedThreadPool(8);
+    private Executor executor = Executors.newFixedThreadPool(8, new ThreadFactoryBuilder().setDaemon(true).build());
     private Map<String, TaskInfo<?>> activeTaskMap = new HashMap<>();
     private Map<String, TaskInfo<?>> threadTaskMap = new HashMap<>();
     private TaskPersistence taskPersistence;

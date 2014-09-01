@@ -1,6 +1,8 @@
 package io.github.floto.core.virtualization.esx;
 
 import com.vmware.vim25.mo.HttpNfcLease;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LeaseProgressUpdater extends Thread {
 	private HttpNfcLease httpNfcLease = null;
@@ -19,8 +21,7 @@ public class LeaseProgressUpdater extends Thread {
 				Thread.sleep(updateInterval);
 			} catch (InterruptedException ie) {
 				break;
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			} catch (Exception ignored) {
 			}
 		}
 	}

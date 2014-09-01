@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
+import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
+import io.github.floto.core.jobs.SshHostManipulator;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.ssh.SshService;
 import io.github.floto.core.util.DockerfileHelper;
@@ -57,11 +59,11 @@ import java.util.function.Consumer;
 public class FlotoService implements Closeable {
     private Logger log = LoggerFactory.getLogger(FlotoService.class);
 
-	private FlotoDsl flotoDsl = new FlotoDsl();
-	private File rootDefinitionFile;
-	private String manifestString;
-	private Manifest manifest = new Manifest();
-	private SshService sshService = new SshService();
+    private FlotoDsl flotoDsl = new FlotoDsl();
+    private File rootDefinitionFile;
+    private String manifestString;
+    private Manifest manifest = new Manifest();
+    private SshService sshService = new SshService();
     private int proxyPort = 40005;
     private File flotoHome = new File(System.getProperty("user.home") + "/.floto");
     private final boolean useProxy;
@@ -70,8 +72,9 @@ public class FlotoService implements Closeable {
 
     private Map<String, String> externalHostIpMap = new HashMap<>();
 
-	private Client client;
-	{
+    private Client client;
+
+    {
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.property(ClientProperties.READ_TIMEOUT, 0);
         clientConfig.property(ClientProperties.CONNECT_TIMEOUT, 2000);
@@ -85,9 +88,9 @@ public class FlotoService implements Closeable {
         clientBuilder.withConfig(clientConfig);
         client = clientBuilder.build();
         client.register(new ErrorClientResponseFilter());
-	}
+    }
 
-	private boolean buildOutputDumpEnabled = false;
+    private boolean buildOutputDumpEnabled = false;
     private TaskService taskService;
 
     public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
@@ -99,34 +102,34 @@ public class FlotoService implements Closeable {
         } catch (JsonProcessingException e) {
             throw Throwables.propagate(e);
         }
-        if(this.useProxy) {
+        if (this.useProxy) {
             proxy = new HttpProxy(proxyPort);
             proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
             proxy.start();
             try {
                 String ownAddress = commonParameters.proxyUrl;
-                if(ownAddress == null || ownAddress.isEmpty()) {
-                	try {
-                		ownAddress = Inet4Address.getLocalHost().getHostAddress();
-                	} catch(Throwable throwable) {
-                		log.warn("Unable to get own address", throwable);
-                	}
-                	if(ownAddress == null || ownAddress.startsWith("127.")) {
-                		Enumeration e = NetworkInterface.getNetworkInterfaces();
-                		while (e.hasMoreElements()) {
-                			NetworkInterface n = (NetworkInterface) e.nextElement();
-                			if(n.getDisplayName().startsWith("eth")) {
-                				Enumeration ee = n.getInetAddresses();
-                				while (ee.hasMoreElements()) {
-                					InetAddress i = (InetAddress) ee.nextElement();
-                					if(i instanceof Inet4Address) {
-                						ownAddress = i.getHostAddress();
-                						break;
-                					}
-                				}
-                			}
-                		}
-                	}
+                if (ownAddress == null || ownAddress.isEmpty()) {
+                    try {
+                        ownAddress = Inet4Address.getLocalHost().getHostAddress();
+                    } catch (Throwable throwable) {
+                        log.warn("Unable to get own address", throwable);
+                    }
+                    if (ownAddress == null || ownAddress.startsWith("127.")) {
+                        Enumeration e = NetworkInterface.getNetworkInterfaces();
+                        while (e.hasMoreElements()) {
+                            NetworkInterface n = (NetworkInterface) e.nextElement();
+                            if (n.getDisplayName().startsWith("eth")) {
+                                Enumeration ee = n.getInetAddresses();
+                                while (ee.hasMoreElements()) {
+                                    InetAddress i = (InetAddress) ee.nextElement();
+                                    if (i instanceof Inet4Address) {
+                                        ownAddress = i.getHostAddress();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 log.info("Using proxy address: {}", ownAddress);
                 httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";
@@ -136,9 +139,9 @@ public class FlotoService implements Closeable {
             }
 
         }
-	}
+    }
 
-	public TaskInfo<Void> compileManifest() {
+    public TaskInfo<Void> compileManifest() {
         return taskService.startTask("Compile manifest", () -> {
             log.info("Compiling manifest");
             String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
@@ -147,101 +150,101 @@ public class FlotoService implements Closeable {
             log.warn("Compiled manifest");
             return null;
         });
-	}
+    }
 
-	public String getManifestString() {
-		return manifestString;
-	}
+    public String getManifestString() {
+        return manifestString;
+    }
 
-	public TaskInfo<Void> redeployContainers(List<String> containers) {
-        return taskService.startTask("Redeploy containers "+ Joiner.on(", ").join(containers), () -> {
+    public TaskInfo<Void> redeployContainers(List<String> containers) {
+        return taskService.startTask("Redeploy containers " + Joiner.on(", ").join(containers), () -> {
             log.info("Redeploying containers {}", containers);
             containers.forEach(this::redeployContainer);
             return null;
         });
-	}
+    }
 
-	private void redeployContainer(String containerName) {
-		File buildLogDirectory = new File(flotoHome, "buildLog");
-		Manifest manifest = this.manifest;
-		try {
-			FileUtils.forceMkdir(buildLogDirectory);
-		} catch (IOException e) {
-			Throwables.propagate(e);
-		}
-		try (FileOutputStream buildLogStream = new FileOutputStream(getContainerBuildLogFile(containerName))) {
-			Container container = findContainer(containerName, manifest);
-			Image image = findImage(container.image, manifest);
-			Host host = findHost(container.host, manifest);
+    private void redeployContainer(String containerName) {
+        File buildLogDirectory = new File(flotoHome, "buildLog");
+        Manifest manifest = this.manifest;
+        try {
+            FileUtils.forceMkdir(buildLogDirectory);
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        }
+        try (FileOutputStream buildLogStream = new FileOutputStream(getContainerBuildLogFile(containerName))) {
+            Container container = findContainer(containerName, manifest);
+            Image image = findImage(container.image, manifest);
+            Host host = findHost(container.host, manifest);
 
-			// Build base image
-			String baseImageName = image.name + "-image";
-			buildImage(baseImageName, image.buildSteps, host, manifest, Collections.emptyMap(), buildLogStream);
+            // Build base image
+            String baseImageName = image.name + "-image";
+            buildImage(baseImageName, image.buildSteps, host, manifest, Collections.emptyMap(), buildLogStream);
 
-			// Build configured image
-			List<JsonNode> configureSteps = new ArrayList<>(container.configureSteps);
-			ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode().put("type", "FROM").put("line", baseImageName);
+            // Build configured image
+            List<JsonNode> configureSteps = new ArrayList<>(container.configureSteps);
+            ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode().put("type", "FROM").put("line", baseImageName);
 
-			configureSteps.add(0, fromBuildStep);
-			Map<String, Object> globalConfig = createGlobalConfig(manifest);
-			buildImage(container.name, configureSteps, host, manifest, globalConfig, buildLogStream);
+            configureSteps.add(0, fromBuildStep);
+            Map<String, Object> globalConfig = createGlobalConfig(manifest);
+            buildImage(container.name, configureSteps, host, manifest, globalConfig, buildLogStream);
 
-			// destroy old container
-			destroyContainer(container.name, host);
+            // destroy old container
+            destroyContainer(container.name, host);
 
-			// create container
-			createContainer(container, host);
+            // create container
+            createContainer(container, host);
 
-			// start container
-			startContainer(containerName);
-			log.info("Redeployed container {}", container.name);
+            // start container
+            startContainer(containerName);
+            log.info("Redeployed container {}", container.name);
 
-		} catch (IOException e) {
-			Throwables.propagate(e);
-		}
-	}
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        }
+    }
 
-	public Map<String, Object> createGlobalConfig(Manifest manifest) {
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			Map<String, Object> siteMap = mapper.reader(Map.class).readValue(manifest.site);
-			HashMap<String, Object> globalConfig = new HashMap<>();
-			globalConfig.put("site", siteMap);
-			return globalConfig;
-		} catch (IOException e) {
-			throw Throwables.propagate(e);
-		}
-	}
+    public Map<String, Object> createGlobalConfig(Manifest manifest) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> siteMap = mapper.reader(Map.class).readValue(manifest.site);
+            HashMap<String, Object> globalConfig = new HashMap<>();
+            globalConfig.put("site", siteMap);
+            return globalConfig;
+        } catch (IOException e) {
+            throw Throwables.propagate(e);
+        }
+    }
 
-	private File getContainerBuildLogFile(String containerName) {
-		return new File(flotoHome, "buildLog/" + containerName);
-	}
+    private File getContainerBuildLogFile(String containerName) {
+        return new File(flotoHome, "buildLog/" + containerName);
+    }
 
-	private void startContainer(Image image, Container container, Host host) {
-		WebTarget dockerTarget = createDockerTarget(host);
-		Map<String, Object> startConfig = new HashMap<>();
+    private void startContainer(Image image, Container container, Host host) {
+        WebTarget dockerTarget = createDockerTarget(host);
+        Map<String, Object> startConfig = new HashMap<>();
 
-		// Host networking
-		startConfig.put("NetworkMode", "host");
+        // Host networking
+        startConfig.put("NetworkMode", "host");
 
-		// Host mount directories
-		ArrayList<String> binds = new ArrayList<>();
-		for (Map.Entry<String, String> entry : getContainerVolumes(image, container).entrySet()) {
-			binds.add(entry.getKey() + ":" + entry.getValue());
-		}
-		startConfig.put("Binds", binds);
+        // Host mount directories
+        ArrayList<String> binds = new ArrayList<>();
+        for (Map.Entry<String, String> entry : getContainerVolumes(image, container).entrySet()) {
+            binds.add(entry.getKey() + ":" + entry.getValue());
+        }
+        startConfig.put("Binds", binds);
 
-		Response startResponse = dockerTarget.path("/containers/" + container.name + "/start").request().post(Entity.entity(startConfig, MediaType.APPLICATION_JSON_TYPE));
-		startResponse.close();
-	}
+        Response startResponse = dockerTarget.path("/containers/" + container.name + "/start").request().post(Entity.entity(startConfig, MediaType.APPLICATION_JSON_TYPE));
+        startResponse.close();
+    }
 
-	private Map<String, String> getContainerVolumes(Image image, Container container) {
-		HashMap<String, String> volumeMap = new HashMap<>();
-		ArrayList<JsonNode> steps = new ArrayList<>(image.buildSteps);
-		steps.addAll(container.configureSteps);
-		for (JsonNode step : steps) {
-			String type = step.path("type").asText();
-			if (type.equals("VOLUME")) {
+    private Map<String, String> getContainerVolumes(Image image, Container container) {
+        HashMap<String, String> volumeMap = new HashMap<>();
+        ArrayList<JsonNode> steps = new ArrayList<>(image.buildSteps);
+        steps.addAll(container.configureSteps);
+        for (JsonNode step : steps) {
+            String type = step.path("type").asText();
+            if (type.equals("VOLUME")) {
                 String path = step.path("path").asText();
                 String name = step.path("name").asText();
                 volumeMap.put("/data/" + container.name + "/" + name, path);
@@ -249,95 +252,95 @@ public class FlotoService implements Closeable {
                 String hostPath = step.path("hostPath").asText();
                 String containerPath = step.path("containerPath").asText();
                 volumeMap.put(hostPath, containerPath);
-			}
-		}
-		return volumeMap;
-	}
+            }
+        }
+        return volumeMap;
+    }
 
-	private void createContainer(Container container, Host host) {
-		WebTarget dockerTarget = createDockerTarget(host);
-		Map<String, Object> createConfig = new HashMap<>();
-		createConfig.put("Image", container.name);
-		Response createResponse = dockerTarget.path("/containers/create").queryParam("name", container.name).request().post(Entity.entity(createConfig, MediaType.APPLICATION_JSON_TYPE));
-		createResponse.close();
-	}
+    private void createContainer(Container container, Host host) {
+        WebTarget dockerTarget = createDockerTarget(host);
+        Map<String, Object> createConfig = new HashMap<>();
+        createConfig.put("Image", container.name);
+        Response createResponse = dockerTarget.path("/containers/create").queryParam("name", container.name).request().post(Entity.entity(createConfig, MediaType.APPLICATION_JSON_TYPE));
+        createResponse.close();
+    }
 
-	private void destroyContainer(String containerName, Host host) {
-		WebTarget dockerTarget = createDockerTarget(host);
-		try {
-			Response killResponse = dockerTarget.path("/containers/" + containerName + "/kill").request().post(Entity.text(""));
-			killResponse.close();
-			Response removeResponse = dockerTarget.path("/containers/" + containerName).request().delete();
-			removeResponse.close();
-		} catch (Throwable t) {
-			if (t.getMessage().contains("404")) {
-				// Not there - ignore
-			} else {
-				throw new RuntimeException("Unable to destroy container " + containerName, t);
-			}
-		}
-	}
+    private void destroyContainer(String containerName, Host host) {
+        WebTarget dockerTarget = createDockerTarget(host);
+        try {
+            Response killResponse = dockerTarget.path("/containers/" + containerName + "/kill").request().post(Entity.text(""));
+            killResponse.close();
+            Response removeResponse = dockerTarget.path("/containers/" + containerName).request().delete();
+            removeResponse.close();
+        } catch (Throwable t) {
+            if (t.getMessage().contains("404")) {
+                // Not there - ignore
+            } else {
+                throw new RuntimeException("Unable to destroy container " + containerName, t);
+            }
+        }
+    }
 
-	private void buildImage(String imageName, List<JsonNode> buildSteps, Host host, Manifest manifest, Map<String, Object> globalConfig, OutputStream buildLogStream) {
-		PrintWriter buildLogWriter = new PrintWriter(buildLogStream);
-		String dockerFile = createDockerFile(buildSteps);
+    private void buildImage(String imageName, List<JsonNode> buildSteps, Host host, Manifest manifest, Map<String, Object> globalConfig, OutputStream buildLogStream) {
+        PrintWriter buildLogWriter = new PrintWriter(buildLogStream);
+        String dockerFile = createDockerFile(buildSteps);
 
-		WebTarget dockerTarget = createDockerTarget(host);
-		WebTarget buildTarget = dockerTarget.path("build");
-		Response response = buildTarget.queryParam("t", imageName).request().post(Entity.entity(new StreamingOutput() {
-			@Override
-			public void write(OutputStream outputStream) throws IOException, WebApplicationException {
-				try (TarOutputStream out = new TarOutputStream(outputStream)) {
-					out.setLongFileMode(TarOutputStream.LONGFILE_POSIX);
-					TarEntry tarEntry = new TarEntry("Dockerfile");
-					byte[] bytes = dockerFile.getBytes();
-					tarEntry.setSize(bytes.length);
-					out.putNextEntry(tarEntry);
-					out.write(bytes);
-					out.closeEntry();
-					for (JsonNode step : buildSteps) {
-						String type = step.path("type").asText();
-						if ("ADD_TEMPLATE".equals(type)) {
-							String destination = step.path("destination").asText();
-							String source = destination;
-							if (source.startsWith("/")) {
-								source = source.substring(1);
-							}
-							String templated = new TemplateUtil().getTemplate(step, globalConfig);
-							TarEntry templateTarEntry = new TarEntry(source);
+        WebTarget dockerTarget = createDockerTarget(host);
+        WebTarget buildTarget = dockerTarget.path("build");
+        Response response = buildTarget.queryParam("t", imageName).request().post(Entity.entity(new StreamingOutput() {
+            @Override
+            public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+                try (TarOutputStream out = new TarOutputStream(outputStream)) {
+                    out.setLongFileMode(TarOutputStream.LONGFILE_POSIX);
+                    TarEntry tarEntry = new TarEntry("Dockerfile");
+                    byte[] bytes = dockerFile.getBytes();
+                    tarEntry.setSize(bytes.length);
+                    out.putNextEntry(tarEntry);
+                    out.write(bytes);
+                    out.closeEntry();
+                    for (JsonNode step : buildSteps) {
+                        String type = step.path("type").asText();
+                        if ("ADD_TEMPLATE".equals(type)) {
+                            String destination = step.path("destination").asText();
+                            String source = destination;
+                            if (source.startsWith("/")) {
+                                source = source.substring(1);
+                            }
+                            String templated = new TemplateUtil().getTemplate(step, globalConfig);
+                            TarEntry templateTarEntry = new TarEntry(source);
                             byte[] templateBytes = templated.getBytes(Charsets.UTF_8);
                             templateTarEntry.setSize(templateBytes.length);
-							out.putNextEntry(templateTarEntry);
-							IOUtils.write(templateBytes, out);
-							out.closeEntry();
-						} else if ("ADD_MAVEN".equals(type)) {
-							String coordinates = step.path("coordinates").asText();
-							String destination = step.path("destination").asText();
-							if (coordinates.contains(":tar.gz:")) {
-								destination = destination + ".x";
-							}
-							if (destination.startsWith("/")) {
-								destination = destination.substring(1);
-							}
+                            out.putNextEntry(templateTarEntry);
+                            IOUtils.write(templateBytes, out);
+                            out.closeEntry();
+                        } else if ("ADD_MAVEN".equals(type)) {
+                            String coordinates = step.path("coordinates").asText();
+                            String destination = step.path("destination").asText();
+                            if (coordinates.contains(":tar.gz:")) {
+                                destination = destination + ".x";
+                            }
+                            if (destination.startsWith("/")) {
+                                destination = destination.substring(1);
+                            }
 
                             JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
                             File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
-							TarEntry templateTarEntry = new TarEntry(artifactFile, destination);
-							out.putNextEntry(templateTarEntry);
-							FileUtils.copyFile(artifactFile, out);
-							out.closeEntry();
+                            TarEntry templateTarEntry = new TarEntry(artifactFile, destination);
+                            out.putNextEntry(templateTarEntry);
+                            FileUtils.copyFile(artifactFile, out);
+                            out.closeEntry();
                         } else if ("COPY_FILES".equals(type)) {
                             JsonNode fileList = step.path("fileList");
                             List<String> files = new ArrayList<String>();
                             Iterator<Map.Entry<String, JsonNode>> iterator = fileList.fields();
-                            while(iterator.hasNext()) {
+                            while (iterator.hasNext()) {
                                 files.add(iterator.next().getKey());
                             }
                             String destination = step.path("destination").asText();
 
                             for (String filename : files) {
                                 File file = new File(filename);
-                                TarEntry templateTarEntry = new TarEntry(file, destination+filename);
+                                TarEntry templateTarEntry = new TarEntry(file, destination + filename);
                                 out.putNextEntry(templateTarEntry);
                                 FileUtils.copyFile(file, out);
                                 out.closeEntry();
@@ -347,7 +350,7 @@ public class FlotoService implements Closeable {
                             String source = step.path("source").asText();
                             File sourceFile = new File(source);
                             Collection<File> files;
-                            if(sourceFile.isDirectory()) {
+                            if (sourceFile.isDirectory()) {
                                 files = FileUtils.listFiles(sourceFile, FileFileFilter.FILE, TrueFileFilter.INSTANCE);
                             } else {
                                 files = Collections.singleton(sourceFile);
@@ -355,7 +358,7 @@ public class FlotoService implements Closeable {
                             String destination = step.path("destination").asText();
 
                             for (File file : files) {
-                                TarEntry templateTarEntry = new TarEntry(file, destination+file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\","/"));
+                                TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
                                 out.putNextEntry(templateTarEntry);
                                 FileUtils.copyFile(file, out);
                                 out.closeEntry();
@@ -364,55 +367,55 @@ public class FlotoService implements Closeable {
                             String hostPath = step.path("hostPath").asText();
                             String containerPath = step.path("containerPath").asText();
                         }
-					}
+                    }
 
-					out.close();
-				}
+                    out.close();
+                }
 
-			}
-		}, "application/tar"));
-		try {
-			ObjectMapper objectMapper = new ObjectMapper();
-			InputStream inputStream = (InputStream) response.getEntity();
-			CloseShieldInputStream shieldInputStream = new CloseShieldInputStream(inputStream);
-			MappingIterator<JsonNode> entries = objectMapper.reader(JsonNode.class).readValues(shieldInputStream);
-			while (entries.hasNext()) {
-				JsonNode node = entries.next();
-				JsonNode errorNode = node.get("error");
-				if (errorNode != null) {
-					String errorText = errorNode.asText();
-					buildLogWriter.println();
-					buildLogWriter.println();
-					buildLogWriter.println(errorText);
-					if(buildOutputDumpEnabled) {
-						System.out.println();
-						System.out.println(errorText);
-					}
-					throw new RuntimeException("Error building image: " + errorText);
-				}
-				JsonNode streamNode = node.get("stream");
-				if (streamNode != null) {
-					String text = streamNode.asText();
-					buildLogWriter.print(text);
-					if(buildOutputDumpEnabled) {
-						System.out.print(text);
-					}
-				}
+            }
+        }, "application/tar"));
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            InputStream inputStream = (InputStream) response.getEntity();
+            CloseShieldInputStream shieldInputStream = new CloseShieldInputStream(inputStream);
+            MappingIterator<JsonNode> entries = objectMapper.reader(JsonNode.class).readValues(shieldInputStream);
+            while (entries.hasNext()) {
+                JsonNode node = entries.next();
+                JsonNode errorNode = node.get("error");
+                if (errorNode != null) {
+                    String errorText = errorNode.asText();
+                    buildLogWriter.println();
+                    buildLogWriter.println();
+                    buildLogWriter.println(errorText);
+                    if (buildOutputDumpEnabled) {
+                        System.out.println();
+                        System.out.println(errorText);
+                    }
+                    throw new RuntimeException("Error building image: " + errorText);
+                }
+                JsonNode streamNode = node.get("stream");
+                if (streamNode != null) {
+                    String text = streamNode.asText();
+                    buildLogWriter.print(text);
+                    if (buildOutputDumpEnabled) {
+                        System.out.print(text);
+                    }
+                }
                 buildLogWriter.flush();
-			}
-			// Drain outputstream, wait for build completion
-			IOUtils.copy(inputStream, System.out);
-		} catch (IOException e) {
-			Throwables.propagate(e);
-		} finally {
-			buildLogWriter.flush();
-			response.close();
-		}
-	}
+            }
+            // Drain outputstream, wait for build completion
+            IOUtils.copy(inputStream, System.out);
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        } finally {
+            buildLogWriter.flush();
+            response.close();
+        }
+    }
 
     private String createDockerFile(List<JsonNode> buildSteps) {
         DockerfileHelper dockerfileHelper = new DockerfileHelper();
-        if(useProxy) {
+        if (useProxy) {
             dockerfileHelper.setHttpProxy(httpProxyUrl);
         }
         return dockerfileHelper.createDockerfile(buildSteps);
@@ -429,14 +432,14 @@ public class FlotoService implements Closeable {
                 tarOutputStream.closeEntry();
             }
             tarOutputStream.close();
-        } catch(Exception e) {
+        } catch (Exception e) {
             Throwables.propagate(e);
         }
     }
 
     private WebTarget createDockerTarget(Host host) {
-		return client.target("http://" + getExternalHostIp(host) + ":2375");
-	}
+        return client.target("http://" + getExternalHostIp(host) + ":2375");
+    }
 
     public void setExternalHostIp(String hostName, String ip) {
         externalHostIpMap.put(hostName, ip);
@@ -444,215 +447,215 @@ public class FlotoService implements Closeable {
 
     public String getExternalHostIp(Host host) {
         String ip = externalHostIpMap.get(host.name);
-        if(ip == null) {
+        if (ip == null) {
             ip = host.ip;
         }
         return ip;
     }
 
-	private Image findImage(String imageName, Manifest manifest) {
-		for (Image candidate : manifest.images) {
-			if (imageName.equals(candidate.name)) {
-				return candidate;
-			}
-		}
-		throw new IllegalArgumentException("Unknown image: " + imageName);
-	}
+    private Image findImage(String imageName, Manifest manifest) {
+        for (Image candidate : manifest.images) {
+            if (imageName.equals(candidate.name)) {
+                return candidate;
+            }
+        }
+        throw new IllegalArgumentException("Unknown image: " + imageName);
+    }
 
-	private Host findHost(String hostName, Manifest manifest) {
+    private Host findHost(String hostName, Manifest manifest) {
         return manifest.findHost(hostName);
-	}
+    }
 
-	private Container findContainer(String containerName, Manifest manifest) {
-		for (Container candidate : manifest.containers) {
-			if (containerName.equals(candidate.name)) {
-				return candidate;
-			}
-		}
-		throw new IllegalArgumentException("Unknown container: " + containerName);
-	}
+    private Container findContainer(String containerName, Manifest manifest) {
+        for (Container candidate : manifest.containers) {
+            if (containerName.equals(candidate.name)) {
+                return candidate;
+            }
+        }
+        throw new IllegalArgumentException("Unknown container: " + containerName);
+    }
 
-	public TaskInfo<Void> stopContainers(List<String> containers) {
-        return taskService.startTask("Stop containers "+ Joiner.on(", ").join(containers), () -> {
+    public TaskInfo<Void> stopContainers(List<String> containers) {
+        return taskService.startTask("Stop containers " + Joiner.on(", ").join(containers), () -> {
             log.info("Stopping containers {}", containers);
             containers.forEach(runContainerCommand("stop"));
             return null;
         });
 
-	}
+    }
 
-	public TaskInfo<Void> restartContainers(List<String> containers) {
-        return taskService.startTask("Restart containers "+ Joiner.on(", ").join(containers), () -> {
+    public TaskInfo<Void> restartContainers(List<String> containers) {
+        return taskService.startTask("Restart containers " + Joiner.on(", ").join(containers), () -> {
             log.info("Restarting containers {}", containers);
             containers.forEach(runContainerCommand("restart"));
             return null;
         });
-	}
+    }
 
-	public TaskInfo<Void> startContainers(List<String> containers) {
-        return taskService.startTask("Start containers "+ Joiner.on(", ").join(containers), () -> {
+    public TaskInfo<Void> startContainers(List<String> containers) {
+        return taskService.startTask("Start containers " + Joiner.on(", ").join(containers), () -> {
             log.info("Starting containers {}", containers);
             containers.forEach(this::startContainer);
             return null;
         });
-	}
+    }
 
-	private void startContainer(String containerName) {
-		Manifest manifest = this.manifest;
-		Container container = findContainer(containerName, manifest);
-		Host host = findHost(container.host, manifest);
-		Image image = findImage(container.image, manifest);
-		startContainer(image, container, host);
-	}
+    private void startContainer(String containerName) {
+        Manifest manifest = this.manifest;
+        Container container = findContainer(containerName, manifest);
+        Host host = findHost(container.host, manifest);
+        Image image = findImage(container.image, manifest);
+        startContainer(image, container, host);
+    }
 
-	private Consumer<? super String> runContainerCommand(String command) {
-		return (String containerName) -> {
-			Manifest manifest = this.manifest;
-			Container container = findContainer(containerName, manifest);
-			Host host = findHost(container.host, manifest);
-			WebTarget dockerTarget = createDockerTarget(host);
-			try {
-				Response response = dockerTarget.path("/containers/" + containerName + "/" + command).request().post(Entity.text(""));
-				response.close();
-			} catch (Throwable t) {
-				Throwables.propagate(t);
-			}
-		};
-	}
+    private Consumer<? super String> runContainerCommand(String command) {
+        return (String containerName) -> {
+            Manifest manifest = this.manifest;
+            Container container = findContainer(containerName, manifest);
+            Host host = findHost(container.host, manifest);
+            WebTarget dockerTarget = createDockerTarget(host);
+            try {
+                Response response = dockerTarget.path("/containers/" + containerName + "/" + command).request().post(Entity.text(""));
+                response.close();
+            } catch (Throwable t) {
+                Throwables.propagate(t);
+            }
+        };
+    }
 
-	public Map<String, String> getContainerStates() {
-		HashMap<String, String> states = new HashMap<>();
-		Manifest manifest = this.manifest;
-		for (Host host : manifest.hosts) {
-			WebTarget dockerTarget = createDockerTarget(host);
-			try {
-				JsonNode response = dockerTarget.path("/containers/json").queryParam("all", true).request().buildGet().submit(JsonNode.class).get();
-				for (JsonNode container : response) {
-					for (JsonNode nameNode : container.get("Names")) {
-						String name = nameNode.textValue();
-						name = name.substring(1);
-						String status = container.get("Status").textValue();
-						String state = "stopped";
-						if (status.startsWith("Up ")) {
-							state = "running";
-						}
-						states.put(name, state);
-					}
-				}
+    public Map<String, String> getContainerStates() {
+        HashMap<String, String> states = new HashMap<>();
+        Manifest manifest = this.manifest;
+        for (Host host : manifest.hosts) {
+            WebTarget dockerTarget = createDockerTarget(host);
+            try {
+                JsonNode response = dockerTarget.path("/containers/json").queryParam("all", true).request().buildGet().submit(JsonNode.class).get();
+                for (JsonNode container : response) {
+                    for (JsonNode nameNode : container.get("Names")) {
+                        String name = nameNode.textValue();
+                        name = name.substring(1);
+                        String status = container.get("Status").textValue();
+                        String state = "stopped";
+                        if (status.startsWith("Up ")) {
+                            state = "running";
+                        }
+                        states.put(name, state);
+                    }
+                }
 
-			} catch (Throwable ignored) {
+            } catch (Throwable ignored) {
                 log.warn("Error getting container state for host {}: {}", host.name, ignored.getMessage());
-			}
+            }
 
 
-		}
-		return states;
-	}
+        }
+        return states;
+    }
 
-	public TaskInfo<Void> purgeContainerData(List<String> containers) {
+    public TaskInfo<Void> purgeContainerData(List<String> containers) {
         return taskService.startTask("Purge container data in " + Joiner.on(", ").join(containers), () -> {
             log.info("Purging data in containers {}", containers);
             containers.forEach(this::purgeContainerData);
             return null;
         });
 
-	}
+    }
 
-	private void purgeContainerData(String containerName) {
-		Manifest manifest = this.manifest;
-		Container container = findContainer(containerName, manifest);
-		Host host = findHost(container.host, manifest);
-		String dataDirectory = "/data/" + container.name;
-		log.info("Deleting " + dataDirectory);
-		sshService.execute(getExternalHostIp(host), "sudo rm -rf " + dataDirectory);
-	}
+    private void purgeContainerData(String containerName) {
+        Manifest manifest = this.manifest;
+        Container container = findContainer(containerName, manifest);
+        Host host = findHost(container.host, manifest);
+        String dataDirectory = "/data/" + container.name;
+        log.info("Deleting " + dataDirectory);
+        sshService.execute(getExternalHostIp(host), "sudo rm -rf " + dataDirectory);
+    }
 
-	public String getDockerfile(String containerName, String type) {
-		Manifest manifest = this.manifest;
-		Container container = findContainer(containerName, manifest);
-		List<JsonNode> buildSteps;
-		if ("container".equals(type)) {
-			String baseImageName = container.image + "-image";
-			buildSteps = new ArrayList<>(container.configureSteps);
-			ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode().put("type", "FROM").put("line", baseImageName);
+    public String getDockerfile(String containerName, String type) {
+        Manifest manifest = this.manifest;
+        Container container = findContainer(containerName, manifest);
+        List<JsonNode> buildSteps;
+        if ("container".equals(type)) {
+            String baseImageName = container.image + "-image";
+            buildSteps = new ArrayList<>(container.configureSteps);
+            ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode().put("type", "FROM").put("line", baseImageName);
 
-			buildSteps.add(0, fromBuildStep);
-		} else if ("image".equals(type)) {
-			Image image = findImage(container.image, manifest);
-			buildSteps = image.buildSteps;
-		} else {
-			throw new IllegalArgumentException("Unknown image type " + type);
-		}
-		String dockerFile = createDockerFile(buildSteps);
-		return dockerFile;
-	}
+            buildSteps.add(0, fromBuildStep);
+        } else if ("image".equals(type)) {
+            Image image = findImage(container.image, manifest);
+            buildSteps = image.buildSteps;
+        } else {
+            throw new IllegalArgumentException("Unknown image type " + type);
+        }
+        String dockerFile = createDockerFile(buildSteps);
+        return dockerFile;
+    }
 
-	public void getLog(String containerName, OutputStream output) {
-		Manifest manifest = this.manifest;
-		Container container = findContainer(containerName, manifest);
-		Host host = findHost(container.host, manifest);
+    public void getLog(String containerName, OutputStream output) {
+        Manifest manifest = this.manifest;
+        Container container = findContainer(containerName, manifest);
+        Host host = findHost(container.host, manifest);
 
-		WebTarget dockerTarget = createDockerTarget(host);
+        WebTarget dockerTarget = createDockerTarget(host);
 
-		try (InputStream inputStream = dockerTarget.path("/containers/" + containerName + "/logs")
-				.queryParam("stdout", true)
-				.queryParam("stderr", true)
-				.queryParam("timestamps", false)
-				.request().buildGet().invoke(InputStream.class)) {
-			DataInputStream dataInputStream = new DataInputStream(inputStream);
-			while (true) {
-				int flags = dataInputStream.readInt();
-				int size = dataInputStream.readInt();
-				IOUtils.copyLarge(inputStream, output, 0, size);
-			}
-		} catch (EOFException expected) {
+        try (InputStream inputStream = dockerTarget.path("/containers/" + containerName + "/logs")
+                .queryParam("stdout", true)
+                .queryParam("stderr", true)
+                .queryParam("timestamps", false)
+                .request().buildGet().invoke(InputStream.class)) {
+            DataInputStream dataInputStream = new DataInputStream(inputStream);
+            while (true) {
+                int flags = dataInputStream.readInt();
+                int size = dataInputStream.readInt();
+                IOUtils.copyLarge(inputStream, output, 0, size);
+            }
+        } catch (EOFException expected) {
 
-		} catch (IOException e) {
-			Throwables.propagate(e);
-		}
-	}
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        }
+    }
 
-	public void getBuildLog(String containerName, OutputStream output) {
-		try (FileInputStream input = new FileInputStream(getContainerBuildLogFile(containerName))) {
-			IOUtils.copy(input, output);
-		} catch (IOException e) {
-			Throwables.propagate(e);
-		}
-	}
+    public void getBuildLog(String containerName, OutputStream output) {
+        try (FileInputStream input = new FileInputStream(getContainerBuildLogFile(containerName))) {
+            IOUtils.copy(input, output);
+        } catch (IOException e) {
+            Throwables.propagate(e);
+        }
+    }
 
-	public String getTemplate(String containerName, String path) {
-		Manifest manifest = this.manifest;
-		Container container = findContainer(containerName, manifest);
-		Image image = findImage(container.image, manifest);
-		List<JsonNode> steps = new ArrayList<>();
-		steps.addAll(container.configureSteps);
-		steps.addAll(image.buildSteps);
-		JsonNode templateStep = null;
-		for (JsonNode step : steps) {
-			String type = step.path("type").asText();
-			if ("ADD_TEMPLATE".equals(type)) {
-				String destination = step.path("destination").asText();
-				if (destination.equals(path)) {
-					templateStep = step;
-					break;
-				}
+    public String getTemplate(String containerName, String path) {
+        Manifest manifest = this.manifest;
+        Container container = findContainer(containerName, manifest);
+        Image image = findImage(container.image, manifest);
+        List<JsonNode> steps = new ArrayList<>();
+        steps.addAll(container.configureSteps);
+        steps.addAll(image.buildSteps);
+        JsonNode templateStep = null;
+        for (JsonNode step : steps) {
+            String type = step.path("type").asText();
+            if ("ADD_TEMPLATE".equals(type)) {
+                String destination = step.path("destination").asText();
+                if (destination.equals(path)) {
+                    templateStep = step;
+                    break;
+                }
 
-			}
-		}
-		if (templateStep == null) {
-			throw new IllegalArgumentException("Template path not found: " + path);
-		}
-		Map<String, Object> globalConfig = createGlobalConfig(manifest);
-		return new TemplateUtil().getTemplate(templateStep, globalConfig);
-	}
+            }
+        }
+        if (templateStep == null) {
+            throw new IllegalArgumentException("Template path not found: " + path);
+        }
+        Map<String, Object> globalConfig = createGlobalConfig(manifest);
+        return new TemplateUtil().getTemplate(templateStep, globalConfig);
+    }
 
-	public Manifest getManifest() {
-		return manifest;
-	}
+    public Manifest getManifest() {
+        return manifest;
+    }
 
-	public void enableBuildOutputDump(boolean enabled) {
-		buildOutputDumpEnabled = enabled;
-	}
+    public void enableBuildOutputDump(boolean enabled) {
+        buildOutputDumpEnabled = enabled;
+    }
 
     public String getHostTemplate(String hostName, String path) {
         Manifest manifest = this.manifest;
@@ -687,15 +690,15 @@ public class FlotoService implements Closeable {
             new ManifestJob<Void>(manifest) {
                 @Override
                 public Void execute() throws Exception {
-                    for(Image image: manifest.images) {
+                    for (Image image : manifest.images) {
                         verifyTemplates(image.buildSteps);
                     }
 
-                    for(Container container: manifest.containers) {
+                    for (Container container : manifest.containers) {
                         verifyTemplates(container.configureSteps);
                     }
 
-                    for(Host host: manifest.hosts) {
+                    for (Host host : manifest.hosts) {
                         verifyTemplates(host.postDeploySteps);
                         verifyTemplates(host.reconfigureSteps);
                     }
@@ -723,5 +726,57 @@ public class FlotoService implements Closeable {
 
     public String getHttpProxyUrl() {
         return httpProxyUrl;
+    }
+
+    public String getHostScript(String hostName, String type) {
+        try {
+            return new HostJob<String>(manifest, hostName) {
+
+                @Override
+                public String execute() throws Exception {
+                    List<JsonNode> steps = null;
+                    if (type.equals("postDeploy")) {
+                        steps = host.postDeploySteps;
+                    } else if (type.equals("reconfigure")) {
+                        steps = host.reconfigureSteps;
+                    }
+
+                    if (steps == null) {
+                        return "- No script for " + type;
+                    }
+                    return generateScript(steps);
+                }
+            }.execute();
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
+    }
+
+    private String generateScript(List<JsonNode> steps) {
+        StringBuilder scriptBuilder = new StringBuilder();
+        for (JsonNode step : steps) {
+            String type = step.path("type").asText();
+            String line = step.path("line").asText();
+            if ("ADD_TEMPLATE".equals(type)) {
+                type = "ADD";
+                String destination = step.path("destination").asText();
+                String source = destination;
+                if (source.startsWith("/")) {
+                    source = source.substring(1);
+                }
+                line = source + " " + destination;
+            } else if ("RUN".equals(type)) {
+                type = null;
+            } else if ("DETERMINE_IP".equals(type)) {
+                line = step.path("command").asText();
+            }
+            if (type != null) {
+                scriptBuilder.append(type).append(" ");
+            }
+            scriptBuilder.append(line);
+            scriptBuilder.append("\n");
+        }
+        return scriptBuilder.toString();
+
     }
 }

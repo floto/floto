@@ -1,6 +1,7 @@
 package io.github.floto.core.jobs;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.util.GitHelper;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,17 +21,24 @@ public class ExportVmJob extends HypervisorJob<Void> {
 	public Void execute() throws Exception {
 		log.info("Exporting vm {}", host.name);
 
+		File rootDefinitionFile = new File(flotoService.getManifest().rootFile);
+		log.info("Root definition file: {}", rootDefinitionFile);
+		String gitDescription = new GitHelper(rootDefinitionFile.getParentFile()).describe();
+		log.info("Git Description {}", gitDescription);
+
 		// TODO: delete intermediate images?
 		// TODO: Zerofill disk?
 
 		// Stop VM
 		hypervisorService.stopVm(host.name);
 
+		// HACK: Sleep a bit to give vmware workstation time to clean up its lock file
+		Thread.sleep(1000);
+
 		// Export Image
 		String exportName = host.exportName;
 		if(exportName == null) {
-//			exportName = host.name + "_" + gitDescription + ".ova";
-			exportName = host.name + ".ova";
+			exportName = host.name + "_" + gitDescription + ".ova";
 		}
 
 		File exportFile = new File("vm/" + exportName);
@@ -38,8 +46,6 @@ public class ExportVmJob extends HypervisorJob<Void> {
 		hypervisorService.exportVm(host.name, exportFile.getAbsolutePath());
 
 		log.info("Exported to: {}", exportName);
-
-		hypervisorService.startVm(host.name);
 
 		return null;
 	}

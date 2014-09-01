@@ -62,10 +62,9 @@
     <script src="/js/util/ErrorHandling.js"></script>
     <script src="/js/util/directives.js"></script>
 
-
     <div class="navbar navbar-default navbar-fixed-top" bs-navbar>
         <div class="navbar-inner" style="padding-left: 15px">
-            <a class="navbar-brand" href="#">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
+            <a class="navbar-brand" href="#" title="{{flotoVersion}}">&nbsp;<img src="/img/floto-icon.svg" style="height: 24px;">&nbsp;&nbsp;floto&nbsp;&nbsp;
 
             </a>
 
@@ -75,7 +74,7 @@
                     <li ui-sref-active="active"><a ui-sref="hosts">Hosts</a></li>
                     <li ui-sref-active="active"><a ui-sref="tasks">Tasks</a></li>
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Export <span class="caret"></span></a>
+                        <a style="cursor: pointer" class="dropdown-toggle" data-toggle="dropdown">Export <span class="caret"></span></a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="api/export/container-logs">Container Logs</a></li>
                         </ul>
@@ -85,14 +84,19 @@
                 <form class="navbar-form navbar-left" role="search">
                     <button type="button" class="btn btn-primary btn-sm" ng-click="compileManifest()">Recompile</button>
                 </form>
-                <span ng-show="domainName" class="navbar-brand pull-right"
-                      href="#"><strong>[{{domainName}}]</strong></span>
+                <span class="navbar-brand pull-right" href="#" style="text-align: center; padding: 5px 20px">
+                    <strong ng-show="domainName" >[{{domainName}}]</strong><br>
+                    <span style="font-size: 80%" class="text-muted">{{site.projectRevision}}</span>
+                </span>
+
             </div>
             </a>
         </div>
     </div>
     <section style="margin-top: 64px" ui-view></section>
+
 </div>
+<div style="position: fixed; bottom; -30px; right: 10px; font-size: 80%" class="text-muted">{{flotoRevision}}</div>
 
 </body>
 </html>

@@ -22,6 +22,7 @@
 				}
 				host.state = states[host.name];
 			});
+			$scope.hostNames = _.pluck($scope.manifest.hosts, "name");
 		}
 
 		$scope.$watch("manifest.hosts", merge);
