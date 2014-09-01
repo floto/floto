@@ -32,7 +32,11 @@ public class ExternalProgram {
                     continue;
                 }
                 for(String subDirectory: potentialProgramDirectories) {
-                    Collection<File> candidates = FileUtils.listFiles(new File(directory+"\\"+subDirectory), FileFilterUtils.nameFileFilter(command, IOCase.INSENSITIVE), FileFilterUtils.trueFileFilter());
+                    File subDirectoryFile = new File(directory + "\\" + subDirectory);
+                    if(!subDirectoryFile.isDirectory()) {
+                        continue;
+                    }
+                    Collection<File> candidates = FileUtils.listFiles(subDirectoryFile, FileFilterUtils.nameFileFilter(command, IOCase.INSENSITIVE), FileFilterUtils.trueFileFilter());
                     if(!candidates.isEmpty()) {
                         command = candidates.iterator().next().getAbsolutePath();
                         break outer;
