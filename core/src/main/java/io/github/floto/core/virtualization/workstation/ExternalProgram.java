@@ -34,7 +34,7 @@ public class ExternalProgram {
                 for(String subDirectory: potentialProgramDirectories) {
                     File subDirectoryFile = new File(directory + "\\" + subDirectory);
                     if(!subDirectoryFile.isDirectory()) {
-                        break;
+                        continue;
                     }
                     Collection<File> candidates = FileUtils.listFiles(subDirectoryFile, FileFilterUtils.nameFileFilter(command, IOCase.INSENSITIVE), FileFilterUtils.trueFileFilter());
                     if(!candidates.isEmpty()) {
