@@ -28,8 +28,8 @@
         <td>
             <a ng-show="container.config.webUrl" href="{{container.config.webUrl}}" style="display: block;white-space:nowrap;" ng-click="$event.stopPropagation()"><span class="glyphicon glyphicon-globe"></span> Web UI</a>
         </td>
-        <td style="width: 100%">
-            {{container.name}} <span class="text-muted">{{container.config.version}}</span>
-            ({{container.image}} @ {{container.host}})</a></td>
+        <td style="width: 100%" title="{{container.image}} @ {{container.host}}">
+            {{container.name}} <span class="text-muted pull-right">{{container.config.version}}</span>
+            </a></td>
     </tr>
 </table>

@@ -20,7 +20,7 @@ public class FreemarkerJsonifyMethod implements TemplateMethodModelEx {
 			} else if (object instanceof SimpleSequence) {
 				object = ((SimpleSequence) object).toList();
 			}
-			String string = objectMapper.writer().writeValueAsString(object);
+			String string = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
 			return string;
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException("Unable to jsonify " + arguments);
