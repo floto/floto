@@ -79,12 +79,13 @@
             var result = {
                 loading: true
             };
-            $http.get(app.urlPrefix + url, {transformResponse: function(x) {return x;}}).then(function (response) {
+            $http.get(app.urlPrefix + url, {suppressErrorNotfications: true, transformResponse: function(x) {return x;}}).then(function (response) {
                 result.loading = false;
                 result.content = response.data;
             }).catch(function (error) {
+	            var data = JSON.parse(error.data);
                 result.loading = false;
-                result.error = error.data.message;
+                result.error = data.message;
             });
             return  result;
 
