@@ -202,11 +202,34 @@ public class FlotoService implements Closeable {
 
 	public TaskInfo<Void> redeployContainers(List<String> containers) {
 		Manifest manifest = this.manifest;
-		Container registryContainer = this.findRegistryContainer(manifest);
-		Image registryImage = this.findImage(registryContainer.image, manifest);
-		Host registryHost = this.findHost(registryContainer.host, manifest);
-		String hostIp = registryHost.ip;
-		String registryContainerState = this.getContainerStates().get(registryContainer.name);
+		if(this.getImageRegistryNode(manifest) != null) {
+			Container registryContainer = this.findRegistryContainer(manifest);
+			boolean registryRedploymentInstructed = containers.stream().filter(c -> registryContainer.name.equals(c)).findFirst().isPresent();
+			if(registryRedploymentInstructed) {
+				containers.add(0, containers.remove(containers.indexOf(registryContainer.name)));
+			}
+			else {
+				String registryContainerState = this.getContainerStates().get(registryContainer.name);
+				if(registryContainerState == null) {
+					containers.add(0, registryContainer.name);
+				}
+				else if("stopped".equals(registryContainerState)) {
+					log.info("Starting registry");
+					this.startContainers(Lists.newArrayList(registryContainer.name));
+				}
+				else if("running".equals(registryContainerState)) {
+					log.info("Registry already running");
+				}
+				else {
+					throw new RuntimeException("Unknown state=" + registryContainerState);
+				}
+			}
+		}
+		
+//		Image registryImage = this.findImage(registryContainer.image, manifest);
+//		Host registryHost = this.findHost(registryContainer.host, manifest);
+//		String hostIp = registryHost.ip;
+//		String registryContainerState = this.getContainerStates().get(registryContainer.name);
 		
 		
 		return taskService.startTask("Redeploy containers "
@@ -655,6 +678,10 @@ public class FlotoService implements Closeable {
 	private WebTarget createDockerTarget(Host host) {
 		return client.target("http://" + getExternalHostIp(host) + ":2375");
 	}
+	
+	private WebTarget createRegistryTarget(String ip, String port) {
+		return client.target("http://" + ip + ":" + port);
+	}
 
 	public void setExternalHostIp(String hostName, String ip) {
 		externalHostIpMap.put(hostName, ip);
@@ -691,10 +718,14 @@ public class FlotoService implements Closeable {
     }
     
     private Container findRegistryContainer(Manifest manifest) {
-    	String containerName = manifest.site.get("imageRegistry").get("containerName").textValue();
+    	String containerName = getImageRegistryNode(manifest).get("containerName").textValue();
     	return this.findContainer(containerName, manifest);
     }
-
+    
+    private JsonNode getImageRegistryNode(Manifest manifest) {
+    	return manifest.site.get("imageRegistry");
+    }
+    
     public TaskInfo<Void> stopContainers(List<String> containers) {
         return taskService.startTask("Stop containers " + Joiner.on(", ").join(containers), () -> {
             log.info("Stopping containers {}", containers);
