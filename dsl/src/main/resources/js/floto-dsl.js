@@ -27,6 +27,10 @@
 		};
 		manifest.images.push(imageDef);
 	};
+	
+	global.setImageRegistry = function setImageRegistry(imageRegistry) {
+		manifest.site.imageRegistry = imageRegistry;
+	};
 
 	global.run = function run(what) {
 		currentSteps.push({
