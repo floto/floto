@@ -1,14 +1,5 @@
 package io.github.floto.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
@@ -24,8 +15,44 @@ import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
+
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
@@ -49,22 +76,15 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.*;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.URI;
-import java.util.*;
-import java.util.function.Consumer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 
 public class FlotoService implements Closeable {
 	private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -181,6 +201,14 @@ public class FlotoService implements Closeable {
     }
 
 	public TaskInfo<Void> redeployContainers(List<String> containers) {
+		Manifest manifest = this.manifest;
+		Container registryContainer = this.findRegistryContainer(manifest);
+		Image registryImage = this.findImage(registryContainer.image, manifest);
+		Host registryHost = this.findHost(registryContainer.host, manifest);
+		String hostIp = registryHost.ip;
+		String registryContainerState = this.getContainerStates().get(registryContainer.name);
+		
+		
 		return taskService.startTask("Redeploy containers "
 				+ Joiner.on(", ").join(containers), () -> {
 			log.info("Redeploying containers {}", containers);
@@ -188,7 +216,7 @@ public class FlotoService implements Closeable {
 			return null;
 		});
 	}
-
+	
 	private void redeployContainer(String containerName) {
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		Manifest manifest = this.manifest;
@@ -201,6 +229,7 @@ public class FlotoService implements Closeable {
 				getContainerBuildLogFile(containerName))) {
 			Container container = findContainer(containerName, manifest);
 			Image image = findImage(container.image, manifest);
+			String rootImage = this.getRootImage(image);
 			Host host = findHost(container.host, manifest);
 
 			// Build base image
@@ -232,6 +261,14 @@ public class FlotoService implements Closeable {
 		} catch (IOException e) {
 			Throwables.propagate(e);
 		}
+	}
+	
+	private String getRootImage(Image image) {
+		return image.buildSteps.stream()
+				.filter(node -> node.get("type").textValue().equals("FROM"))
+				.peek(node -> log.info(node.toString()))
+				.map(node -> node.get("line").textValue())
+				.findFirst().get();
 	}
 
 	public Map<String, Object> createGlobalConfig(Manifest manifest) {
@@ -651,6 +688,11 @@ public class FlotoService implements Closeable {
         }
         throw new IllegalArgumentException("Unknown container: " + containerName);
     }
+    
+    private Container findRegistryContainer(Manifest manifest) {
+    	String containerName = manifest.site.get("imageRegistry").get("containerName").textValue();
+    	return this.findContainer(containerName, manifest);
+    }
 
     public TaskInfo<Void> stopContainers(List<String> containers) {
         return taskService.startTask("Stop containers " + Joiner.on(", ").join(containers), () -> {
@@ -700,6 +742,7 @@ public class FlotoService implements Closeable {
         };
     }
 
+    
     public Map<String, String> getContainerStates() {
         HashMap<String, String> states = new HashMap<>();
         Manifest manifest = this.manifest;
