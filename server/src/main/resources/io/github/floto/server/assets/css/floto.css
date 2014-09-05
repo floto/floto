@@ -10,8 +10,10 @@
 
 body {
   font-family: 'SourceSansPro', sans-serif;
+  font-size: 15px;
 }
 
 pre {
   font-family: 'SourceCodePro', sans-serif;
+  font-size: 12px;
 }
