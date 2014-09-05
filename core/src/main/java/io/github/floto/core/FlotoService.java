@@ -1,8 +1,10 @@
 package io.github.floto.core;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
+import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.core.ssh.SshService;
 import io.github.floto.core.util.DockerfileHelper;
 import io.github.floto.core.util.ErrorClientResponseFilter;
@@ -15,6 +17,7 @@ import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
+
 
 import java.io.Closeable;
 import java.io.DataInputStream;
@@ -40,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
@@ -50,8 +54,10 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
+
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -75,6 +81,7 @@ import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -106,6 +113,8 @@ public class FlotoService implements Closeable {
 	// -----------------------------------------
 
 	private Map<String, String> externalHostIpMap = new HashMap<>();
+	
+	private ImageRegistry imageRegistry;
 
 	private Client client;
 	{
@@ -192,6 +201,7 @@ public class FlotoService implements Closeable {
 					manifest = flotoDsl.toManifest(manifestString);
 					this.manifestString = manifestString;
 					log.warn("Compiled manifest");
+					this.setImageRegistry(manifest);
 					return null;
 				});
 	}
@@ -202,7 +212,7 @@ public class FlotoService implements Closeable {
 
 	public TaskInfo<Void> redeployContainers(List<String> containers) {
 		Manifest manifest = this.manifest;
-		if(this.getImageRegistryNode(manifest) != null) {
+		if(this.imageRegistry != null) {
 			Container registryContainer = this.findRegistryContainer(manifest);
 			boolean registryRedploymentInstructed = containers.stream().filter(c -> registryContainer.name.equals(c)).findFirst().isPresent();
 			if(registryRedploymentInstructed) {
@@ -252,7 +262,24 @@ public class FlotoService implements Closeable {
 				getContainerBuildLogFile(containerName))) {
 			Container container = findContainer(containerName, manifest);
 			Image image = findImage(container.image, manifest);
-			String rootImage = this.getRootImage(image);
+			String rootImageName = this.getRootImage(image);
+			Image rootImage = this.findImage(rootImageName, manifest);
+			
+			
+			
+			
+			
+//			if(this.imageRegistry != null && !container.name.equals(this.imageRegistry.getContainerName())) {
+//				if(this.registryHasImage(rootImage)) {
+//				}
+//				// Check if image available in registry. If so, use image from registry
+//			}
+			
+			
+			
+			
+			
+			
 			Host host = findHost(container.host, manifest);
 
 			// Build base image
@@ -286,14 +313,6 @@ public class FlotoService implements Closeable {
 		}
 	}
 	
-	private String getRootImage(Image image) {
-		return image.buildSteps.stream()
-				.filter(node -> node.get("type").textValue().equals("FROM"))
-				.peek(node -> log.info(node.toString()))
-				.map(node -> node.get("line").textValue())
-				.findFirst().get();
-	}
-
 	public Map<String, Object> createGlobalConfig(Manifest manifest) {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
@@ -679,8 +698,8 @@ public class FlotoService implements Closeable {
 		return client.target("http://" + getExternalHostIp(host) + ":2375");
 	}
 	
-	private WebTarget createRegistryTarget(String ip, String port) {
-		return client.target("http://" + ip + ":" + port);
+	private WebTarget createRegistryTarget() {
+		return client.target("http://" + this.imageRegistry.getIp() + ":" + this.imageRegistry.getContainerName());
 	}
 
 	public void setExternalHostIp(String hostName, String ip) {
@@ -717,13 +736,48 @@ public class FlotoService implements Closeable {
         throw new IllegalArgumentException("Unknown container: " + containerName);
     }
     
+    private void setImageRegistry(Manifest manifest) {
+		JsonNode registryNode = manifest.site.get("imageRegistry");
+		if(registryNode == null) {
+			return;
+		}
+		String containerName = registryNode.get("containerName").textValue();
+		Integer port = registryNode.get("port").intValue();
+		Container registryContainer = this.findContainer(containerName, manifest);
+		Host registryHost = this.findHost(registryContainer.host, manifest);
+		String ip = registryHost.ip;
+		this.imageRegistry = new ImageRegistry(containerName, ip, port);
+	}
+	
+	private String getRootImage(Image image) {
+		return image.buildSteps.stream()
+				.filter(node -> node.get("type").textValue().equals("FROM"))
+				.peek(node -> log.info(node.toString()))
+				.map(node -> node.get("line").textValue())
+				.findFirst().get();
+	}
+    
     private Container findRegistryContainer(Manifest manifest) {
-    	String containerName = getImageRegistryNode(manifest).get("containerName").textValue();
-    	return this.findContainer(containerName, manifest);
+    	return this.findContainer(this.imageRegistry.getContainerName(), manifest);
     }
     
-    private JsonNode getImageRegistryNode(Manifest manifest) {
-    	return manifest.site.get("imageRegistry");
+    private boolean registryHasImage(Image image) {
+    	/*
+    	 * WebTarget buildTarget = dockerTarget.path("build");
+		Response response = buildTarget.queryParam("t", imageName).request()
+				.post(Entity.entity(new StreamingOutput() {
+					@Override
+    	 */
+    	WebTarget registryTarget = this.createRegistryTarget();
+    	Response response = registryTarget.path("v1").path("search").queryParam("q", image.name).request().get();
+    	response.close();
+    	return false;
+    }
+    
+    private String createPrivateRegistryImageName(String imageName) {
+    	return this.imageRegistry.getIp() + ":" + 
+    			String.valueOf(this.imageRegistry.getPort()) + "/" +
+    			(imageName.indexOf("/") != -1 ? imageName.substring(imageName.indexOf("/")) : imageName);
     }
     
     public TaskInfo<Void> stopContainers(List<String> containers) {
