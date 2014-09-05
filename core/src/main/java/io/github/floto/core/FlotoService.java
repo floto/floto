@@ -350,6 +350,7 @@ public class FlotoService implements Closeable {
 				binds.add(entry.getKey() + ":" + entry.getValue());
 			}
 			startConfig.put("Binds", binds);
+			startConfig.put("Privileged", container.priviledged);
 			startConfig.put("NetworkMode", "host");
 
 			start.setEntity(new StringEntity(new ObjectMapper()

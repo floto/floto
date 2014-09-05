@@ -10,4 +10,6 @@ public class Container {
 	public String host;
 	public JsonNode config;
 	public List<JsonNode> configureSteps;
+    public boolean priviledged = false;
+
 }
