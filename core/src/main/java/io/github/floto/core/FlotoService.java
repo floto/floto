@@ -263,7 +263,7 @@ public class FlotoService implements Closeable {
 			Container container = findContainer(containerName, manifest);
 			Image image = findImage(container.image, manifest);
 			String rootImageName = this.getRootImage(image);
-			Image rootImage = this.findImage(rootImageName, manifest);
+//			Image rootImage = this.findImage(rootImageName, manifest);
 			
 			
 			
