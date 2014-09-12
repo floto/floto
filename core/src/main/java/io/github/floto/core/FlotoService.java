@@ -564,6 +564,18 @@ public class FlotoService implements Closeable {
 									out.putNextEntry(templateTarEntry);
 									FileUtils.copyFile(artifactFile, out);
 									out.closeEntry();
+                                } else if ("ADD_MANIFEST_JSON".equals(type)) {
+                                    String destination = step.path(
+                                            "destination").asText();
+                                    TarEntry manifestTarEntry = new TarEntry(destination);
+                                    out.putNextEntry(manifestTarEntry);
+                                    byte[] manifestBytes = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsBytes(manifest);
+                                    manifestTarEntry
+                                            .setSize(manifestBytes.length);
+                                    out.putNextEntry(manifestTarEntry);
+                                    IOUtils.write(manifestBytes, out);
+
+                                    out.closeEntry();
 								} else if ("COPY_FILES".equals(type)) {
 									JsonNode fileList = step.path("fileList");
 									List<String> files = new ArrayList<String>();

@@ -111,6 +111,13 @@
 		});
 	};
 
+	global.addManifestJson = function addManifestJson(destination) {
+		currentSteps.push({
+			type: "ADD_MANIFEST_JSON",
+			destination: destination
+		});
+	};
+
 	global.download = function download(url, destination) {
 		currentSteps.push({
 			type: "DOWNLOAD",

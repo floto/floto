@@ -49,6 +49,11 @@ public class DockerfileHelper {
                     source = source.substring(1);
                 }
                 line = source + " " + destination;
+            } else if ("ADD_MANIFEST_JSON".equals(type)) {
+                type = "ADD";
+                String destination = step.path("destination").asText();
+                line = destination + " " + destination;
+
             } else if ("DOWNLOAD".equals(type)) {
                 String url = step.path("url").asText();
                 String destination = step.path("destination").asText();
