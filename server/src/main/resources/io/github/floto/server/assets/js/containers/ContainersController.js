@@ -23,6 +23,7 @@
 			updateGroups();
 		});
 
+		var unmanagedContainers = [];
 		function merge() {
 			if (!$scope.manifest || !$scope.manifest.containers) {
 				return;
@@ -30,13 +31,30 @@
 			if (!$scope.containerStates) {
 				return;
 			}
-			var states = $scope.containerStates.states;
+			if($scope.containerStates.states) {
+				unmanagedContainers = [];
+			}
+			var states = $scope.containerStates.states || {};
+			var containerHash = {};
 			$scope.manifest.containers.forEach(function (container) {
 				container.state = "unknown";
 				if (!states || !states[container.name]) {
 					return;
 				}
 				container.state = states[container.name];
+				containerHash[container.name] = container.name;
+			});
+
+			Object.keys(states).forEach(function(name) {
+				if(!containerHash[name]) {
+					unmanagedContainers.push({
+						name: name,
+						state: states[name],
+						unmanaged: true,
+						host: "?",
+						image: "?"
+					})
+				}
 			});
 
 			$scope.groupings = {
@@ -55,7 +73,8 @@
 				imageGroup.containerNames.push(container.name);
 			});
 			$scope.containerNames = _.pluck($scope.manifest.containers, "name");
-			$scope.containers = $scope.manifest.containers;
+
+			$scope.containers = unmanagedContainers.concat($scope.manifest.containers);
 			updateGroups();
 
 		}

@@ -1,5 +1,5 @@
 <table class="table table-bordered table-striped table-hover table-condensed">
-    <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name}" ng-click="$state.go('container', {containerName: container.name})" style="cursor: pointer">
+    <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name, 'warning': container.unmanaged}" ng-click="$state.go('container', {containerName: container.name})" style="cursor: pointer">
         <td><span style="display: inline-block;width: 100px" class="label label-default"
                   ng-class="{'label-success': container.state==='running', 'label-warning': container.state==='stopped', 'label-danger': container.state === 'not-there'}">{{container.state}}</span>
         </td>
@@ -29,7 +29,8 @@
             <a ng-show="container.config.webUrl" href="{{container.config.webUrl}}" style="display: block;white-space:nowrap;" ng-click="$event.stopPropagation()"><span class="glyphicon glyphicon-globe"></span> Web UI</a>
         </td>
         <td style="width: 100%" title="{{container.image}} @ {{container.host}}">
-            {{container.name}} <span class="text-muted pull-right">{{container.config.version}}</span>
+            {{container.name}}<span class="text-muted pull-right">{{container.config.version}}</span>
+            <span ng-if="container.unmanaged" class="pull-right label label-warning">Unmanaged!</span>
             </a></td>
     </tr>
 </table>
