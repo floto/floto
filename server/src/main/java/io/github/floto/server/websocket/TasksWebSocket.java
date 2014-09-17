@@ -32,11 +32,13 @@ public class TasksWebSocket {
         this.taskService = taskService;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     @OnOpen
     public void onWebSocketConnect(Session sess) {
         this.session = sess;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     @OnMessage
     public void onWebSocketText(String message) {
         try {
@@ -87,11 +89,17 @@ public class TasksWebSocket {
         }
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     @OnClose
     public void onWebSocketClose(CloseReason reason) {
-        System.out.println("Socket Closed: " + reason);
+        CloseReason.CloseCode closeCode = reason.getCloseCode();
+        if(closeCode.equals(CloseReason.CloseCodes.NORMAL_CLOSURE) || closeCode.equals(CloseReason.CloseCodes.GOING_AWAY)) {
+            return;
+        }
+        log.warn("WebSocket closed: {} - {}", reason.getCloseCode(), reason.getReasonPhrase());
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     @OnError
     public void onWebSocketError(Throwable cause) {
         if(cause instanceof SocketTimeoutException) {
