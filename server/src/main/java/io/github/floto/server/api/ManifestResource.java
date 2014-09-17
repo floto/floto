@@ -1,7 +1,6 @@
 package io.github.floto.server.api;
 
 import io.github.floto.core.FlotoService;
-import io.github.floto.dsl.FlotoDsl;
 import io.github.floto.util.task.TaskInfo;
 
 import javax.ws.rs.GET;
@@ -28,8 +27,6 @@ public class ManifestResource {
 	@Path("compile")
 	public TaskInfo<Void> compileManifest() {
 		return flotoService.compileManifest();
-        // TODO: reenable verification
-//		flotoService.verifyTemplates();
 	}
 
 }
