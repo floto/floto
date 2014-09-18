@@ -186,17 +186,18 @@ public class FlotoService implements Closeable {
     }
 
 	public TaskInfo<Void> redeployContainers(List<String> containers) {
+        List<String> actualContainers = new ArrayList<>(containers);
 		Manifest manifest = this.manifest;
 		if(this.imageRegistry != null) {
 			Container registryContainer = this.findRegistryContainer(manifest);
-			boolean registryRedploymentInstructed = containers.stream().filter(c -> registryContainer.name.equals(c)).findFirst().isPresent();
+			boolean registryRedploymentInstructed = actualContainers.stream().filter(c -> registryContainer.name.equals(c)).findFirst().isPresent();
 			if(registryRedploymentInstructed) {
-				containers.add(0, containers.remove(containers.indexOf(registryContainer.name)));
+				actualContainers.add(0, actualContainers.remove(actualContainers.indexOf(registryContainer.name)));
 			}
 			else {
 				String registryContainerState = this.getContainerStates().get(registryContainer.name);
 				if(registryContainerState == null) {
-					containers.add(0, registryContainer.name);
+					actualContainers.add(0, registryContainer.name);
 				}
 				else if("stopped".equals(registryContainerState)) {
 					log.info("Starting registry");
@@ -218,9 +219,9 @@ public class FlotoService implements Closeable {
 		
 		
 		return taskService.startTask("Redeploy containers "
-				+ Joiner.on(", ").join(containers), () -> {
-			log.info("Redeploying containers {}", containers);
-			containers.forEach(this::redeployContainer);
+				+ Joiner.on(", ").join(actualContainers), () -> {
+			log.info("Redeploying containers {}", actualContainers);
+			actualContainers.forEach(this::redeployContainer);
 			return null;
 		});
 	}
