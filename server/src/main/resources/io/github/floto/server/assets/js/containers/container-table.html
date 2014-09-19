@@ -3,7 +3,7 @@
         <td><span style="display: inline-block;width: 100px" class="label label-default"
                   ng-class="{'label-success': container.state==='running', 'label-warning': container.state==='stopped', 'label-danger': container.state === 'not-there'}">{{container.state}}</span>
         </td>
-        <td>
+        <td ng-if="configuration.canRedeploy">
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-primary"
                     ng-click="redeployContainers({containers: [container.name]})">Redeploy
             </button>
