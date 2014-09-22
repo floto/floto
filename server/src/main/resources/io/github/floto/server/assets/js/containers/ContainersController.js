@@ -37,7 +37,7 @@
 			var states = $scope.containerStates.states || {};
 			var containerHash = {};
 			$scope.manifest.containers.forEach(function (container) {
-				container.state = "unknown";
+				container.state = {status: "unknown"};
 				if (!states || !states[container.name]) {
 					return;
 				}
@@ -100,6 +100,10 @@
 
 		$scope.purgeContainerData = function purgeContainerData(request) {
 			FlotoService.purgeContainerData(request);
+		};
+
+		$scope.destroyUnmanagedContainer = function destroyUnmanagedContainer(request) {
+			FlotoService.destroyUnmanagedContainer(request).then(update);
 		};
 
 		$scope.refresh = update;

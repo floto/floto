@@ -1,7 +1,7 @@
 <table class="table table-bordered table-striped table-hover table-condensed">
     <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name, 'warning': container.unmanaged}" ng-click="$state.go('container', {containerName: container.name})" style="cursor: pointer">
         <td><span style="display: inline-block;width: 100px" class="label label-default"
-                  ng-class="{'label-success': container.state==='running', 'label-warning': container.state==='stopped', 'label-danger': container.state === 'not-there'}">{{container.state}}</span>
+                  ng-class="{'label-success': container.state.status==='running', 'label-warning': container.state.status==='stopped', 'label-danger': container.state.status === 'not-there'}">{{container.state.status}}</span>
         </td>
         <td ng-if="configuration.canRedeploy">
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-primary"
@@ -10,19 +10,22 @@
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-success"
-                    ng-disabled="container.state == 'running'"
+                    ng-disabled="container.state.status == 'running'"
                     ng-click="startContainers({containers: [container.name]})">Start
             </button>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
-                    ng-disabled="container.state != 'running'"
+                    ng-disabled="container.state.status != 'running'"
                     ng-click="stopContainers({containers: [container.name]})">Stop
             </button>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
                     ng-click="purgeContainerData({containers: [container.name]})">Purge data
+            </button>
+            <button ng-if="container.unmanaged" type="button" class="btn btn-xs btn-danger"
+                    ng-click="destroyUnmanagedContainer({containerName: container.name, hostName: container.state.hostName})">Destroy
             </button>
         </td>
         <td>

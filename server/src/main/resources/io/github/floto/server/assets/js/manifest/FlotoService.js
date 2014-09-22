@@ -97,7 +97,7 @@
                 function findImage(imageName) {
                     var image = _.find(manifest.images, {name: imageName});
                     if (!image) {
-                        throw "Image " + imageName + " not found";
+                        image = {buildSteps:[]};
                     }
                     return image;
                 }
@@ -105,7 +105,7 @@
                 function findContainer(containerName) {
                     var container = _.find(manifest.containers, {name: containerName});
                     if (!container) {
-                        throw "Container " + containerName + " not found";
+	                    container = {name: containerName, configureSteps: []};
                     }
                     return container;
                 }
@@ -155,6 +155,10 @@
             });
 
         };
+
+	    FlotoService.destroyUnmanagedContainer = function destroyUnmanagedContainer(request) {
+		    return TaskService.httpPost(app.urlPrefix + 'containers/_destroyUnmanaged', request);
+	    };
         FlotoService.refreshManifest();
 
         return FlotoService;

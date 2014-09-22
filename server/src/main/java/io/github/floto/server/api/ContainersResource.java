@@ -34,7 +34,15 @@ public class ContainersResource {
 		return flotoService.stopContainers(containersRequest.containers);
 	}
 
-	@POST
+    @POST
+    @Path("_destroyUnmanaged")
+    @Produces(MediaType.APPLICATION_JSON)
+    public TaskInfo<Void> destroyUnmanagedContainer(UnmanagedContainerRequest containerRequest) {
+        return flotoService.destroyUnmanagedContainer(containerRequest.containerName, containerRequest.hostName);
+    }
+
+
+    @POST
 	@Path("_start")
 	@Produces(MediaType.APPLICATION_JSON)
 	public TaskInfo<Void> startContainers(ContainersRequest containersRequest) {

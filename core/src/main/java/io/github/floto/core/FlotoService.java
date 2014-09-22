@@ -195,19 +195,19 @@ public class FlotoService implements Closeable {
 				actualContainers.add(0, actualContainers.remove(actualContainers.indexOf(registryContainer.name)));
 			}
 			else {
-				String registryContainerState = this.getContainerStates().get(registryContainer.name);
+				ContainerState registryContainerState = this.getContainerStates().get(registryContainer.name);
 				if(registryContainerState == null) {
 					actualContainers.add(0, registryContainer.name);
 				}
-				else if("stopped".equals(registryContainerState)) {
+				else if(registryContainerState.status == ContainerState.Status.stopped) {
 					log.info("Starting registry");
 					this.startContainers(Lists.newArrayList(registryContainer.name));
 				}
-				else if("running".equals(registryContainerState)) {
+				else if(registryContainerState.status == ContainerState.Status.running) {
 					log.info("Registry already running");
 				}
 				else {
-					throw new RuntimeException("Unknown state=" + registryContainerState);
+					throw new RuntimeException("Unknown status=" + registryContainerState.status);
 				}
 			}
 		}
@@ -817,8 +817,8 @@ public class FlotoService implements Closeable {
     }
 
     
-    public Map<String, String> getContainerStates() {
-        HashMap<String, String> states = new HashMap<>();
+    public Map<String, ContainerState> getContainerStates() {
+        HashMap<String, ContainerState> states = new HashMap<>();
         Manifest manifest = this.manifest;
         for (Host host : manifest.hosts) {
             WebTarget dockerTarget = createDockerTarget(host);
@@ -826,13 +826,16 @@ public class FlotoService implements Closeable {
                 JsonNode response = dockerTarget.path("/containers/json").queryParam("all", true).request().buildGet().submit(JsonNode.class).get();
                 for (JsonNode container : response) {
                     for (JsonNode nameNode : container.get("Names")) {
+                        ContainerState state = new ContainerState();
                         String name = nameNode.textValue();
                         name = name.substring(1);
-                        String status = container.get("Status").textValue();
-                        String state = "stopped";
-                        if (status.startsWith("Up ")) {
-                            state = "running";
+                        String dockerStatus = container.get("Status").textValue();
+                        state.status = ContainerState.Status.stopped;
+                        if (dockerStatus.startsWith("Up ")) {
+                            state.status = ContainerState.Status.running;
                         }
+                        state.containerName = name;
+                        state.hostName = host.name;
                         states.put(name, state);
                     }
                 }
@@ -1078,5 +1081,15 @@ public class FlotoService implements Closeable {
         }
         return scriptBuilder.toString();
 
+    }
+
+    public TaskInfo<Void> destroyUnmanagedContainer(String containerName, String hostName) {
+        return taskService.startTask("Destroy container " + containerName+ "@"+ hostName, () -> {
+            Manifest manifest = this.manifest;
+            Host host = findHost(hostName, manifest);
+            log.info("Destroying container");
+            destroyContainer(containerName, host);
+            return null;
+        });
     }
 }
