@@ -12,6 +12,13 @@
                     <button type="button" class="btn btn-primary"
                             ng-click="redeployContainers({containers: containerNames})">Redeploy all
                     </button>
+                    <button type="button" class="btn btn-success"
+                            ng-click="startContainers({containers: containerNames})">Start all
+                    </button>
+                    <button type="button" class="btn btn-danger"
+                            ng-click="stopContainers({containers: containerNames})">Stop all
+                    </button>
+
 
                 </div>
                 <div class="col-md-6">
@@ -47,9 +54,15 @@
                                 <div style="display: table-cell;width: 100%">
                                     <h4>{{group.title}}</h4>
                                 </div>
-                                <div style="display: table-cell;">
+                                <div style="display: table-cell; white-space: nowrap">
                                     <button type="button" class="btn btn-xs btn-primary"
                                             ng-click="redeployContainers({containers: group.containerNames})">Redeploy
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-success"
+                                            ng-click="startContainers({containers: group.containerNames})">Start
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-danger"
+                                            ng-click="stopContainers({containers: group.containerNames})">Stop
                                     </button>
                                 </div>
                             </div>
