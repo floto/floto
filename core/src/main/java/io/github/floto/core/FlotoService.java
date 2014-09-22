@@ -29,8 +29,7 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.FileFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -574,12 +573,22 @@ public class FlotoService implements Closeable {
 								} else if ("COPY_DIRECTORY".equals(type)) {
 									String source = step.path("source")
 											.asText();
-									File sourceFile = new File(source);
+                                    JsonNode options = step.path("options");
+                                    JsonNode excludeDirectories = options.path("excludeDirectories");
+                                    List<IOFileFilter> filters = new ArrayList<IOFileFilter>();
+                                    for(JsonNode node: excludeDirectories) {
+                                        filters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+                                    }
+                                    IOFileFilter directoryFilter = new AndFileFilter(filters);
+                                    if(filters.isEmpty()) {
+                                           directoryFilter = TrueFileFilter.INSTANCE;
+                                    }
+                                    File sourceFile = new File(source);
 									Collection<File> files;
 									if (sourceFile.isDirectory()) {
-										files = FileUtils.listFiles(sourceFile,
-												FileFileFilter.FILE,
-												TrueFileFilter.INSTANCE);
+                                        files = FileUtils.listFiles(sourceFile,
+                                                FileFileFilter.FILE,
+                                                directoryFilter);
 									} else {
 										files = Collections
 												.singleton(sourceFile);

@@ -148,11 +148,12 @@
 		});
 	};
 
-	global.copyDirectory = function copyFiles(source, destination) {
+	global.copyDirectory = function copyDirectory(source, destination, options) {
 		currentSteps.push({
 			type: "COPY_DIRECTORY",
 			source: source,
-			destination: destination
+			destination: destination,
+			options: options
 		});
 	};
 
