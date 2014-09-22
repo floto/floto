@@ -32,10 +32,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -374,8 +374,7 @@ public class FlotoService implements Closeable {
 			start.setEntity(new StringEntity(new ObjectMapper()
 					.writeValueAsString(startConfig), ContentType
 					.create("application/json")));
-			CloseableHttpResponse response = httpClient.execute(start);
-			response.close();
+			httpClient.execute(start, new BasicResponseHandler());
 		} catch (Exception ex) {
 			Throwables.propagate(ex);
 		}
