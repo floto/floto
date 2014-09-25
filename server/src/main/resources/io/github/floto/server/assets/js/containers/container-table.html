@@ -4,9 +4,23 @@
                   ng-class="{'label-success': container.state.status==='running', 'label-warning': container.state.status==='stopped', 'label-danger': container.state.status === 'not-there'}">{{container.state.status}}</span>
         </td>
         <td ng-if="configuration.canRedeploy">
-            <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-primary"
-                    ng-click="redeployContainers({containers: [container.name]})">Redeploy
-            </button>
+        	<div class="btn-group" ng-class='{open: open}'>
+	            <button ng-if="!container.unmanaged" data-toggle="dropdown" class="btn btn-xs btn-primary dropdown-toggle"
+	                    ng-click='open=!open'><span class="caret"></span>Redeploy
+	            </button>
+				<ul class="dropdown-menu">
+        			<!--
+       				<li><a href="#">From Scratch</a></li>
+        			<li><a href="#">From Root-image</a></li>
+        			<li><a href="#">From Base-image</a></li>
+        			-->
+        			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromScratch'})"><a href="#">From Scratch</a></li>
+        			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromRootImage'})"><a href="#">From Root-image</a></li>
+        			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromBaseImage'})"><a href="#">From Base-image</a></li>
+    			</ul>
+			</div>
+	            
+	            
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-success"

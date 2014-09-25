@@ -9,9 +9,16 @@
                     <button type="button"
                             class="btn btn-default" ng-click="refresh()">Refresh
                     </button>
-                    <button type="button" class="btn btn-primary"
-                            ng-click="redeployContainers({containers: containerNames})">Redeploy all
-                    </button>
+                    <div class="btn-group" ng-class='{open: open}'>
+	                    <button type="button" class="btn btn-primary dropdown-toggle"
+	                    		ng-click='open=!open'><span class="caret"></span>Redeploy all
+	                    </button>
+	                    <ul class="dropdown-menu">
+      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromScratch'})"><a href="#">From Scratch</a></li>
+      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href="#">From Root-image</a></li>
+      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromBaseImage'})"><a href="#">From Base-image</a></li>
+   						</ul>
+	                </div>
                     <button type="button" class="btn btn-success"
                             ng-click="startContainers({containers: containerNames})">Start all
                     </button>
