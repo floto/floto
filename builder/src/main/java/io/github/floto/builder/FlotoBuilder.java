@@ -2,13 +2,16 @@ package io.github.floto.builder;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
+
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.FlotoService.DeploymentMode;
 import io.github.floto.core.jobs.ExportVmJob;
 import io.github.floto.core.jobs.RedeployVmJob;
 import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskService;
+
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
 import org.joda.time.format.PeriodFormat;
@@ -73,7 +76,7 @@ public class FlotoBuilder {
             redeployVmJob.execute();
 
             for (Container container : manifest.containers) {
-                flotoService.redeployContainers(Arrays.asList(container.name)).getResultFuture().get();
+                flotoService.redeployContainers(Arrays.asList(container.name), DeploymentMode.fromScratch).getResultFuture().get();
             }
 
 	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, host.name);
