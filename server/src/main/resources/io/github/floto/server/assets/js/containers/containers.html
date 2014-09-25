@@ -17,6 +17,7 @@
       						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromScratch'})"><a href="#">From Scratch</a></li>
       						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href="#">From Root-image</a></li>
       						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromBaseImage'})"><a href="#">From Base-image</a></li>
+      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'containerRebuild'})"><a href="#">Container-rebuild only</a></li>
    						</ul>
 	                </div>
                     <button type="button" class="btn btn-success"
