@@ -1,14 +1,5 @@
 package io.github.floto.core;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
@@ -25,11 +16,52 @@ import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
+
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.*;
+import org.apache.commons.io.filefilter.AndFileFilter;
+import org.apache.commons.io.filefilter.FileFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.NotFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.methods.HttpPost;
@@ -50,22 +82,16 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.*;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.URI;
-import java.util.*;
-import java.util.function.Consumer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 
 public class FlotoService implements Closeable {
 	private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -236,7 +262,7 @@ public class FlotoService implements Closeable {
 						});
 	}
 
-	private void redeployContainer2(String containerName,
+	private void redeployContainer(String containerName,
 			DeploymentMode deploymentMode) {
 
 		File buildLogDirectory = new File(flotoHome, "buildLog");
@@ -369,133 +395,6 @@ public class FlotoService implements Closeable {
 		if (useRegistry) {
 			this.tagImage(host, container.name);
 			this.pushImage(host, container.name);
-		}
-	}
-
-	private void redeployContainer(String containerName,
-			DeploymentMode deploymentMode) {
-		File buildLogDirectory = new File(flotoHome, "buildLog");
-		Manifest manifest = this.manifest;
-		try {
-			FileUtils.forceMkdir(buildLogDirectory);
-		} catch (IOException e) {
-			Throwables.propagate(e);
-		}
-		try (FileOutputStream buildLogStream = new FileOutputStream(
-				getContainerBuildLogFile(containerName))) {
-			Container container = findContainer(containerName, manifest);
-			Image image = findImage(container.image, manifest);
-			String rootImageName = this.deconstructPrivateImageName(this
-					.getRootImage(image));
-			Host host = findHost(container.host, manifest);
-			if (this.imageRegistry != null) {
-				if (!this.findRegistryContainer(manifest).name
-						.equalsIgnoreCase(container.name)) {
-					if (!DeploymentMode.fromScratch.equals(deploymentMode)) {
-						if (!this.registryHasImage(rootImageName)) {
-							if (!this.hostHasImage(rootImageName, host)) {
-								this.createImage(host, rootImageName);
-							}
-							this.tagImage(host, rootImageName);
-							this.pushImage(host, rootImageName);
-						}
-						this.setRootImage(image, rootImageName);
-					}
-				}
-				log.info("Will use root-image={}", this.getRootImage(image));
-			}
-
-			// Build base image
-			String baseImageName = image.name + "-image";
-			if (this.imageRegistry != null) {
-				if (!this.findRegistryContainer(manifest).name
-						.equalsIgnoreCase(container.name)) {
-					if (!DeploymentMode.fromScratch.equals(deploymentMode)
-							&& !DeploymentMode.fromRootImage
-									.equals(deploymentMode)) {
-						if (!this.registryHasImage(baseImageName)) {
-							if (!this.hostHasImage(baseImageName, host)) {
-								buildImage(baseImageName, image.buildSteps,
-										host, manifest, Collections.emptyMap(),
-										buildLogStream);
-							}
-							this.tagImage(host, baseImageName);
-							this.pushImage(host, baseImageName);
-						}
-						baseImageName = this
-								.constructPrivateImageName(baseImageName);
-					} else {
-						buildImage(baseImageName, image.buildSteps, host,
-								manifest, Collections.emptyMap(),
-								buildLogStream);
-						this.tagImage(host, baseImageName);
-						this.pushImage(host, baseImageName);
-					}
-				} else {
-					buildImage(baseImageName, image.buildSteps, host, manifest,
-							Collections.emptyMap(), buildLogStream);
-				}
-			} else {
-				buildImage(baseImageName, image.buildSteps, host, manifest,
-						Collections.emptyMap(), buildLogStream);
-			}
-
-			// Build configured image
-			List<JsonNode> configureSteps = new ArrayList<>(
-					container.configureSteps);
-			ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode()
-					.put("type", "FROM").put("line", baseImageName);
-
-			configureSteps.add(0, fromBuildStep);
-			Map<String, Object> globalConfig = createGlobalConfig(manifest);
-			if (this.imageRegistry != null) {
-				if (!this.findRegistryContainer(manifest).name
-						.equalsIgnoreCase(container.name)) {
-					if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
-						if (!this.registryHasImage(container.name)) {
-							if (!this.hostHasImage(container.name, host)) {
-								buildImage(container.name, configureSteps,
-										host, manifest, globalConfig,
-										buildLogStream);
-							}
-							this.tagImage(host, container.name);
-							this.pushImage(host, container.name);
-						}
-					} else {
-						buildImage(container.name, configureSteps, host,
-								manifest, globalConfig, buildLogStream);
-						this.tagImage(host, container.name);
-						this.pushImage(host, container.name);
-					}
-				} else {
-					buildImage(container.name, configureSteps, host, manifest,
-							globalConfig, buildLogStream);
-				}
-			} else {
-				buildImage(container.name, configureSteps, host, manifest,
-						globalConfig, buildLogStream);
-			}
-
-			// destroy old container
-			destroyContainer(container.name, host);
-
-			// create container
-			createContainer(container, host);
-
-			// start container
-			startContainer(containerName);
-			if (this.imageRegistry != null) {
-				if (this.findRegistryContainer(manifest).name
-						.equalsIgnoreCase(container.name)) {
-					this.tagImage(host, rootImageName);
-					this.pushImage(host, rootImageName);
-				}
-			}
-
-			log.info("Redeployed container {}", container.name);
-
-		} catch (IOException e) {
-			Throwables.propagate(e);
 		}
 	}
 
