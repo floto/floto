@@ -91,7 +91,7 @@ public class FlotoService implements Closeable {
 	private ImageRegistry imageRegistry;
 
 	public enum DeploymentMode {
-		fromScratch, fromRootImage, fromBaseImage
+		fromScratch, fromRootImage, fromBaseImage, containerRebuild
 	}
 
 	private Client client;
@@ -191,7 +191,7 @@ public class FlotoService implements Closeable {
 
 	public TaskInfo<Void> redeployContainers(List<String> containers,
 			DeploymentMode deploymentMode) {
-		
+
 		List<String> actualContainers = new ArrayList<>(containers);
 		Manifest manifest = this.manifest;
 		if (this.imageRegistry != null) {
@@ -236,6 +236,142 @@ public class FlotoService implements Closeable {
 						});
 	}
 
+	private void redeployContainer2(String containerName,
+			DeploymentMode deploymentMode) {
+
+		File buildLogDirectory = new File(flotoHome, "buildLog");
+		Manifest manifest = this.manifest;
+		try {
+			FileUtils.forceMkdir(buildLogDirectory);
+		} catch (IOException e) {
+			Throwables.propagate(e);
+		}
+		try (FileOutputStream buildLogStream = new FileOutputStream(
+				getContainerBuildLogFile(containerName))) {
+			Container container = findContainer(containerName, manifest);
+			Image image = findImage(container.image, manifest);
+			Host host = findHost(container.host, manifest);
+			String rootImageName = this.getRootImage(image);
+			if (rootImageName.startsWith(this.getRegistryName())) {
+				throw new IllegalStateException(
+						"RootImageName must refer to local registry at this stage");
+			}
+			try {
+				if (DeploymentMode.fromScratch.equals(deploymentMode)) {
+					this.redeployContainerFromScratch(container, image, host,
+							buildLogStream, rootImageName);
+				}
+				else if(DeploymentMode.fromRootImage.equals(deploymentMode)) {
+					this.redeployContainerFromRootImage(container, image, host, buildLogStream, rootImageName);
+				}
+				else if(DeploymentMode.fromBaseImage.equals(deploymentMode)) {
+					this.redeployContainerFromBaseImage(container, image, host, buildLogStream);
+				}
+				else if(DeploymentMode.containerRebuild.equals(deploymentMode)) {
+					// container-rebuild will be performed anyway
+				}
+				else {
+					throw new IllegalArgumentException("Unknown mode=" + deploymentMode);
+				}
+			} finally {
+				this.setRootImage(image, rootImageName);
+			}
+
+			// destroy old container
+			destroyContainer(container.name, host);
+
+			// create container
+			createContainer(container, host);
+
+			// start container
+			startContainer(containerName);
+
+			// Push the root-image if registry has just been built
+			if (this.imageRegistry != null) {
+				if (this.findRegistryContainer(manifest).name
+						.equalsIgnoreCase(container.name)) {
+					this.tagImage(host, rootImageName);
+					this.pushImage(host, rootImageName);
+				}
+			}
+			log.info("Redeployed container {}", container.name);
+		} catch (Throwable t) {
+			Throwables.propagate(t);
+		}
+	}
+
+	private void redeployContainerFromScratch(Container container, Image image,
+			Host host, FileOutputStream buildLogStream, String rootImageName)
+			throws Exception {
+		if (this.imageRegistry != null) {
+			if (!this.findRegistryContainer(manifest).name
+					.equalsIgnoreCase(container.name)) {
+				if (!this.registryHasImage(rootImageName)) {
+					if (!this.hostHasImage(rootImageName, host)) {
+						this.createImage(host, rootImageName);
+					}
+					this.tagImage(host, rootImageName);
+					this.pushImage(host, rootImageName);
+				}
+			}
+		}
+
+		this.redeployContainerFromRootImage(container, image, host,
+				buildLogStream, rootImageName);
+	}
+
+	private void redeployContainerFromRootImage(Container container,
+			Image image, Host host, FileOutputStream buildLogStream,
+			String rootImageName) throws Exception {
+		
+		boolean useRegistry = this.imageRegistry != null && !this.findRegistryContainer(manifest).name
+				.equalsIgnoreCase(container.name);
+		
+		if (useRegistry) {
+			this.setRootImage(image,
+					this.constructPrivateImageName(rootImageName));
+		}
+		log.info("Will use root-image={}", this.getRootImage(image));
+
+		// Build base image
+		String baseImageName = this.createBaseImageName(image);
+		this.buildImage(baseImageName, image.buildSteps, host, manifest,
+				Collections.emptyMap(), buildLogStream);
+		if (useRegistry) {
+				this.tagImage(host, baseImageName);
+				this.pushImage(host, baseImageName);
+		}
+
+		this.redeployContainerFromBaseImage(container, image, host, buildLogStream);
+	}
+
+	private void redeployContainerFromBaseImage(Container container, Image image, Host host, FileOutputStream buildLogStream) {
+		
+		boolean useRegistry = this.imageRegistry != null && !this.findRegistryContainer(manifest).name
+				.equalsIgnoreCase(container.name);
+		
+		String baseImageName = this.createBaseImageName(image);
+		if (useRegistry) {
+			baseImageName = this.constructPrivateImageName(baseImageName);
+		}
+		log.info("Will use base-image={}", baseImageName);
+
+		// Build configured image
+		List<JsonNode> configureSteps = new ArrayList<>(
+				container.configureSteps);
+		ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode()
+				.put("type", "FROM").put("line", baseImageName);
+
+		configureSteps.add(0, fromBuildStep);
+		Map<String, Object> globalConfig = createGlobalConfig(manifest);
+		buildImage(container.name, configureSteps, host, manifest,
+				globalConfig, buildLogStream);
+		if (useRegistry) {
+			this.tagImage(host, container.name);
+			this.pushImage(host, container.name);
+		}
+	}
+
 	private void redeployContainer(String containerName,
 			DeploymentMode deploymentMode) {
 		File buildLogDirectory = new File(flotoHome, "buildLog");
@@ -255,18 +391,16 @@ public class FlotoService implements Closeable {
 			if (this.imageRegistry != null) {
 				if (!this.findRegistryContainer(manifest).name
 						.equalsIgnoreCase(container.name)) {
-					if (!this.registryHasImage(rootImageName)
-							|| DeploymentMode.fromScratch
-									.equals(deploymentMode)) {
-						if (!this.hostHasImage(rootImageName, host)
-								|| DeploymentMode.fromScratch
-										.equals(deploymentMode)) {
-							this.createImage(host, rootImageName);
+					if (!DeploymentMode.fromScratch.equals(deploymentMode)) {
+						if (!this.registryHasImage(rootImageName)) {
+							if (!this.hostHasImage(rootImageName, host)) {
+								this.createImage(host, rootImageName);
+							}
+							this.tagImage(host, rootImageName);
+							this.pushImage(host, rootImageName);
 						}
-						this.tagImage(host, rootImageName);
-						this.pushImage(host, rootImageName);
+						this.setRootImage(image, rootImageName);
 					}
-					this.setRootImage(image, rootImageName);
 				}
 				log.info("Will use root-image={}", this.getRootImage(image));
 			}
@@ -276,25 +410,27 @@ public class FlotoService implements Closeable {
 			if (this.imageRegistry != null) {
 				if (!this.findRegistryContainer(manifest).name
 						.equalsIgnoreCase(container.name)) {
-					if (!this.registryHasImage(baseImageName)
-							|| DeploymentMode.fromScratch
-									.equals(deploymentMode)
-							|| DeploymentMode.fromRootImage
+					if (!DeploymentMode.fromScratch.equals(deploymentMode)
+							&& !DeploymentMode.fromRootImage
 									.equals(deploymentMode)) {
-						if (!this.hostHasImage(baseImageName, host)
-								|| DeploymentMode.fromScratch
-										.equals(deploymentMode)
-								|| DeploymentMode.fromRootImage
-										.equals(deploymentMode)) {
-							buildImage(baseImageName, image.buildSteps, host,
-									manifest, Collections.emptyMap(),
-									buildLogStream);
+						if (!this.registryHasImage(baseImageName)) {
+							if (!this.hostHasImage(baseImageName, host)) {
+								buildImage(baseImageName, image.buildSteps,
+										host, manifest, Collections.emptyMap(),
+										buildLogStream);
+							}
+							this.tagImage(host, baseImageName);
+							this.pushImage(host, baseImageName);
 						}
+						baseImageName = this
+								.constructPrivateImageName(baseImageName);
+					} else {
+						buildImage(baseImageName, image.buildSteps, host,
+								manifest, Collections.emptyMap(),
+								buildLogStream);
 						this.tagImage(host, baseImageName);
 						this.pushImage(host, baseImageName);
 					}
-					baseImageName = this
-							.constructPrivateImageName(baseImageName);
 				} else {
 					buildImage(baseImageName, image.buildSteps, host, manifest,
 							Collections.emptyMap(), buildLogStream);
@@ -315,11 +451,19 @@ public class FlotoService implements Closeable {
 			if (this.imageRegistry != null) {
 				if (!this.findRegistryContainer(manifest).name
 						.equalsIgnoreCase(container.name)) {
-					if (!this.registryHasImage(container.name)) {
-						if (!this.hostHasImage(container.name, host)) {
-							buildImage(container.name, configureSteps, host,
-									manifest, globalConfig, buildLogStream);
+					if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
+						if (!this.registryHasImage(container.name)) {
+							if (!this.hostHasImage(container.name, host)) {
+								buildImage(container.name, configureSteps,
+										host, manifest, globalConfig,
+										buildLogStream);
+							}
+							this.tagImage(host, container.name);
+							this.pushImage(host, container.name);
 						}
+					} else {
+						buildImage(container.name, configureSteps, host,
+								manifest, globalConfig, buildLogStream);
 						this.tagImage(host, container.name);
 						this.pushImage(host, container.name);
 					}
@@ -833,16 +977,13 @@ public class FlotoService implements Closeable {
 	}
 
 	private void setRootImage(Image image, String newRootImageName) {
-		image.buildSteps
-				.stream()
+		image.buildSteps.stream()
 				.filter(node -> node.get("type").textValue().equals("FROM"))
-				.forEach(
-						n -> {
-							ObjectNode on = (ObjectNode) n;
-							on.remove("line");
-							on.put("line",
-									this.constructPrivateImageName(newRootImageName));
-						});
+				.forEach(n -> {
+					ObjectNode on = (ObjectNode) n;
+					on.remove("line");
+					on.put("line", newRootImageName);
+				});
 
 	}
 
@@ -855,6 +996,10 @@ public class FlotoService implements Closeable {
 			return imageName.replace(this.getRegistryName() + "/", "");
 		}
 		return imageName;
+	}
+	
+	private String createBaseImageName(Image image) {
+		return image.name + "-image";
 	}
 
 	private String getRegistryName() {
