@@ -365,6 +365,9 @@ public class VirtualMachineManager {
             leaseUpdater.interrupt();
             httpNfcLease.httpNfcLeaseProgress(100);
             httpNfcLease.httpNfcLeaseComplete();
+        } else {
+            log.error("Error: {}", httpNfcLease.getError().getLocalizedMessage());
+            throw new IllegalStateException("Lease in state " + httpNfcLease.getError().getLocalizedMessage());
         }
 
 		VirtualMachine vm = getVm(templateVmName);
