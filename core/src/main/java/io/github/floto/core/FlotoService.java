@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import javax.ws.rs.NotFoundException;
@@ -317,6 +318,8 @@ public class FlotoService implements Closeable {
 				if (this.findRegistryContainer(manifest).name
 						.equalsIgnoreCase(container.name)) {
 					this.tagImage(host, rootImageName);
+					// Wait a bit to ensure, registry is up
+					Thread.sleep(5000L);
 					this.pushImage(host, rootImageName);
 				}
 			}
@@ -337,6 +340,7 @@ public class FlotoService implements Closeable {
 						this.createImage(host, rootImageName);
 					}
 					this.tagImage(host, rootImageName);
+					this.pingRegistry(host);
 					this.pushImage(host, rootImageName);
 				}
 			}
@@ -994,6 +998,17 @@ public class FlotoService implements Closeable {
 		} catch (Throwable t) {
 			Throwables.propagate(t);
 		}
+	}
+	
+	private void pingRegistry(Host host) {
+		WebTarget registryTarget = this.createRegistryTarget();
+		try {
+			JsonNode response = registryTarget.path("v1").path("_ping").request().buildGet()
+					.submit(JsonNode.class).get();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 	}
 
 	private void tagImage(Host host, String imageName) {
