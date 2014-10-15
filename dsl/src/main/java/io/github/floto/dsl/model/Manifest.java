@@ -20,4 +20,8 @@ public class Manifest {
         }
         throw new IllegalArgumentException("Unknown host: " + hostName);
     }
+    
+    public Container findContainer(String containerName) {
+    	return containers.stream().filter(c -> c.name.equals(containerName)).findFirst().orElse(null);
+    }
 }
