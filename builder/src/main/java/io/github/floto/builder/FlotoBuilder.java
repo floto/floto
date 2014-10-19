@@ -76,7 +76,7 @@ public class FlotoBuilder {
             redeployVmJob.execute();
 
             for (Container container : manifest.containers) {
-                flotoService.redeployContainers(Arrays.asList(container.name), DeploymentMode.fromScratch).getResultFuture().get();
+                flotoService.redeployContainers(Arrays.asList(container.name), DeploymentMode.fromScratch, true, false).getResultFuture().get();
             }
 
 	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, host.name);

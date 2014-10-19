@@ -217,7 +217,7 @@ public class FlotoService implements Closeable {
 	}
 
 	public TaskInfo<Void> redeployContainers(List<String> containers,
-			DeploymentMode deploymentMode) {
+			DeploymentMode deploymentMode, boolean createAndStartContainer, boolean deployOnRegistry) {
 
 		List<String> actualContainers = new ArrayList<>(containers);
 		Manifest manifest = this.manifest;
@@ -229,13 +229,13 @@ public class FlotoService implements Closeable {
 			if (registryRedploymentInstructed) {
 				actualContainers.remove(actualContainers
 						.indexOf(registryContainer.name));
-				this.redeployContainer(registryContainer.name, deploymentMode);
+				this.redeployContainer(registryContainer.name, deploymentMode, true, deployOnRegistry);
 			} else {
 				ContainerState registryContainerState = this
 						.getContainerStates().get(registryContainer.name);
 				if (registryContainerState == null) {
 					this.redeployContainer(registryContainer.name,
-							deploymentMode);
+							deploymentMode, true, deployOnRegistry);
 				} else if (registryContainerState.status == ContainerState.Status.stopped) {
 					log.info("Starting registry");
 					this.startContainers(Lists
@@ -258,13 +258,13 @@ public class FlotoService implements Closeable {
 									actualContainers, deploymentMode);
 							actualContainers.forEach(container -> this
 									.redeployContainer(container,
-											deploymentMode));
+											deploymentMode, createAndStartContainer, deployOnRegistry));
 							return null;
 						});
 	}
 
 	private void redeployContainer(String containerName,
-			DeploymentMode deploymentMode) {
+			DeploymentMode deploymentMode, boolean createAndStartContainer, boolean deployOnRegistry) {
 
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		Manifest manifest = this.manifest;
@@ -277,7 +277,7 @@ public class FlotoService implements Closeable {
 				getContainerBuildLogFile(containerName))) {
 			Container container = findContainer(containerName, manifest);
 			Image image = findImage(container.image, manifest);
-			Host host = findHost(container.host, manifest);
+			Host host = deployOnRegistry ? 	findRegistryHost(manifest) : findHost(container.host, manifest);
 			String rootImageName = this.getRootImage(image);
 			if (rootImageName.startsWith(this.getRegistryName())) {
 				throw new IllegalStateException(
@@ -306,12 +306,16 @@ public class FlotoService implements Closeable {
 
 			// destroy old container
 			destroyContainer(container.name, host);
+			
+			if(createAndStartContainer) {
+				// create container
+				createContainer(container, host);
+				
+				// start container
+				startContainer(containerName);
+				
+			}
 
-			// create container
-			createContainer(container, host);
-
-			// start container
-			startContainer(containerName);
 
 			// Push the root-image if registry has just been built
 			if (this.imageRegistry != null) {
@@ -349,7 +353,7 @@ public class FlotoService implements Closeable {
 		this.redeployContainerFromRootImage(container, image, host,
 				buildLogStream, rootImageName);
 	}
-
+	
 	private void redeployContainerFromRootImage(Container container,
 			Image image, Host host, FileOutputStream buildLogStream,
 			String rootImageName) throws Exception {
