@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import javax.ws.rs.NotFoundException;
@@ -286,13 +285,13 @@ public class FlotoService implements Closeable {
 			try {
 				if (DeploymentMode.fromScratch.equals(deploymentMode)) {
 					this.redeployContainerFromScratch(container, image, host,
-							buildLogStream, rootImageName);
+							buildLogStream, rootImageName, createAndStartContainer);
 				}
 				else if(DeploymentMode.fromRootImage.equals(deploymentMode)) {
-					this.redeployContainerFromRootImage(container, image, host, buildLogStream, rootImageName);
+					this.redeployContainerFromRootImage(container, image, host, buildLogStream, rootImageName, createAndStartContainer);
 				}
 				else if(DeploymentMode.fromBaseImage.equals(deploymentMode)) {
-					this.redeployContainerFromBaseImage(container, image, host, buildLogStream);
+					this.redeployContainerFromBaseImage(container, image, host, buildLogStream, createAndStartContainer);
 				}
 				else if(DeploymentMode.containerRebuild.equals(deploymentMode)) {
 					// container-rebuild will be performed anyway
@@ -325,6 +324,7 @@ public class FlotoService implements Closeable {
 					// Wait a bit to ensure, registry is up
 					Thread.sleep(5000L);
 					this.pushImage(host, rootImageName);
+					this.deleteImage(host, rootImageName);
 				}
 			}
 			log.info("Redeployed container {}", container.name);
@@ -334,7 +334,7 @@ public class FlotoService implements Closeable {
 	}
 
 	private void redeployContainerFromScratch(Container container, Image image,
-			Host host, FileOutputStream buildLogStream, String rootImageName)
+			Host host, FileOutputStream buildLogStream, String rootImageName, boolean createAndStartContainer)
 			throws Exception {
 		if (this.imageRegistry != null) {
 			if (!this.findRegistryContainer(manifest).name
@@ -346,17 +346,18 @@ public class FlotoService implements Closeable {
 					this.tagImage(host, rootImageName);
 					this.pingRegistry(host);
 					this.pushImage(host, rootImageName);
+					this.deleteImage(host, rootImageName);
 				}
 			}
 		}
 
 		this.redeployContainerFromRootImage(container, image, host,
-				buildLogStream, rootImageName);
+				buildLogStream, rootImageName, createAndStartContainer);
 	}
 	
 	private void redeployContainerFromRootImage(Container container,
 			Image image, Host host, FileOutputStream buildLogStream,
-			String rootImageName) throws Exception {
+			String rootImageName, boolean createAndStartContainer) throws Exception {
 		
 		boolean useRegistry = this.imageRegistry != null && !this.findRegistryContainer(manifest).name
 				.equalsIgnoreCase(container.name);
@@ -374,12 +375,16 @@ public class FlotoService implements Closeable {
 		if (useRegistry) {
 				this.tagImage(host, baseImageName);
 				this.pushImage(host, baseImageName);
+				this.deleteImage(host, baseImageName);
+				if(!createAndStartContainer) {
+					this.deleteImage(host, this.constructPrivateImageName(baseImageName));
+				}
 		}
 
-		this.redeployContainerFromBaseImage(container, image, host, buildLogStream);
+		this.redeployContainerFromBaseImage(container, image, host, buildLogStream, createAndStartContainer);
 	}
 
-	private void redeployContainerFromBaseImage(Container container, Image image, Host host, FileOutputStream buildLogStream) {
+	private void redeployContainerFromBaseImage(Container container, Image image, Host host, FileOutputStream buildLogStream, boolean createAndStartContainer) {
 		
 		boolean useRegistry = this.imageRegistry != null && !this.findRegistryContainer(manifest).name
 				.equalsIgnoreCase(container.name);
@@ -403,6 +408,10 @@ public class FlotoService implements Closeable {
 		if (useRegistry) {
 			this.tagImage(host, container.name);
 			this.pushImage(host, container.name);
+			this.deleteImage(host, container.name);
+			if(!createAndStartContainer) {
+				this.deleteImage(host, this.constructPrivateImageName(baseImageName));
+			}
 		}
 	}
 
@@ -531,10 +540,17 @@ public class FlotoService implements Closeable {
 	// }
 
 	private void createContainer(Container container, Host host) {
+		String imageName = container.name;
+		if (this.imageRegistry != null) {
+			if (!this.findRegistryContainer(manifest).name
+					.equalsIgnoreCase(container.name)) {
+				imageName = this.constructPrivateImageName(container.name);
+			}
+		}
 		WebTarget dockerTarget = createDockerTarget(host).path(
 				"/containers/create").queryParam("name", container.name);
 		Map<String, Object> createConfig = Maps.newHashMap();
-		createConfig.put("Image", container.name);
+		createConfig.put("Image", imageName);
 		createConfig.put("PortSpecs", null);
 		createConfig.put("ExposedPorts", Maps.newHashMap());
 
@@ -1042,6 +1058,17 @@ public class FlotoService implements Closeable {
 					.path("/images/" + this.constructPrivateImageName(name)
 							+ "/push").queryParam("tag", tag).request()
 					.header("X-Registry-Auth", "aaa").post(Entity.text(""));
+			response.close();
+		} catch (Throwable t) {
+			Throwables.propagate(t);
+		}
+	}
+	
+	private void deleteImage(Host host, String imageName) {
+		WebTarget dockerTarget = createDockerTarget(host);
+		try {
+			Response response = dockerTarget
+					.path("/images/" + imageName).request().delete();
 			response.close();
 		} catch (Throwable t) {
 			Throwables.propagate(t);

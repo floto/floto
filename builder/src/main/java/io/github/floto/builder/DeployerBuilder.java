@@ -96,7 +96,7 @@ public class DeployerBuilder {
 	        
 
             log.info("Will deploy={}", deploymentList);
-            flotoService.setExternalHostIp(deploymentHost.name, "172.16.1.128");
+            flotoService.setExternalHostIp(deploymentHost.name, "192.168.119.129");
             
             log.info("Will deploy={}", deploymentList);
             flotoService.redeployContainers(deploymentList.stream().map(c -> c.name).collect(Collectors.toList()), DeploymentMode.fromScratch, true, true).getResultFuture().get();
@@ -157,13 +157,13 @@ public class DeployerBuilder {
 
             // Find host
 	        List<Container> deploymentList = Lists.newArrayList();
-	        Container mainContainer = manifest.findContainer("registry");
-	        if(mainContainer == null) {
+	        Container registryContainer = manifest.findContainer("registry");
+	        if(registryContainer == null) {
 	        	throw new IllegalStateException("Cannot create deployer-VM without registry");
 	        }
-	        deploymentList.add(mainContainer);
-	        Host deploymentHost = manifest.findHost(mainContainer.host);
-	        Container flotoContainer = manifest.findContainer("deployment");
+	        deploymentList.add(registryContainer);
+	        Host deploymentHost = manifest.findHost(registryContainer.host);
+	        Container flotoContainer = manifest.findContainer("floto");
 	        if(flotoContainer == null) {
 	        	throw new IllegalStateException("Cannot create deployer-VM without floto");
 	        }
@@ -183,7 +183,7 @@ public class DeployerBuilder {
             RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, deploymentHost.name);
             redeployVmJob.execute();
 
-            log.info("Will deploy={}", deploymentList);
+            log.info("Will deploy={}", deploymentList.stream().map(c -> c.name).collect(Collectors.toList()));
             flotoService.redeployContainers(deploymentList.stream().map(c -> c.name).collect(Collectors.toList()), DeploymentMode.fromScratch, true, true).getResultFuture().get();
             
             // build remaining images and deploy them to registry
