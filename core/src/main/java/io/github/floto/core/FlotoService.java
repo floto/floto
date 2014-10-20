@@ -410,7 +410,7 @@ public class FlotoService implements Closeable {
 			this.pushImage(host, container.name);
 			this.deleteImage(host, container.name);
 			if(!createAndStartContainer) {
-				this.deleteImage(host, this.constructPrivateImageName(baseImageName));
+				this.deleteImage(host, baseImageName);
 			}
 		}
 	}
@@ -1065,6 +1065,7 @@ public class FlotoService implements Closeable {
 	}
 	
 	private void deleteImage(Host host, String imageName) {
+		log.info("Will delete=" + imageName);
 		WebTarget dockerTarget = createDockerTarget(host);
 		try {
 			Response response = dockerTarget
