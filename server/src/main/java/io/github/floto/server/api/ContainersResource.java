@@ -24,7 +24,7 @@ public class ContainersResource {
 	@Path("_redeploy")
 	@Produces(MediaType.APPLICATION_JSON)
 	public TaskInfo<Void> redeployContainers(ContainersRequest containersRequest) {
-		return flotoService.redeployContainers(containersRequest.containers, containersRequest.deploymentMode);
+		return flotoService.redeployContainers(containersRequest.containers, containersRequest.deploymentMode, true, false);
 	}
 
 	@POST
