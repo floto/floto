@@ -42,9 +42,66 @@ public class DeployerBuilder {
     public static void main(String[] args) {
         new DeployerBuilder(args).run();
     }
-
     
     private void run() {
+        try {
+            SLF4JBridgeHandler.removeHandlersForRootLogger();
+            SLF4JBridgeHandler.install();
+
+            JCommander jCommander = new JCommander();
+            jCommander.setProgramName("FlotoServer");
+            jCommander.addObject(parameters);
+            if(arguments.length == 0) {
+                jCommander.usage();
+                return;
+            }
+            jCommander.parse(arguments);
+
+            log.info("Starting Floto Builder");
+            Stopwatch stopwatch = Stopwatch.createStarted();
+
+            TaskService taskService = new TaskService();
+            flotoService = new FlotoService(parameters, taskService);
+            flotoService.compileManifest().getResultFuture().get();
+            flotoService.validateTemplates();
+
+            flotoService.enableBuildOutputDump(true);
+
+	        Manifest manifest = flotoService.getManifest();
+
+            // Find host
+	        Container registryContainer = manifest.findContainer("registry");
+	        if(registryContainer == null) {
+	        	throw new IllegalStateException("Cannot create deployer-VM without registry");
+	        }
+	        Host deploymentHost = manifest.findHost(registryContainer.host);
+	        
+            RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, deploymentHost.name);
+            redeployVmJob.execute();
+            
+            flotoService.buildDeployerVM(deploymentHost);
+
+
+//	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
+//	        exportVmJob.execute();
+
+            log.info("Build complete");
+            stopwatch.stop();
+            Duration duration = Duration.standardSeconds(stopwatch.elapsed(TimeUnit.SECONDS));
+            log.info("Total time: {}", PeriodFormat.wordBased(Locale.ROOT).print(duration.toPeriod()));
+        } catch (Throwable e) {
+            log.error("Error running build", e);
+            log.error("Build failed");
+            System.exit(1);
+        } finally {
+            IOUtils.closeQuietly(flotoService);
+        }
+    }
+    
+    
+
+    
+    private void run2() {
         try {
             SLF4JBridgeHandler.removeHandlersForRootLogger();
             SLF4JBridgeHandler.install();
