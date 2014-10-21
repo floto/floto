@@ -30,7 +30,6 @@ import java.io.PrintWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,14 +63,7 @@ import org.apache.commons.io.filefilter.NotFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHeader;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
@@ -107,10 +99,6 @@ public class FlotoService implements Closeable {
 	private final boolean useProxy;
 	private String httpProxyUrl;
 	private HttpProxy proxy;
-
-	// --------- JUST A WORKAROUND!!! ---------
-	private CloseableHttpClient httpClient = HttpClients.createDefault();
-	// -----------------------------------------
 
 	private Map<String, String> externalHostIpMap = new HashMap<>();
 
@@ -216,7 +204,8 @@ public class FlotoService implements Closeable {
 	}
 
 	public TaskInfo<Void> redeployContainers(List<String> containers,
-			DeploymentMode deploymentMode, boolean createAndStartContainer, boolean deployOnRegistry) {
+			DeploymentMode deploymentMode, boolean createAndStartContainer,
+			boolean deployOnRegistry) {
 
 		List<String> actualContainers = new ArrayList<>(containers);
 		Manifest manifest = this.manifest;
@@ -228,7 +217,8 @@ public class FlotoService implements Closeable {
 			if (registryRedploymentInstructed) {
 				actualContainers.remove(actualContainers
 						.indexOf(registryContainer.name));
-				this.redeployContainer(registryContainer.name, deploymentMode, true, deployOnRegistry);
+				this.redeployContainer(registryContainer.name, deploymentMode,
+						true, deployOnRegistry);
 			} else {
 				ContainerState registryContainerState = this
 						.getContainerStates().get(registryContainer.name);
@@ -257,13 +247,16 @@ public class FlotoService implements Closeable {
 									actualContainers, deploymentMode);
 							actualContainers.forEach(container -> this
 									.redeployContainer(container,
-											deploymentMode, createAndStartContainer, deployOnRegistry));
+											deploymentMode,
+											createAndStartContainer,
+											deployOnRegistry));
 							return null;
 						});
 	}
 
 	private void redeployContainer(String containerName,
-			DeploymentMode deploymentMode, boolean createAndStartContainer, boolean deployOnRegistry) {
+			DeploymentMode deploymentMode, boolean createAndStartContainer,
+			boolean deployOnRegistry) {
 
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		Manifest manifest = this.manifest;
@@ -276,7 +269,8 @@ public class FlotoService implements Closeable {
 				getContainerBuildLogFile(containerName))) {
 			Container container = findContainer(containerName, manifest);
 			Image image = findImage(container.image, manifest);
-			Host host = deployOnRegistry ? 	findRegistryHost(manifest) : findHost(container.host, manifest);
+			Host host = deployOnRegistry ? findRegistryHost(manifest)
+					: findHost(container.host, manifest);
 			String rootImageName = this.getRootImage(image);
 			if (rootImageName.startsWith(this.getRegistryName())) {
 				throw new IllegalStateException(
@@ -285,19 +279,21 @@ public class FlotoService implements Closeable {
 			try {
 				if (DeploymentMode.fromScratch.equals(deploymentMode)) {
 					this.redeployContainerFromScratch(container, image, host,
-							buildLogStream, rootImageName, createAndStartContainer);
-				}
-				else if(DeploymentMode.fromRootImage.equals(deploymentMode)) {
-					this.redeployContainerFromRootImage(container, image, host, buildLogStream, rootImageName, createAndStartContainer);
-				}
-				else if(DeploymentMode.fromBaseImage.equals(deploymentMode)) {
-					this.redeployContainerFromBaseImage(container, image, host, buildLogStream, createAndStartContainer);
-				}
-				else if(DeploymentMode.containerRebuild.equals(deploymentMode)) {
+							buildLogStream, rootImageName,
+							createAndStartContainer);
+				} else if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
+					this.redeployContainerFromRootImage(container, image, host,
+							buildLogStream, rootImageName,
+							createAndStartContainer);
+				} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
+					this.redeployContainerFromBaseImage(container, image, host,
+							buildLogStream, createAndStartContainer);
+				} else if (DeploymentMode.containerRebuild
+						.equals(deploymentMode)) {
 					// container-rebuild will be performed anyway
-				}
-				else {
-					throw new IllegalArgumentException("Unknown mode=" + deploymentMode);
+				} else {
+					throw new IllegalArgumentException("Unknown mode="
+							+ deploymentMode);
 				}
 			} finally {
 				this.setRootImage(image, rootImageName);
@@ -305,16 +301,15 @@ public class FlotoService implements Closeable {
 
 			// destroy old container
 			destroyContainer(container.name, host);
-			
-			if(createAndStartContainer) {
+
+			if (createAndStartContainer) {
 				// create container
 				createContainer(container, host);
-				
+
 				// start container
 				startContainer(containerName);
-				
-			}
 
+			}
 
 			// Push the root-image if registry has just been built
 			if (this.imageRegistry != null) {
@@ -334,8 +329,8 @@ public class FlotoService implements Closeable {
 	}
 
 	private void redeployContainerFromScratch(Container container, Image image,
-			Host host, FileOutputStream buildLogStream, String rootImageName, boolean createAndStartContainer)
-			throws Exception {
+			Host host, FileOutputStream buildLogStream, String rootImageName,
+			boolean createAndStartContainer) throws Exception {
 		if (this.imageRegistry != null) {
 			if (!this.findRegistryContainer(manifest).name
 					.equalsIgnoreCase(container.name)) {
@@ -344,7 +339,6 @@ public class FlotoService implements Closeable {
 						this.createImage(host, rootImageName);
 					}
 					this.tagImage(host, rootImageName);
-					this.pingRegistry(host);
 					this.pushImage(host, rootImageName);
 					this.deleteImage(host, rootImageName);
 				}
@@ -354,14 +348,16 @@ public class FlotoService implements Closeable {
 		this.redeployContainerFromRootImage(container, image, host,
 				buildLogStream, rootImageName, createAndStartContainer);
 	}
-	
+
 	private void redeployContainerFromRootImage(Container container,
 			Image image, Host host, FileOutputStream buildLogStream,
-			String rootImageName, boolean createAndStartContainer) throws Exception {
-		
-		boolean useRegistry = this.imageRegistry != null && !this.findRegistryContainer(manifest).name
-				.equalsIgnoreCase(container.name);
-		
+			String rootImageName, boolean createAndStartContainer)
+			throws Exception {
+
+		boolean useRegistry = this.imageRegistry != null
+				&& !this.findRegistryContainer(manifest).name
+						.equalsIgnoreCase(container.name);
+
 		if (useRegistry) {
 			this.setRootImage(image,
 					this.constructPrivateImageName(rootImageName));
@@ -373,22 +369,23 @@ public class FlotoService implements Closeable {
 		this.buildImage(baseImageName, image.buildSteps, host, manifest,
 				Collections.emptyMap(), buildLogStream);
 		if (useRegistry) {
-				this.tagImage(host, baseImageName);
-				this.pushImage(host, baseImageName);
-				this.deleteImage(host, baseImageName);
-				if(!createAndStartContainer) {
-					this.deleteImage(host, this.constructPrivateImageName(baseImageName));
-				}
+			this.tagImage(host, baseImageName);
+			this.pushImage(host, baseImageName);
+			this.deleteImage(host, baseImageName);
 		}
 
-		this.redeployContainerFromBaseImage(container, image, host, buildLogStream, createAndStartContainer);
+		this.redeployContainerFromBaseImage(container, image, host,
+				buildLogStream, createAndStartContainer);
 	}
 
-	private void redeployContainerFromBaseImage(Container container, Image image, Host host, FileOutputStream buildLogStream, boolean createAndStartContainer) {
-		
-		boolean useRegistry = this.imageRegistry != null && !this.findRegistryContainer(manifest).name
-				.equalsIgnoreCase(container.name);
-		
+	private void redeployContainerFromBaseImage(Container container,
+			Image image, Host host, FileOutputStream buildLogStream,
+			boolean createAndStartContainer) {
+
+		boolean useRegistry = this.imageRegistry != null
+				&& !this.findRegistryContainer(manifest).name
+						.equalsIgnoreCase(container.name);
+
 		String baseImageName = this.createBaseImageName(image);
 		if (useRegistry) {
 			baseImageName = this.constructPrivateImageName(baseImageName);
@@ -409,7 +406,9 @@ public class FlotoService implements Closeable {
 			this.tagImage(host, container.name);
 			this.pushImage(host, container.name);
 			this.deleteImage(host, container.name);
-			if(!createAndStartContainer) {
+			if (!createAndStartContainer) {
+				this.deleteImage(host,
+						this.constructPrivateImageName(container.name));
 				this.deleteImage(host, baseImageName);
 			}
 		}
@@ -432,81 +431,27 @@ public class FlotoService implements Closeable {
 		return new File(flotoHome, "buildLog/" + containerName);
 	}
 
-	// private void startContainer(Image image, Container container, Host host)
-	// {
-	// WebTarget dockerTarget = createDockerTarget(host);
-	// Map<String, Object> startConfig = new HashMap<>();
-	//
-	// // Host networking
-	// startConfig.put("NetworkMode", "host");
-	//
-	// // Host mount directories
-	// ArrayList<String> binds = new ArrayList<>();
-	// for (Map.Entry<String, String> entry : getContainerVolumes(image,
-	// container).entrySet()) {
-	// binds.add(entry.getKey() + ":" + entry.getValue());
-	// }
-	// startConfig.put("Binds", binds);
-	//
-	// Response startResponse = dockerTarget.path("/containers/" +
-	// container.name + "/start").request().post(Entity.entity(startConfig,
-	// MediaType.APPLICATION_JSON_TYPE));
-	// startResponse.close();
-	// }
-
-	// private void startContainer(Image image, Container container, Host host)
-	// {
-	//
-	// WebTarget dockerTarget = createDockerTarget(host).path(
-	// "/containers/" + container.name + "/start");
-	// Map<String, Object> startConfig = Maps.newHashMap();
-	//
-	// // Host mount directories
-	// ArrayList<String> binds = new ArrayList<>();
-	// for (Map.Entry<String, String> entry : getContainerVolumes(image,
-	// container).entrySet()) {
-	// binds.add(entry.getKey() + ":" + entry.getValue());
-	// }
-	// startConfig.put("Binds", binds);
-	//
-	// // Host networking
-	// startConfig.put("NetworkMode", "host");
-	//
-	// Builder request = dockerTarget.request();
-	// Response response = request.post(Entity.json(startConfig));
-	// System.out.println(response.getStatusInfo());
-	// response.close();
-	// }
-
 	private void startContainer(Image image, Container container, Host host) {
 
-		WebTarget dockerTarget = createDockerTarget(host);
-		URI uri = dockerTarget.path("/containers/" + container.name + "/start")
-				.getUri();
+		WebTarget dockerTarget = createDockerTarget(host).path(
+				"/containers/" + container.name + "/start");
+		Map<String, Object> startConfig = Maps.newHashMap();
 
-		try {
-			HttpPost start = new HttpPost(uri);
-			start.setHeader(new BasicHeader("Accept-Encoding", "gzip,deflate"));
-
-			Map<String, Object> startConfig = Maps.newHashMap();
-			ArrayList<String> binds = Lists.newArrayList();
-			for (Map.Entry<String, String> entry : getContainerVolumes(image,
-					container).entrySet()) {
-				binds.add(entry.getKey() + ":" + entry.getValue());
-			}
-			startConfig.put("Binds", binds);
-			startConfig.put("Privileged", container.priviledged);
-			startConfig.put("NetworkMode", "host");
-
-			start.setEntity(new StringEntity(new ObjectMapper()
-					.writeValueAsString(startConfig), ContentType
-					.create("application/json")));
-			httpClient.execute(start, new BasicResponseHandler());
-		} catch (Exception ex) {
-			Throwables.propagate(ex);
+		// Host mount directories
+		ArrayList<String> binds = new ArrayList<>();
+		for (Map.Entry<String, String> entry : getContainerVolumes(image,
+				container).entrySet()) {
+			binds.add(entry.getKey() + ":" + entry.getValue());
 		}
+		startConfig.put("Binds", binds);
+		startConfig.put("Privileged", container.priviledged);
+		startConfig.put("NetworkMode", "host");
 
+		Builder request = dockerTarget.request();
+		Response response = request.post(Entity.json(startConfig));
+		response.close();
 	}
+
 
 	private Map<String, String> getContainerVolumes(Image image,
 			Container container) {
@@ -528,17 +473,6 @@ public class FlotoService implements Closeable {
 		return volumeMap;
 	}
 
-	// private void createContainer(Container container, Host host) {
-	// WebTarget dockerTarget = createDockerTarget(host);
-	// Map<String, Object> createConfig = new HashMap<>();
-	// createConfig.put("Image", container.name);
-	// Response createResponse =
-	// dockerTarget.path("/containers/create").queryParam("name",
-	// container.name).request().post(Entity.entity(createConfig,
-	// MediaType.APPLICATION_JSON_TYPE));
-	// createResponse.close();
-	// }
-
 	private void createContainer(Container container, Host host) {
 		String imageName = container.name;
 		if (this.imageRegistry != null) {
@@ -558,35 +492,6 @@ public class FlotoService implements Closeable {
 		Response response = request.post(Entity.json(createConfig));
 		response.close();
 	}
-
-	// private void createContainer(Container container, Host host) {
-	//
-	// ObjectMapper objectMapper = new ObjectMapper();
-	//
-	// WebTarget dockerTarget = createDockerTarget(host);
-	//
-	// try {
-	// URI uri = new URI(dockerTarget.path("/containers/create").getUri()
-	// .toString()
-	// + "?name=" + container.name);
-	// System.out.println("CREATE-URI=" + uri);
-	// HttpPost create = new HttpPost(uri);
-	// create.setHeader(new BasicHeader("Accept-Encoding", "gzip,deflate"));
-	// Map<String, Object> createConfig = Maps.newHashMap();
-	// createConfig.put("Image", container.name);
-	// createConfig.put("PortSpecs", null);
-	// createConfig.put("ExposedPorts", Maps.newHashMap());
-	// create.setEntity(new StringEntity(objectMapper
-	// .writeValueAsString(createConfig), ContentType
-	// .create("application/json")));
-	//
-	// CloseableHttpResponse response = httpClient.execute(create);
-	// System.out.println(response.getStatusLine());
-	// response.close();
-	// } catch (Exception e) {
-	// Throwables.propagate(e);
-	// }
-	// }
 
 	private void destroyContainer(String containerName, Host host) {
 		WebTarget dockerTarget = createDockerTarget(host);
@@ -920,7 +825,7 @@ public class FlotoService implements Closeable {
 		}
 		return imageName;
 	}
-	
+
 	private String createBaseImageName(Image image) {
 		return image.name + "-image";
 	}
@@ -1019,29 +924,19 @@ public class FlotoService implements Closeable {
 			Throwables.propagate(t);
 		}
 	}
-	
-	private void pingRegistry(Host host) {
-		WebTarget registryTarget = this.createRegistryTarget();
-		try {
-			JsonNode response = registryTarget.path("v1").path("_ping").request().buildGet()
-					.submit(JsonNode.class).get();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-	}
 
 	private void tagImage(Host host, String imageName) {
 		Pair<String, String> splitted = this.splitImageName(imageName);
 		String name = splitted.getLeft();
 		String tag = splitted.getRight();
+		String privateName = this.constructPrivateImageName(name);
+		log.info("Will tag='{}' as='{}', tag='{}'", imageName, privateName, tag);
 		WebTarget dockerTarget = createDockerTarget(host);
 		try {
 			Response response = dockerTarget
 					.path("/images/" + imageName + "/tag")
-					.queryParam("repo", this.getRegistryName() + "/" + name)
-					.queryParam("tag", tag).queryParam("force", "0").request()
-					.post(Entity.text(""));
+					.queryParam("repo", privateName).queryParam("tag", tag)
+					.queryParam("force", "0").request().post(Entity.text(""));
 			response.close();
 		} catch (Throwable t) {
 			Throwables.propagate(t);
@@ -1052,24 +947,27 @@ public class FlotoService implements Closeable {
 		Pair<String, String> splitted = this.splitImageName(imageName);
 		String name = splitted.getLeft();
 		String tag = splitted.getRight();
+		String privateName = this.constructPrivateImageName(name);
+		log.info("Will push='{}' as='{}', tag='{}'", imageName, privateName,
+				tag);
 		WebTarget dockerTarget = createDockerTarget(host);
 		try {
 			Response response = dockerTarget
-					.path("/images/" + this.constructPrivateImageName(name)
-							+ "/push").queryParam("tag", tag).request()
+					.path("/images/" + privateName + "/push")
+					.queryParam("tag", tag).request()
 					.header("X-Registry-Auth", "aaa").post(Entity.text(""));
 			response.close();
 		} catch (Throwable t) {
 			Throwables.propagate(t);
 		}
 	}
-	
+
 	private void deleteImage(Host host, String imageName) {
-		log.info("Will delete=" + imageName);
+		log.info("Will delete='{}'", imageName);
 		WebTarget dockerTarget = createDockerTarget(host);
 		try {
-			Response response = dockerTarget
-					.path("/images/" + imageName).request().delete();
+			Response response = dockerTarget.path("/images/" + imageName)
+					.request().delete();
 			response.close();
 		} catch (Throwable t) {
 			Throwables.propagate(t);
