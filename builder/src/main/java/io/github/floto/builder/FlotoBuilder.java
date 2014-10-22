@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -75,8 +76,10 @@ public class FlotoBuilder {
             Host host = manifest.hosts.get(0);
             RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, host.name);
             redeployVmJob.execute();
+//            flotoService.setExternalHostIp(host.name, "192.168.119.129");
             
-            flotoService.redeployContainers(manifest.containers.stream().map(c -> c.name).collect(Collectors.toList()), DeploymentMode.fromRootImage);
+            List<String> containers = manifest.containers.stream().map(c -> c.name).collect(Collectors.toList());
+            flotoService.redeployContainers(containers, DeploymentMode.fromRootImage).getResultFuture().get();
 
 	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, host.name);
 	        exportVmJob.execute();
