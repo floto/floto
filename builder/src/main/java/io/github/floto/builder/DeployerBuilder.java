@@ -74,101 +74,36 @@ public class DeployerBuilder {
 	        if(registryContainer == null) {
 	        	throw new IllegalStateException("Cannot create deployer-VM without registry");
 	        }
-	        Host deploymentHost = manifest.findHost(registryContainer.host);
-	        
-            RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, deploymentHost.name);
-            redeployVmJob.execute();
-            
-            flotoService.buildDeployerVM(deploymentHost);
-
-
-//	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
-//	        exportVmJob.execute();
-
-            log.info("Build complete");
-            stopwatch.stop();
-            Duration duration = Duration.standardSeconds(stopwatch.elapsed(TimeUnit.SECONDS));
-            log.info("Total time: {}", PeriodFormat.wordBased(Locale.ROOT).print(duration.toPeriod()));
-        } catch (Throwable e) {
-            log.error("Error running build", e);
-            log.error("Build failed");
-            System.exit(1);
-        } finally {
-            IOUtils.closeQuietly(flotoService);
-        }
-    }
-    
-    
-
-    
-    private void run2() {
-        try {
-            SLF4JBridgeHandler.removeHandlersForRootLogger();
-            SLF4JBridgeHandler.install();
-
-            JCommander jCommander = new JCommander();
-            jCommander.setProgramName("FlotoServer");
-            jCommander.addObject(parameters);
-            if(arguments.length == 0) {
-                jCommander.usage();
-                return;
-            }
-            jCommander.parse(arguments);
-
-            log.info("Starting Floto Builder");
-            Stopwatch stopwatch = Stopwatch.createStarted();
-
-            TaskService taskService = new TaskService();
-            flotoService = new FlotoService(parameters, taskService);
-            flotoService.compileManifest().getResultFuture().get();
-            flotoService.validateTemplates();
-
-            flotoService.enableBuildOutputDump(true);
-
-	        Manifest manifest = flotoService.getManifest();
-
-            // Find host
-	        List<Container> deploymentList = Lists.newArrayList();
-	        Container registryContainer = manifest.findContainer("registry");
-	        if(registryContainer == null) {
-	        	throw new IllegalStateException("Cannot create deployer-VM without registry");
-	        }
-	        deploymentList.add(registryContainer);
-	        Host deploymentHost = manifest.findHost(registryContainer.host);
 	        Container flotoContainer = manifest.findContainer("floto");
 	        if(flotoContainer == null) {
 	        	throw new IllegalStateException("Cannot create deployer-VM without floto");
 	        }
-	        if(!flotoContainer.host.equals(deploymentHost.name)) {
-	        	throw new IllegalStateException("registry and floto must run on the same host");
-	        }
-	        deploymentList.add(flotoContainer);
-	        // registryUi is optional but if it is present in config it must run on same host
 	        Container registryUiContainer = manifest.findContainer("registry-ui");
-	        if(registryUiContainer != null) {
-	        	if(!registryUiContainer.host.equals(deploymentHost.name)) {
-	        		throw new IllegalStateException("if registryUI is present it must run on same host");
-	        	}
-	        	deploymentList.add(registryUiContainer);
+	        if(registryUiContainer == null) {
+	        	throw new IllegalStateException("Cannot create deployer-VM without registry-ui");
 	        }
+	        Host deploymentHost = manifest.findHost(registryContainer.host);
+//	        flotoService.setExternalHostIp(deploymentHost.name, "192.168.119.129");
 	        
             RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, deploymentHost.name);
             redeployVmJob.execute();
+            
+            
+            
+            flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, false, true, false);
+            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, true, false);
+            flotoService.redeployDeployerContainer(deploymentHost, registryUiContainer, true, false, true, true, true, false);
+            
+            manifest.containers.stream().filter(c -> !Lists.newArrayList(registryContainer, flotoContainer, registryUiContainer).contains(c)).
+        	forEach(c -> {
+        		try {
+        			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, true, false, true);
+        		}
+        		catch(Exception ex) {
+        			throw Throwables.propagate(ex);
+        		}
+        	});
 
-            log.info("Will deploy={}", deploymentList.stream().map(c -> c.name).collect(Collectors.toList()));
-            flotoService.redeployContainers(deploymentList.stream().map(c -> c.name).collect(Collectors.toList()), DeploymentMode.fromScratch, true, true).getResultFuture().get();
-            
-            // build remaining images and deploy them to registry
-            
-            manifest.containers.stream().filter(c -> !deploymentList.contains(c)).
-            	forEach(c -> {
-            		try {
-            			flotoService.redeployContainers(Arrays.asList(c.name), DeploymentMode.fromScratch, false, true).getResultFuture().get();
-            		}
-            		catch(Exception ex) {
-            			throw Throwables.propagate(ex);
-            		}
-            	});
 
 //	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
 //	        exportVmJob.execute();
@@ -185,7 +120,4 @@ public class DeployerBuilder {
             IOUtils.closeQuietly(flotoService);
         }
     }
-
-
-
 }

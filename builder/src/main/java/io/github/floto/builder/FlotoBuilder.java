@@ -22,6 +22,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class FlotoBuilder {
 
@@ -74,10 +75,8 @@ public class FlotoBuilder {
             Host host = manifest.hosts.get(0);
             RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, host.name);
             redeployVmJob.execute();
-
-            for (Container container : manifest.containers) {
-                flotoService.redeployContainers(Arrays.asList(container.name), DeploymentMode.fromScratch, true, false).getResultFuture().get();
-            }
+            
+            flotoService.redeployContainers(manifest.containers.stream().map(c -> c.name).collect(Collectors.toList()), DeploymentMode.fromRootImage);
 
 	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, host.name);
 	        exportVmJob.execute();
