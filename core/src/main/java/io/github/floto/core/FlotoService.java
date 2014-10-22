@@ -197,14 +197,16 @@ public class FlotoService implements Closeable {
 
 		List<String> deploymentContainerNames = Lists.newArrayList("registry", "floto", "registry-ui");
 		List<String> actualContainers = containers.stream().filter(c -> !deploymentContainerNames.contains(c)).collect(Collectors.toList());
-		if (actualContainers.size() < containers.size()) {
+		if (this.imageRegistry != null && actualContainers.size() < containers.size()) {
 			log.warn("Cannot redeploy deployment-containers='{}'", deploymentContainerNames);
 		}
 
 		
-		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(actualContainers) + "in mode '" + deploymentMode + "'", () -> {
+		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(actualContainers) + " in mode '" + deploymentMode + "'", () -> {
 		
-			for (String containerName : containers) {
+			for (String containerName : actualContainers) {
+				
+				log.info("Will deploy container='{}'", containerName);
 	
 				File buildLogDirectory = new File(flotoHome, "buildLog");
 				try {
@@ -300,11 +302,12 @@ public class FlotoService implements Closeable {
 
 	}
 
-	private void redeployFromRootImage(Host host, Container container, String rootImage, FileOutputStream buildLogStream, boolean pushBaseImage) throws Exception {
-		String baseImageName = this.createBaseImage(host, container, pushBaseImage, buildLogStream);
-		if (pushBaseImage) {
+	private void redeployFromRootImage(Host host, Container container, String rootImage, FileOutputStream buildLogStream, boolean pushImage) throws Exception {
+		String baseImageName = this.createBaseImage(host, container, pushImage, buildLogStream);
+		if (pushImage) {
 			baseImageName = this.pushToRegistry(host, baseImageName, true, false, false);
 		}
+		this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, pushImage);
 	}
 
 	private void redeployFromBaseImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream, boolean pushFinalImage) throws Exception {
@@ -676,9 +679,11 @@ public class FlotoService implements Closeable {
 	private void setImageRegistry(Manifest manifest) {
 		JsonNode registryNode = manifest.site.get("imageRegistry");
 		if (registryNode == null) {
+			log.info("Will run without image-registry");
 			return;
 		}
 		String containerName = registryNode.get("containerName").textValue();
+		log.info("Will run with image-registry='{}'", containerName);
 		Integer port = registryNode.get("port").intValue();
 		Container registryContainer = this.findContainer(containerName, manifest);
 		Host registryHost = this.findHost(registryContainer.host, manifest);
