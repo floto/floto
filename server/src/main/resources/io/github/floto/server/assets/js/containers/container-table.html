@@ -9,12 +9,7 @@
 	                    ng-click='open=!open'><span class="caret"></span>Redeploy
 	            </button>
 				<ul class="dropdown-menu">
-        			<!--
-       				<li><a href="#">From Scratch</a></li>
-        			<li><a href="#">From Root-image</a></li>
-        			<li><a href="#">From Base-image</a></li>
-        			-->
-        			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromScratch'})"><a href="#">From Scratch</a></li>
+        			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromRootImage'})"><a href="#">From Scratch</a></li>
         			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromRootImage'})"><a href="#">From Root-image</a></li>
         			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'fromBaseImage'})"><a href="#">From Base-image</a></li>
         			<li data-ng-click="redeployContainers({containers: [container.name],deploymentMode: 'containerRebuild'})"><a href="#">Container-rebuild only</a></li>
