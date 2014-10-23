@@ -9,17 +9,17 @@
                     <button type="button"
                             class="btn btn-default" ng-click="refresh()">Refresh
                     </button>
-                    <div class="btn-group" ng-class='{open: open}'>
-	                    <button type="button" class="btn btn-primary dropdown-toggle"
-	                    		ng-click='open=!open'><span class="caret"></span>Redeploy all
-	                    </button>
-	                    <ul class="dropdown-menu">
-      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href="#">From Scratch</a></li>
-      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href="#">From Root-image</a></li>
-      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'fromBaseImage'})"><a href="#">From Base-image</a></li>
-      						<li data-ng-click="redeployContainers({containers: containerNames,deploymentMode: 'containerRebuild'})"><a href="#">Container-rebuild only</a></li>
-   						</ul>
-	                </div>
+					<div class="btn-group" ng-class='{open2: open2}'>
+						<button type="button" data-toggle="dropdown" class="btn btn-primary dropdown-toggle"
+								ng-click='open2=!open2'>Redeploy all <span class="caret"></span>
+						</button>
+						<ul class="dropdown-menu">
+							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href>From Scratch</a></li>
+							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href>From Root-image</a></li>
+							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'fromBaseImage'})"><a href>From Base-image</a></li>
+							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'containerRebuild'})"><a href>Container-rebuild only</a></li>
+						</ul>
+					</div>
                     <button type="button" class="btn btn-success"
                             ng-click="startContainers({containers: containerNames})">Start all
                     </button>
@@ -63,9 +63,17 @@
                                     <h4>{{group.title}}</h4>
                                 </div>
                                 <div style="display: table-cell; white-space: nowrap">
-                                    <button type="button" class="btn btn-xs btn-primary"
-                                            ng-click="redeployContainers({containers: group.containerNames})">Redeploy
-                                    </button>
+									<div class="btn-group" ng-class='{open3: open3}'>
+										<button type="button" data-toggle="dropdown" class="btn btn-xs btn-primary dropdown-toggle"
+												ng-click='open3=!open3'>Redeploy all <span class="caret"></span>
+										</button>
+										<ul class="dropdown-menu">
+											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'fromRootImage'})"><a href>From Scratch</a></li>
+											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'fromRootImage'})"><a href>From Root-image</a></li>
+											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'fromBaseImage'})"><a href>From Base-image</a></li>
+											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'containerRebuild'})"><a href>Container-rebuild only</a></li>
+										</ul>
+									</div>
                                     <button type="button" class="btn btn-xs btn-success"
                                             ng-click="startContainers({containers: group.containerNames})">Start
                                     </button>
