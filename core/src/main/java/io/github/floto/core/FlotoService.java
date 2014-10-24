@@ -55,8 +55,10 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.AndFileFilter;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
@@ -96,7 +98,7 @@ public class FlotoService implements Closeable {
 	private SshService sshService = new SshService();
 	private int proxyPort = 40005;
 	private File flotoHome = new File(System.getProperty("user.home") + "/.floto");
-	private final boolean useProxy;
+	private boolean useProxy;
 	private String httpProxyUrl;
 	private HttpProxy proxy;
 
@@ -128,6 +130,9 @@ public class FlotoService implements Closeable {
 	private boolean buildOutputDumpEnabled = false;
 	private TaskService taskService;
 
+	// for unit-tests only
+	FlotoService() {}
+	
 	public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
 		this.taskService = taskService;
 		this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
@@ -280,7 +285,8 @@ public class FlotoService implements Closeable {
 			if (pushRootImage) {
 				this.pushToRegistry(host, this.getRootImage(container.image), true, false, true);
 				// Also push the additional root-images
-				this.manifest.images.stream().map(i -> this.getRootImage(i)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
+				//this.manifest.images.stream().map(i -> this.getRootImage(i)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
+				this.manifest.containers.stream().map(c -> this.getRootImage(container.image)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
 						.forEach(ri -> {
 							try {
 								this.createImage(host, ri);
@@ -319,8 +325,12 @@ public class FlotoService implements Closeable {
 		this.rebuildContainer(container, finalImageName);
 	}
 
-	private void rebuildContainer(Container container, String finalImageName) {
+	private void rebuildContainer(Container container, String finalImageName) throws Exception {
 		Host executingHost = this.findHost(container.host, this.manifest);
+		if(!hostHasImage(finalImageName, executingHost)) {
+			this.createImage(executingHost, finalImageName);
+		}
+		
 		destroyContainer(container.name, executingHost);
 		createContainer(container, executingHost, finalImageName);
 		startContainer(container.name);
@@ -537,25 +547,41 @@ public class FlotoService implements Closeable {
 							String source = step.path("source").asText();
 							JsonNode options = step.path("options");
 							JsonNode excludeDirectories = options.path("excludeDirectories");
-							List<IOFileFilter> filters = new ArrayList<IOFileFilter>();
+							JsonNode excludeFiles = options.path("excludeFiles");
+							JsonNode newName = options.path("newName");
+							
+							List<IOFileFilter> dirFilters = new ArrayList<IOFileFilter>();
 							for (JsonNode node : excludeDirectories) {
-								filters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+								dirFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
 							}
-							IOFileFilter directoryFilter = new AndFileFilter(filters);
-							if (filters.isEmpty()) {
+							IOFileFilter directoryFilter = new AndFileFilter(dirFilters);
+							if (dirFilters.isEmpty()) {
 								directoryFilter = TrueFileFilter.INSTANCE;
 							}
+							
+							List<IOFileFilter> fileFilters = new ArrayList<IOFileFilter>();
+							for (JsonNode node : excludeFiles) {
+								fileFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+							}
+							IOFileFilter fileFilter = new AndFileFilter(fileFilters);
+							if (fileFilters.isEmpty()) {
+								fileFilter = TrueFileFilter.INSTANCE;
+							}
+
 							File sourceFile = new File(source);
 							Collection<File> files;
 							if (sourceFile.isDirectory()) {
-								files = FileUtils.listFiles(sourceFile, FileFileFilter.FILE, directoryFilter);
+								files = FileUtils.listFiles(sourceFile, fileFilter, directoryFilter);
 							} else {
 								files = Collections.singleton(sourceFile);
 							}
 							String destination = step.path("destination").asText();
 
 							for (File file : files) {
-								TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
+//								TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
+								String targetDirName = newName != null && !newName.isMissingNode() ? newName.asText() : sourceFile.getName();
+								String relative = targetDirName + "/" + FilenameUtils.separatorsToUnix(sourceFile.toURI().relativize(file.toURI()).getPath());
+								TarEntry templateTarEntry = new TarEntry(file, destination + "/" + relative);
 								out.putNextEntry(templateTarEntry);
 								FileUtils.copyFile(file, out);
 								out.closeEntry();
@@ -725,8 +751,8 @@ public class FlotoService implements Closeable {
 		return image.name + "-image";
 	}
 
-	private String getRegistryName() {
-		return this.imageRegistry.getIp() + ":" + this.imageRegistry.getPort();
+	String getRegistryName() {
+		return this.imageRegistry != null ? this.imageRegistry.getIp() + ":" + this.imageRegistry.getPort() : null;
 	}
 
 	private Container findRegistryContainer(Manifest manifest) {
@@ -786,9 +812,14 @@ public class FlotoService implements Closeable {
 		return false;
 	}
 
-	private Pair<String, String> splitImageName(String imageName) {
+	Pair<String, String> splitImageName(String imageName) {
+		String header = "";
+		if(this.getRegistryName() != null && imageName.startsWith(this.getRegistryName())) {
+			header = this.getRegistryName();
+			imageName = imageName.substring(this.getRegistryName().length());
+		}
 		List<String> splittedName = Splitter.on(":").splitToList(imageName);
-		String name = splittedName.get(0);
+		String name = header + splittedName.get(0);
 		String tag = splittedName.size() > 1 ? splittedName.get(1) : "latest";
 		return Pair.of(name, tag);
 	}
@@ -1162,5 +1193,27 @@ public class FlotoService implements Closeable {
 			destroyContainer(containerName, host);
 			return null;
 		});
+	}
+	
+	public static void main(String[] args) {
+		File f = new File("/tmp/123.tgz");
+		System.out.println(FilenameUtils.separatorsToUnix("\\c\\dd\\"));
+		try (FileOutputStream fos = new FileOutputStream(f); TarOutputStream out = new TarOutputStream(fos)) {
+			String destination = "/tmp/x/y/z";
+			File sourceFile = new File("/tmp/b/a");
+			Collection<File> files = files = FileUtils.listFiles(sourceFile, FileFileFilter.FILE, DirectoryFileFilter.DIRECTORY);
+			for (File file : files) {
+				String relative = sourceFile.getName() + "/" + sourceFile.toURI().relativize(file.toURI()).getPath();
+				System.out.println(relative);
+	//			TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
+				TarEntry templateTarEntry = new TarEntry(file, destination + "/" + relative);
+				out.putNextEntry(templateTarEntry);
+				FileUtils.copyFile(file, out);
+				out.closeEntry();
+			}
+		}
+		catch(Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
