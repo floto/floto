@@ -13,14 +13,15 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.fasterxml.jackson.databind.type.SimpleType;
 import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
+
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
 import io.github.floto.server.api.*;
 import io.github.floto.server.util.ThrowableExceptionMapper;
-
 import io.github.floto.server.websocket.TasksWebSocket;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -38,6 +39,7 @@ import org.woelker.jimix.servlet.JimixServlet;
 
 import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerEndpoint;
+
 import java.io.IOException;
 
 public class FlotoServer {
@@ -131,6 +133,7 @@ public class FlotoServer {
 		resourceConfig.register(new ExportResource(flotoService));
 		resourceConfig.register(new InfoResource());
 		resourceConfig.register(new ConfigResource());
+		resourceConfig.register(new TemplateResource());
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);

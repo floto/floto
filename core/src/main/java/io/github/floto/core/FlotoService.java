@@ -30,6 +30,7 @@ import java.io.PrintWriter;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1195,25 +1196,14 @@ public class FlotoService implements Closeable {
 		});
 	}
 	
-	public static void main(String[] args) {
-		File f = new File("/tmp/123.tgz");
-		System.out.println(FilenameUtils.separatorsToUnix("\\c\\dd\\"));
-		try (FileOutputStream fos = new FileOutputStream(f); TarOutputStream out = new TarOutputStream(fos)) {
-			String destination = "/tmp/x/y/z";
-			File sourceFile = new File("/tmp/b/a");
-			Collection<File> files = files = FileUtils.listFiles(sourceFile, FileFileFilter.FILE, DirectoryFileFilter.DIRECTORY);
-			for (File file : files) {
-				String relative = sourceFile.getName() + "/" + sourceFile.toURI().relativize(file.toURI()).getPath();
-				System.out.println(relative);
-	//			TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
-				TarEntry templateTarEntry = new TarEntry(file, destination + "/" + relative);
-				out.putNextEntry(templateTarEntry);
-				FileUtils.copyFile(file, out);
-				out.closeEntry();
-			}
+	public URL getTemplateUrl(Host host) throws Exception {
+		if(this.imageRegistry == null) {
+			return null;
 		}
-		catch(Exception e) {
-			throw new RuntimeException(e);
+		Host registryHost = this.findRegistryHost(this.manifest);
+		if(registryHost.name.equals(host.name)) {
+			return null;
 		}
+		return new URL("http://" + registryHost.ip + ":40004/api/template/latest");
 	}
 }

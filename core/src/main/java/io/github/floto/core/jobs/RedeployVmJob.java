@@ -51,7 +51,10 @@ public class RedeployVmJob extends HypervisorJob<Void> {
 			hypervisorService.deleteVm(host.name);
 
 			log.info("Deploying VM {}", host.name);
-			URL ovaUrl = new URL(vmConfiguration.ovaUrl);
+			URL ovaUrl = this.flotoService.getTemplateUrl(this.host);
+			if(ovaUrl == null) {
+				ovaUrl = new URL(vmConfiguration.ovaUrl);
+			}
 			hypervisorService.deployVm(ovaUrl, vmDescription);
 
 			log.info("Starting VM {}", host.name);
