@@ -286,7 +286,7 @@ public class FlotoService implements Closeable {
 				this.pushToRegistry(host, this.getRootImage(container.image), true, false, true);
 				// Also push the additional root-images
 				//this.manifest.images.stream().map(i -> this.getRootImage(i)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
-				this.manifest.containers.stream().map(c -> this.getRootImage(container.image)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
+				this.manifest.containers.stream().map(c -> this.getRootImage(c.image)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
 						.forEach(ri -> {
 							try {
 								this.createImage(host, ri);
