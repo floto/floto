@@ -170,6 +170,7 @@ public class VirtualMachineManager {
 
         VirtualMachine vm = getVm(vmDesc.vmName);
 
+		// search for the desired Network on the esx
         Network network = null;
         for (Network net : host.getNetworks()) {
             if (net.getName().equals(esxDesc.networks.get(0))) {
@@ -182,33 +183,72 @@ public class VirtualMachineManager {
             throw new RuntimeException("Network " + esxDesc.networks.get(0) + " not found");
         }
 
-        List<VirtualDeviceConfigSpec> vdcss = new ArrayList<>();
+        List<VirtualDeviceConfigSpec> vDevConfSpecList = new ArrayList<>();
 
+		// remove virtual nic
         for (VirtualDevice vd : vm.getConfig().getHardware().device) {
             if (vd instanceof VirtualEthernetCard) {
-                VirtualDeviceConfigSpec vdcs = new VirtualDeviceConfigSpec();
-                vdcs.setOperation(VirtualDeviceConfigSpecOperation.edit);
-                VirtualEthernetCard vec = (VirtualEthernetCard) vd;
-                VirtualEthernetCardNetworkBackingInfo vecnb = new VirtualEthernetCardNetworkBackingInfo();
-                vecnb.setDeviceName(network.getName());
-                vec.setBacking(vecnb);
-                vdcs.setDevice(vec);
-                vdcss.add(vdcs);
+                VirtualDeviceConfigSpec vDevConfSpec = new VirtualDeviceConfigSpec();
+                vDevConfSpec.setOperation(VirtualDeviceConfigSpecOperation.remove);
+                vDevConfSpec.setDevice(vd);
+                vDevConfSpecList.add(vDevConfSpec);
             }
         }
 
-        VirtualMachineConfigSpec vmcs = new VirtualMachineConfigSpec();
-        vmcs.setNumCPUs(vmDesc.numberOfCores);
-        vmcs.setMemoryMB(vmDesc.memoryInMB);
+		// create new virtual nic of type VMXNET3
+		VirtualDeviceConfigSpec vmxnet3ConfSpec = new VirtualDeviceConfigSpec();
+		vmxnet3ConfSpec.setOperation(VirtualDeviceConfigSpecOperation.add);
+		VirtualVmxnet3 vNic = new VirtualVmxnet3();
+		VirtualEthernetCardNetworkBackingInfo nicBacking = new VirtualEthernetCardNetworkBackingInfo();
+		nicBacking.setDeviceName(network.getName());
+		vNic.setAddressType("generated");
+		vNic.setBacking(nicBacking);
+		vNic.setKey(4);
+		vmxnet3ConfSpec.setDevice(vNic);
+		vDevConfSpecList.add(vmxnet3ConfSpec);
 
-        VirtualDeviceConfigSpec[] nicSpecArray = new VirtualDeviceConfigSpec[vdcss
-                .size()];
-        nicSpecArray = vdcss.toArray(nicSpecArray);
+		// change the default scsi controller to paravirtualized
+		VirtualDeviceConfigSpec newScsiConfSpec = new VirtualDeviceConfigSpec();
+		newScsiConfSpec.setOperation(VirtualDeviceConfigSpecOperation.add);
+		ParaVirtualSCSIController scsiCtrl = new ParaVirtualSCSIController();
+		scsiCtrl.setKey(0);
+		scsiCtrl.setBusNumber(0);
+		scsiCtrl.setSharedBus(VirtualSCSISharing.noSharing);
+		newScsiConfSpec.setDevice(scsiCtrl);
+		vDevConfSpecList.add(newScsiConfSpec);
 
-        vmcs.setDeviceChange(nicSpecArray);
+		//create or reattach data disk(s)
+		VirtualDiskManager vdm =  new VirtualDiskManager(vm);
+		for (VmDescription.Disk disk : vmDesc.disks) {
+			String fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
+			try {
+				ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+				Folder rootFolder = si.getRootFolder();
+				Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+				EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
+				log.info(fileName + " exists - will add it to virtual machine.");
+				VirtualDeviceConfigSpec diskDevConfSpec = vdm.addVirtualDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
+				vDevConfSpecList.add(diskDevConfSpec);
+			} catch (Exception e) {
+				log.info(fileName + " does not exist - will create new virtual disk.");
+				VirtualDeviceConfigSpec diskDevConfSpec = vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, disk.slot);
+				vDevConfSpecList.add(diskDevConfSpec);
+			}
+		}
+
+		// reconfigure vCPU and vRAM
+		VirtualMachineConfigSpec vmcs = new VirtualMachineConfigSpec();
+		vmcs.setNumCPUs(vmDesc.numberOfCores);
+		vmcs.setMemoryMB(vmDesc.memoryInMB);
+
+		VirtualDeviceConfigSpec[] vDevConfSpecArray = {};
+		vDevConfSpecArray = vDevConfSpecList.toArray(vDevConfSpecArray);
+
+		vmcs.setDeviceChange(vDevConfSpecArray);
+
         Task task = vm.reconfigVM_Task(vmcs);
         EsxUtils.waitForTask(task, "Reconfigure vm "+ vm.getName());
-    }
+	}
 
 	public void deployTemplate(URL vmUrl, String templateVmName) throws Exception {
         log.info("Deploy template " + vmUrl + " to " + esxDesc);

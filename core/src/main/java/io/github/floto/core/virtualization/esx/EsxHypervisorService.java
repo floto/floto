@@ -275,25 +275,6 @@ public class EsxHypervisorService implements HypervisorService {
             // reconfigure VM
             vmManager.reconfigureVm(vmDesc);
 
-            //create or reattach data disk(s)
-			VirtualMachine vm = vmManager.getVm(vmDesc.vmName);
-			VirtualDiskManager vdm =  new VirtualDiskManager(vm);
-			for (Disk disk : vmDesc.disks) {
-				fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
-
-				try {
-		            ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
-					Folder rootFolder = si.getRootFolder();
-		            Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
-
-					EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
-					log.info(fileName + " exists - will add it to virtual machine.");
-					vdm.addVirtualDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
-				} catch (Exception e) {
-					log.info(fileName + " does not exist - will create new virtual disk.");
-					vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, disk.slot);
-				}
-			}
         } catch (Throwable t) {
             throw Throwables.propagate(t);
         }
