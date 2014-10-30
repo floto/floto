@@ -23,7 +23,7 @@ public class TemplateResource {
     public StreamingOutput getImage() {
 		
 			return o -> {
-				try(FileInputStream fis = new FileInputStream(new File("/tmp/floto/images/vmware.ova"))) {
+				try(FileInputStream fis = new FileInputStream(new File("/floto/images/vmware.ova"))) {
 					IOUtils.copy(fis, o);
 				}
 				catch(Throwable t) {
