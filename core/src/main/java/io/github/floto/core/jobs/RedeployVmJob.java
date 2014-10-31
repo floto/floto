@@ -52,9 +52,7 @@ public class RedeployVmJob extends HypervisorJob<Void> {
 
 			log.info("Deploying VM {}", host.name);
 			URL ovaUrl = this.flotoService.getTemplateUrl(this.host);
-			if(ovaUrl == null) {
-				ovaUrl = new URL(vmConfiguration.ovaUrl);
-			}
+			log.info("Will use template=" + ovaUrl);
 			hypervisorService.deployVm(ovaUrl, vmDescription);
 
 			log.info("Starting VM {}", host.name);
