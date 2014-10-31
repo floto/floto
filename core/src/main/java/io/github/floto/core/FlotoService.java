@@ -1202,7 +1202,7 @@ public class FlotoService implements Closeable {
 	
 	public URL getTemplateUrl(Host host) throws Exception {
 		URL url = new URL(host.vmConfiguration.ovaUrl);
-		if(this.getImageRegistry() == null) {
+		if(this.getImageRegistry() != null) {
 			Host registryHost = this.findRegistryHost(this.manifest);
 			if(!registryHost.name.equals(host.name)) {
 				url = new URL("http://" + registryHost.ip + ":40004/api/template/" + FilenameUtils.getName(host.vmConfiguration.ovaUrl));
