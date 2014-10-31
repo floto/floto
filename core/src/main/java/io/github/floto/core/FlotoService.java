@@ -105,7 +105,7 @@ public class FlotoService implements Closeable {
 
 	private Map<String, String> externalHostIpMap = new HashMap<>();
 
-	private ImageRegistry imageRegistry;
+//	private ImageRegistry imageRegistry;
 
 	public enum DeploymentMode {
 		fromRootImage, fromBaseImage, containerRebuild
@@ -190,7 +190,13 @@ public class FlotoService implements Closeable {
 			this.manifestString = manifestString;
 			log.info("Compiled manifest");
 			validateTemplates();
-			this.setImageRegistry(manifest);
+			ImageRegistry imageRegistry = this.getImageRegistry();
+			if(imageRegistry != null) {
+				log.info("Will use image-registry=" + imageRegistry);
+			}
+			else {
+				log.info("Will run without image-registry");
+			}
 			return null;
 		});
 	}
@@ -203,7 +209,7 @@ public class FlotoService implements Closeable {
 
 		List<String> deploymentContainerNames = Lists.newArrayList("registry", "floto", "registry-ui");
 		List<String> actualContainers = containers.stream().filter(c -> !deploymentContainerNames.contains(c)).collect(Collectors.toList());
-		if (this.imageRegistry != null && actualContainers.size() < containers.size()) {
+		if (this.getImageRegistry() != null && actualContainers.size() < containers.size()) {
 			log.warn("Cannot redeploy deployment-containers='{}'", deploymentContainerNames);
 		}
 
@@ -222,21 +228,21 @@ public class FlotoService implements Closeable {
 				}
 				try (FileOutputStream buildLogStream = new FileOutputStream(getContainerBuildLogFile(containerName))) {
 					Container container = this.findContainer(containerName, this.manifest);
-					Host host = this.imageRegistry != null ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
+					Host host = this.getImageRegistry() != null ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
 					Image image = this.findImage(container.image, this.manifest);
 					
 					
 	
 					if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
-						String rootImage = this.imageRegistry != null ? this.constructPrivateImageName(this.getRootImage(image.name)) : this.getRootImage(image.name);
-						boolean pushBaseImage = this.imageRegistry != null ? true : false;
+						String rootImage = this.getImageRegistry() != null ? this.constructPrivateImageName(this.getRootImage(image.name)) : this.getRootImage(image.name);
+						boolean pushBaseImage = this.getImageRegistry() != null ? true : false;
 						this.redeployFromRootImage(host, container, rootImage, buildLogStream, pushBaseImage);
 					} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
-						String baseImageName = this.imageRegistry != null ? this.constructPrivateImageName(this.createBaseImageName(image)) : this.createBaseImageName(image);
-						boolean pushFinalImage = this.imageRegistry != null ? true : false;
+						String baseImageName = this.getImageRegistry() != null ? this.constructPrivateImageName(this.createBaseImageName(image)) : this.createBaseImageName(image);
+						boolean pushFinalImage = this.getImageRegistry() != null ? true : false;
 						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, pushFinalImage);
 					} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
-						String finalImageName = this.imageRegistry != null ? this.constructPrivateImageName(container.name) : container.name;
+						String finalImageName = this.getImageRegistry() != null ? this.constructPrivateImageName(container.name) : container.name;
 						this.rebuildContainer(container, finalImageName);
 					} else {
 						throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
@@ -666,7 +672,7 @@ public class FlotoService implements Closeable {
 	}
 
 	private WebTarget createRegistryTarget() {
-		return client.target("http://" + this.getExternalHostIp(this.findRegistryHost(this.manifest)) + ":" + this.imageRegistry.getPort());
+		return client.target("http://" + this.getExternalHostIp(this.findRegistryHost(this.manifest)) + ":" + this.getImageRegistry().getPort());
 	}
 
 	public void setExternalHostIp(String hostName, String ip) {
@@ -703,19 +709,17 @@ public class FlotoService implements Closeable {
 		throw new IllegalArgumentException("Unknown container: " + containerName);
 	}
 
-	private void setImageRegistry(Manifest manifest) {
-		JsonNode registryNode = manifest.site.get("imageRegistry");
+	private ImageRegistry getImageRegistry() {
+		JsonNode registryNode = this.manifest.site.get("imageRegistry");
 		if (registryNode == null) {
-			log.info("Will run without image-registry");
-			return;
+			return null;
 		}
 		String containerName = registryNode.get("containerName").textValue();
-		log.info("Will run with image-registry='{}'", containerName);
 		Integer port = registryNode.get("port").intValue();
 		Container registryContainer = this.findContainer(containerName, manifest);
 		Host registryHost = this.findHost(registryContainer.host, manifest);
 		String ip = registryHost.ip;
-		this.imageRegistry = new ImageRegistry(containerName, ip, port);
+		return new ImageRegistry(containerName, ip, port);
 	}
 
 	private String getRootImage(String imageName) {
@@ -753,11 +757,11 @@ public class FlotoService implements Closeable {
 	}
 
 	String getRegistryName() {
-		return this.imageRegistry != null ? this.imageRegistry.getIp() + ":" + this.imageRegistry.getPort() : null;
+		return this.getImageRegistry() != null ? this.getImageRegistry().getIp() + ":" + this.getImageRegistry().getPort() : null;
 	}
 
 	private Container findRegistryContainer(Manifest manifest) {
-		return this.findContainer(this.imageRegistry.getContainerName(), manifest);
+		return this.findContainer(this.getImageRegistry().getContainerName(), manifest);
 	}
 
 	private Host findRegistryHost(Manifest manifest) {
@@ -1197,13 +1201,13 @@ public class FlotoService implements Closeable {
 	}
 	
 	public URL getTemplateUrl(Host host) throws Exception {
-		if(this.imageRegistry == null) {
-			return null;
+		URL url = new URL(host.vmConfiguration.ovaUrl);
+		if(this.getImageRegistry() == null) {
+			Host registryHost = this.findRegistryHost(this.manifest);
+			if(!registryHost.name.equals(host.name)) {
+				url = new URL("http://" + registryHost.ip + ":40004/api/template/" + FilenameUtils.getName(host.vmConfiguration.ovaUrl));
+			}
 		}
-		Host registryHost = this.findRegistryHost(this.manifest);
-		if(registryHost.name.equals(host.name)) {
-			return null;
-		}
-		return new URL("http://" + registryHost.ip + ":40004/api/template/latest");
+		return url;
 	}
 }
