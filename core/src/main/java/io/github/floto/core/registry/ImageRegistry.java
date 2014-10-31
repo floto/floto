@@ -24,4 +24,11 @@ public class ImageRegistry {
 	public int getPort() {
 		return port;
 	}
+
+	@Override
+	public String toString() {
+		return "ImageRegistry [containerName=" + containerName + ", ip=" + ip + ", port=" + port + "]";
+	}
+	
+	
 }
