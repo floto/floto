@@ -59,8 +59,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.AndFileFilter;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.commons.io.filefilter.FileFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
@@ -207,7 +205,7 @@ public class FlotoService implements Closeable {
 
 	public TaskInfo<Void> redeployContainers(List<String> containers, DeploymentMode deploymentMode) {
 
-		List<String> deploymentContainerNames = Lists.newArrayList("registry", "floto", "registry-ui");
+		List<String> deploymentContainerNames = this.getImageRegistry() != null ? Lists.newArrayList("registry", "floto", "registry-ui") : Collections.emptyList();
 		List<String> actualContainers = containers.stream().filter(c -> !deploymentContainerNames.contains(c)).collect(Collectors.toList());
 		if (this.getImageRegistry() != null && actualContainers.size() < containers.size()) {
 			log.warn("Cannot redeploy deployment-containers='{}'", deploymentContainerNames);
