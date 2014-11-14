@@ -90,23 +90,24 @@ public class DeployerBuilder {
             
             
             
-            flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, false, true, false);
-            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, true, false);
-            flotoService.redeployDeployerContainer(deploymentHost, registryUiContainer, true, false, true, true, true, false);
+            flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, false, true, false, true);
+            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, true, false, false);
+            flotoService.redeployDeployerContainer(deploymentHost, registryUiContainer, true, false, true, true, true, false, true);
             
             manifest.containers.stream().filter(c -> !Lists.newArrayList(registryContainer, flotoContainer, registryUiContainer).contains(c)).
         	forEach(c -> {
         		try {
-        			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, true, false, true);
+        			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, true, false, true, false);
         		}
         		catch(Exception ex) {
         			throw Throwables.propagate(ex);
         		}
         	});
+            flotoService.startContainer("floto");
 
 
-	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
-	        exportVmJob.execute();
+//	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
+//	        exportVmJob.execute();
 
             log.info("Build complete");
             stopwatch.stop();

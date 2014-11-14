@@ -241,7 +241,7 @@ public class FlotoService implements Closeable {
 						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, pushFinalImage);
 					} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
 						String finalImageName = this.getImageRegistry() != null ? this.constructPrivateImageName(container.name) : container.name;
-						this.rebuildContainer(container, finalImageName);
+						this.rebuildContainer(container, finalImageName, true);
 					} else {
 						throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
 					}
@@ -254,7 +254,7 @@ public class FlotoService implements Closeable {
 	}
 
 	public TaskInfo<Void> redeployDeployerContainer(Host host, Container container, boolean usePrivateRootImage, boolean pushRootImage, boolean pushBaseImage,
-			boolean pushFinalImage, boolean createAndStartContainer, boolean deleteCreatedImages) {
+			boolean pushFinalImage, boolean createContainer, boolean deleteCreatedImages, boolean startContainer) {
 
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		List<String> images2Delete = Lists.newArrayList();
@@ -269,7 +269,7 @@ public class FlotoService implements Closeable {
 			String baseImageName = this.createBaseImage(host, container, usePrivateRootImage, buildLogStream);
 			if (pushBaseImage) {
 				baseImageName = this.pushToRegistry(host, baseImageName, true, false, false);
-				if (deleteCreatedImages && !createAndStartContainer) {
+				if (deleteCreatedImages && !createContainer) {
 					images2Delete.add(baseImageName);
 				}
 			}
@@ -278,13 +278,13 @@ public class FlotoService implements Closeable {
 			String finalImageName = container.name;
 			if (pushFinalImage) {
 				finalImageName = this.pushToRegistry(host, container.name, true, false, false);
-				if (deleteCreatedImages && !createAndStartContainer) {
+				if (deleteCreatedImages && !createContainer) {
 					images2Delete.add(finalImageName);
 				}
 			}
 
-			if (createAndStartContainer) {
-				this.rebuildContainer(container, finalImageName);
+			if (createContainer) {
+				this.rebuildContainer(container, finalImageName, startContainer);
 			}
 
 			if (pushRootImage) {
@@ -327,10 +327,10 @@ public class FlotoService implements Closeable {
 		if (pushFinalImage) {
 			finalImageName = this.pushToRegistry(host, container.name, true, false, false);
 		}
-		this.rebuildContainer(container, finalImageName);
+		this.rebuildContainer(container, finalImageName, true);
 	}
 
-	private void rebuildContainer(Container container, String finalImageName) throws Exception {
+	private void rebuildContainer(Container container, String finalImageName, boolean startContainer) throws Exception {
 		Host executingHost = this.findHost(container.host, this.manifest);
 		if(!hostHasImage(finalImageName, executingHost)) {
 			this.createImage(executingHost, finalImageName);
@@ -338,7 +338,9 @@ public class FlotoService implements Closeable {
 		
 		destroyContainer(container.name, executingHost);
 		createContainer(container, executingHost, finalImageName);
-		startContainer(container.name);
+		if(startContainer) {
+			startContainer(container.name);
+		}
 	}
 
 	private String createBaseImage(Host host, Container container, boolean usePrivateRootImage, FileOutputStream buildLogStream) {
@@ -420,6 +422,9 @@ public class FlotoService implements Closeable {
 		startConfig.put("Binds", binds);
 		startConfig.put("Privileged", container.priviledged);
 		startConfig.put("NetworkMode", "host");
+		Map<String, String> restartPolicyMap = Maps.newHashMap();
+		restartPolicyMap.put("Name", "always");
+		startConfig.put("RestartPolicy", restartPolicyMap);
 
 		Builder request = dockerTarget.request();
 		Response response = request.post(Entity.json(startConfig));
@@ -944,7 +949,7 @@ public class FlotoService implements Closeable {
 		});
 	}
 
-	private void startContainer(String containerName) {
+	public void startContainer(String containerName) {
 		Manifest manifest = this.manifest;
 		Container container = findContainer(containerName, manifest);
 		Host host = findHost(container.host, manifest);
