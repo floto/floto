@@ -2,14 +2,15 @@
 	"use strict";
 
 	app.controller("ContainersController", function ($scope, FlotoService, $state, $stateParams) {
+
 		$scope.groupings = {
 			host: {},
 			image: {}
 		};
+
 		function update() {
 			$scope.manifest = FlotoService.getManifest();
 			$scope.containerStates = FlotoService.getContainerStates();
-
 		}
 
 		function updateGroups() {
@@ -87,15 +88,15 @@
 		}, update);
 
 		$scope.redeployContainers = function redeployContainers(request) {
-			FlotoService.redeployContainers(request).then(update);
+			FlotoService.redeployContainers(request).then(update, update);
 		};
 
 		$scope.startContainers = function startContainers(request) {
-			FlotoService.startContainers(request).then(update);
+			FlotoService.startContainers(request).then(update, update);
 		};
 
 		$scope.stopContainers = function stopContainers(request) {
-			FlotoService.stopContainers(request).then(update);
+			FlotoService.stopContainers(request).then(update, update);
 		};
 
 		$scope.purgeContainerData = function purgeContainerData(request) {
@@ -103,7 +104,7 @@
 		};
 
 		$scope.destroyUnmanagedContainer = function destroyUnmanagedContainer(request) {
-			FlotoService.destroyUnmanagedContainer(request).then(update);
+			FlotoService.destroyUnmanagedContainer(request).then(update, update);
 		};
 
 		$scope.refresh = update;

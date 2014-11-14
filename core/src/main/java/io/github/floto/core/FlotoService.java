@@ -881,25 +881,66 @@ public class FlotoService implements Closeable {
 	public TaskInfo<Void> stopContainers(List<String> containers) {
 		return taskService.startTask("Stop containers " + Joiner.on(", ").join(containers), () -> {
 			log.info("Stopping containers {}", containers);
-			containers.forEach(runContainerCommand("stop"));
-			return null;
-		});
+//			containers.forEach(runContainerCommand("stop"));
 
+			List<Exception> errors = new ArrayList<>();
+			for (String container: containers) {
+				try {
+					runContainerCommand("stop").accept(container);
+				} catch (Exception e) {
+					errors.add(e);
+				}
+			}
+			if (!errors.isEmpty()) {
+				// TODO: handle the whole list of exception instead of only the first one
+				throw errors.get(0);
+			} else {
+				return null;
+			}
+		});
 	}
 
 	public TaskInfo<Void> restartContainers(List<String> containers) {
 		return taskService.startTask("Restart containers " + Joiner.on(", ").join(containers), () -> {
 			log.info("Restarting containers {}", containers);
-			containers.forEach(runContainerCommand("restart"));
-			return null;
+//			containers.forEach(runContainerCommand("restart"));
+
+			List<Exception> errors = new ArrayList<>();
+			for (String container: containers) {
+				try {
+					runContainerCommand("restart").accept(container);
+				} catch (Exception e) {
+					errors.add(e);
+				}
+			}
+			if (!errors.isEmpty()) {
+				// TODO: handle the whole list of exception instead of only the first one
+				throw errors.get(0);
+			} else {
+				return null;
+			}
 		});
 	}
 
 	public TaskInfo<Void> startContainers(List<String> containers) {
 		return taskService.startTask("Start containers " + Joiner.on(", ").join(containers), () -> {
 			log.info("Starting containers {}", containers);
-			containers.forEach(this::startContainer);
-			return null;
+//			containers.forEach(this::startContainer);
+
+			List<Exception> errors = new ArrayList<>();
+			for (String container: containers) {
+				try {
+					startContainer(container);
+				} catch (Exception e) {
+					errors.add(e);
+				}
+			}
+			if (!errors.isEmpty()) {
+				// TODO: handle the whole list of exception instead of only the first one
+				throw errors.get(0);
+			} else {
+				return null;
+			}
 		});
 	}
 
