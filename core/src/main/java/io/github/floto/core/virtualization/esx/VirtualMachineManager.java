@@ -499,11 +499,11 @@ public class VirtualMachineManager {
 		LeaseProgressUpdater leaseProgUpdater = new LeaseProgressUpdater(hnLease, 5000);
 		leaseProgUpdater.start();
 
-		long alredyWrittenBytes = 0;
-		HttpNfcLeaseDeviceUrl[] deviceUrls = httpNfcLeaseInfo.getDeviceUrl();
-		if (deviceUrls != null)
+        long alredyWrittenBytes = 0;
+        HttpNfcLeaseDeviceUrl[] deviceUrls = httpNfcLeaseInfo.getDeviceUrl();
+        OvfFile[] ovfFiles = new OvfFile[deviceUrls.length];
+        if (deviceUrls != null)
 		{
-			OvfFile[] ovfFiles = new OvfFile[deviceUrls.length];
 			log.info("Downloading Files:");
 			for (int i = 0; i < deviceUrls.length; i++)
 			{
@@ -544,33 +544,35 @@ public class VirtualMachineManager {
 		hnLease.httpNfcLeaseComplete();
 
 		// tar the ovf to the ova
-		// first entry has to be the ovf!
-		TarOutputStream tos = new TarOutputStream(new FileOutputStream(targetFile));
-		for (File file : exportDir.listFiles()) {
-			if (file.toString().toLowerCase().endsWith(".ovf")) {
-				TarEntry entry = new TarEntry(file, file.getName());
-				tos.putNextEntry(entry);
-				FileInputStream fis = new FileInputStream(file);
-				BufferedInputStream bif = new BufferedInputStream(fis);
-				IOUtils.copy(bif, tos);
-				bif.close();
-				fis.close();
-				tos.closeEntry();
-			}
-		}
-		for (File file : exportDir.listFiles()) {
-			if (file.toString().toLowerCase().endsWith(".ovf")) {
-				continue;
-			}
-			TarEntry entry = new TarEntry(file, file.getName());
-			tos.putNextEntry(entry);
-			FileInputStream fis = new FileInputStream(file);
-			BufferedInputStream bif = new BufferedInputStream(fis);
-			IOUtils.copy(bif, tos);
-			bif.close();
-			fis.close();
-			tos.closeEntry();
-		}
+        // first entry has to be the ovf!
+        TarOutputStream tos = new TarOutputStream(new FileOutputStream(targetFile));
+        for (File file : exportDir.listFiles()) {
+            if (file.toString().toLowerCase().endsWith(".ovf")) {
+                TarEntry entry = new TarEntry(file, file.getName());
+                tos.putNextEntry(entry);
+                FileInputStream fis = new FileInputStream(file);
+                BufferedInputStream bif = new BufferedInputStream(fis);
+                IOUtils.copy(bif, tos);
+                bif.close();
+                fis.close();
+                tos.closeEntry();
+                break;
+            }
+        }
+
+        // vmdks has to be in the same order as defined in ovf
+        for (int i=0; i<ovfFiles.length; i++){
+            File file = new File(exportDir.getPath() + "/" + ovfFiles[i].getPath());
+            TarEntry entry = new TarEntry(file, file.getName());
+            tos.putNextEntry(entry);
+            FileInputStream fis = new FileInputStream(file);
+            BufferedInputStream bif = new BufferedInputStream(fis);
+            IOUtils.copy(bif, tos);
+            bif.close();
+            fis.close();
+            tos.closeEntry();
+
+        }
 		tos.close();
 
 		log.info("Created " + targetFile);
