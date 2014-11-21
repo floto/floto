@@ -6,6 +6,9 @@ public class FlotoCommonParameters {
     @Parameter(names = "--root", description = "Root definition file (site JS)", required = true)
     public String rootDefinitionFile;
 
+    @Parameter(names = "--environment", description = "The target environment (production, development, testing)")
+    public String environment;
+
     @Parameter(names = "--no-proxy", description = "Disable HTTP proxy")
     public boolean noProxy = false;
 

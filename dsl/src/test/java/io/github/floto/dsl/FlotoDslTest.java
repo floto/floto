@@ -19,7 +19,7 @@ public class FlotoDslTest {
 
 	@Test
 	public void testSimpleImage() {
-		Manifest manifest = generateManifest("simple-image.js");
+		Manifest manifest = generateManifest("simple-image.js", "testing");
 		assertEquals(1, manifest.images.size());
 
 		Image image = manifest.images.get(0);
@@ -34,7 +34,7 @@ public class FlotoDslTest {
 
 	@Test
 	public void testSimpleContainer() {
-		Manifest manifest = generateManifest("simple-container.js");
+		Manifest manifest = generateManifest("simple-container.js", "testing");
 		assertEquals(1, manifest.containers.size());
 
 		Container container = manifest.containers.get(0);
@@ -48,7 +48,7 @@ public class FlotoDslTest {
 
 	@Test
 	public void testSimpleHost() {
-		Manifest manifest = generateManifest("simple-host.js");
+		Manifest manifest = generateManifest("simple-host.js", "testing");
 		assertEquals(1, manifest.hosts.size());
 
 		Host host = manifest.hosts.get(0);
@@ -58,12 +58,18 @@ public class FlotoDslTest {
 
 	@Test
 	public void testInclude() {
-		Manifest manifest = generateManifest("include-test.js");
+		Manifest manifest = generateManifest("include-test.js", "testing");
 		assertEquals(1, manifest.images.size());
 	}
 
-	private Manifest generateManifest(String name) {
-		return flotoDsl.generateManifest(new File("src/test/resources/js/" + name));
+	@Test
+	public void testEnvironment() {
+		Manifest manifest = generateManifest("environment.js", "foobar");
+		assertEquals("foobar", manifest.site.path("env").asText());
+	}
+
+	private Manifest generateManifest(String name, String environment) {
+		return flotoDsl.generateManifest(new File("src/test/resources/js/" + name), environment);
 	}
 
 }

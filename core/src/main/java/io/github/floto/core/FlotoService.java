@@ -92,6 +92,7 @@ public class FlotoService implements Closeable {
 
 	private FlotoDsl flotoDsl = new FlotoDsl();
 	private File rootDefinitionFile;
+	private String environment;
 	private String manifestString;
 	private Manifest manifest = new Manifest();
 	private SshService sshService = new SshService();
@@ -135,6 +136,7 @@ public class FlotoService implements Closeable {
 	public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
 		this.taskService = taskService;
 		this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
+		this.environment = commonParameters.environment;
 		this.useProxy = !commonParameters.noProxy;
 		try {
 			this.manifestString = new ObjectMapper().writer().writeValueAsString(manifest);
@@ -183,7 +185,7 @@ public class FlotoService implements Closeable {
 	public TaskInfo<Void> compileManifest() {
 		return taskService.startTask("Compile manifest", () -> {
 			log.info("Compiling manifest");
-			String manifestString = flotoDsl.generateManifestString(rootDefinitionFile);
+			String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
 			manifest = flotoDsl.toManifest(manifestString);
 			this.manifestString = manifestString;
 			log.info("Compiled manifest");

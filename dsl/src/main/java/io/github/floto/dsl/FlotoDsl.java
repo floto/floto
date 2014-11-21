@@ -51,8 +51,8 @@ public class FlotoDsl {
 
 	}
 
-	public Manifest generateManifest(File file) {
-		return toManifest(generateManifestString(file));
+	public Manifest generateManifest(File file, String environment) {
+		return toManifest(generateManifestString(file, environment));
 	}
 
 	private void evalLibrary(ScriptEngine engine, String library) throws IOException, ScriptException {
@@ -61,9 +61,9 @@ public class FlotoDsl {
 		engine.eval(flotoDslScript);
 	}
 
-	public JsonNode generateManifestJson(File file) {
+	public JsonNode generateManifestJson(File file, String environment) {
 		try {
-			String manifestString = generateManifestString(file);
+			String manifestString = generateManifestString(file, environment);
 			// use the ObjectMapper to read the json string and create a tree
 			JsonNode manifest = objectMapper.readTree(manifestString);
 			return manifest;
@@ -72,13 +72,14 @@ public class FlotoDsl {
 		}
 	}
 
-	public String generateManifestString(File file) {
+	public String generateManifestString(File file, String environment) {
 		ScriptEngineManager engineManager =
 				new ScriptEngineManager();
 		ScriptEngine engine =
 				engineManager.getEngineByName("nashorn");
 		try {
             engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put("__ROOT_FILE__", file.getAbsolutePath());
+			engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put("ENVIRONMENT", environment);
             globals.forEach((key, value) -> {
                 engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put(key, value);
             });
