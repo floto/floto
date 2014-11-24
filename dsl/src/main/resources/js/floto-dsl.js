@@ -70,7 +70,8 @@
 	global.cmd = function cmd(what) {
 		currentSteps.push({
 			type: "CMD",
-			line: "while :; do " + what + " ; echo Process exited with status $?; sleep 3; done"
+			// Setup restart and signal handling, propagating SIGTERM to all children to allow processes to clean up
+			line: '["/bin/bash", "-c", "DONE=false; trap \\"echo $(date --utc +%FT%TZ) FLOTO: Propagating SIGTERM;DONE=true;kill -15 -1\\" SIGTERM; while :; do echo $(date --utc +%FT%TZ) FLOTO: Starting ; ' + what + ' & wait ; echo $(date --utc +%FT%TZ) FLOTO: Process exited with status $?; if $DONE ; then echo $(date --utc +%FT%TZ) FLOTO: Terminating gracefully; wait; break ; fi ; sleep 3; done"]'
 		});
 	};
 
