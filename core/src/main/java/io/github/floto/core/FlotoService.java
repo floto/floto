@@ -888,12 +888,11 @@ public class FlotoService implements Closeable {
 	public TaskInfo<Void> stopContainers(List<String> containers) {
 		return taskService.startTask("Stop containers " + Joiner.on(", ").join(containers), () -> {
 			log.info("Stopping containers {}", containers);
-//			containers.forEach(runContainerCommand("stop"));
 
 			List<Exception> errors = new ArrayList<>();
 			for (String container: containers) {
 				try {
-					runContainerCommand("stop").accept(container);
+					stopContainer(container);
 				} catch (Exception e) {
 					errors.add(e);
 				}
@@ -907,10 +906,23 @@ public class FlotoService implements Closeable {
 		});
 	}
 
+	private void stopContainer(String containerName) {
+		Manifest manifest = this.manifest;
+		Container container = findContainer(containerName, manifest);
+		Host host = findHost(container.host, manifest);
+		WebTarget dockerTarget = createDockerTarget(host);
+		try {
+			Response response = dockerTarget.path("/containers/" + containerName + "/stop").queryParam("t", "10").request().post(Entity.text(""));
+			response.close();
+		} catch (Throwable t) {
+			Throwables.propagate(t);
+		}
+
+	}
+
 	public TaskInfo<Void> restartContainers(List<String> containers) {
 		return taskService.startTask("Restart containers " + Joiner.on(", ").join(containers), () -> {
 			log.info("Restarting containers {}", containers);
-//			containers.forEach(runContainerCommand("restart"));
 
 			List<Exception> errors = new ArrayList<>();
 			for (String container: containers) {
