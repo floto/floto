@@ -13,8 +13,10 @@
                 if (manifest.site) {
                     $rootScope.domainName = manifest.site.domainName;
                     $rootScope.site = manifest.site;
-                    $rootScope.titleSuffix = " - " + manifest.site.domainName;
-
+                    $rootScope.titleSuffix = " - " + (manifest.site.projectName || manifest.site.domainName);
+                    if(manifest.site.environment) {
+                        $rootScope.titleSuffix += " (" + manifest.site.environment + ")";
+                    }
                 } else {
                     $rootScope.domainName = null;
                     $rootScope.titleSuffix = null;

@@ -91,7 +91,7 @@
                     <button type="button" class="btn btn-primary btn-sm" ng-click="compileManifest()">Recompile</button>
                 </form>
                 <span class="navbar-brand pull-right" href="#" style="text-align: center; padding: 5px 120px">
-                    <strong ng-show="domainName" >[{{domainName}}]</strong><br>
+                    <span ng-style="{color: site.siteColor}">{{site.projectName || domainName}}<span ng-if="site.environment"> ({{site.environment}})</span></span><br>
                     <span style="font-size: 80%" class="text-muted">{{site.projectRevision}}</span>
                 </span>
 
