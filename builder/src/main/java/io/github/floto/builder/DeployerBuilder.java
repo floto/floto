@@ -99,9 +99,8 @@ public class DeployerBuilder {
         	});
             flotoService.startContainer("floto");
 
-
-//	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
-//	        exportVmJob.execute();
+	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);
+	        exportVmJob.execute();
 
             log.info("Build complete");
             stopwatch.stop();
