@@ -78,13 +78,8 @@ public class DeployerBuilder {
 	        if(flotoContainer == null) {
 	        	throw new IllegalStateException("Cannot create deployer-VM without floto");
 	        }
-	        Container registryUiContainer = manifest.findContainer("registry-ui");
-	        if(registryUiContainer == null) {
-	        	throw new IllegalStateException("Cannot create deployer-VM without registry-ui");
-	        }
 	        Host deploymentHost = manifest.findHost(registryContainer.host);
-//	        flotoService.setExternalHostIp(deploymentHost.name, "192.168.119.129");
-	        
+
             RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, deploymentHost.name);
             redeployVmJob.execute();
             
@@ -92,9 +87,8 @@ public class DeployerBuilder {
             
             flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, false, true, false, true);
             flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, true, false, false);
-            flotoService.redeployDeployerContainer(deploymentHost, registryUiContainer, true, false, true, true, true, false, true);
-            
-            manifest.containers.stream().filter(c -> !Lists.newArrayList(registryContainer, flotoContainer, registryUiContainer).contains(c)).
+
+            manifest.containers.stream().filter(c -> !Lists.newArrayList(registryContainer, flotoContainer).contains(c)).
         	forEach(c -> {
         		try {
         			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, true, false, true, false);
