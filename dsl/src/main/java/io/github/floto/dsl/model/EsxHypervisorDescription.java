@@ -10,6 +10,7 @@ public class EsxHypervisorDescription extends HypervisorDescription {
     public String username;
     public String password;
     public String defaultDatastore;
+    public String dataDatastore;
     public List<String> networks = new ArrayList<>(Arrays.asList("VM Network"));
 
 }
