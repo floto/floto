@@ -133,7 +133,7 @@ public class FlotoServer {
 		resourceConfig.register(new ExportResource(flotoService));
 		resourceConfig.register(new InfoResource());
 		resourceConfig.register(new ConfigResource());
-		resourceConfig.register(new TemplateResource());
+		resourceConfig.register(new VmTemplateResource());
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);

@@ -1263,7 +1263,7 @@ public class FlotoService implements Closeable {
 		if(this.getImageRegistry() != null) {
 			Host registryHost = this.findRegistryHost(this.manifest);
 			if(!registryHost.name.equals(host.name)) {
-				url = new URL("http://" + registryHost.ip + ":40004/api/template/" + FilenameUtils.getName(host.vmConfiguration.ovaUrl));
+				url = new URL("http://" + registryHost.ip + ":40004/api/vmtemplate/" + FilenameUtils.getName(host.vmConfiguration.ovaUrl));
 			}
 		}
 		return url;
