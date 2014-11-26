@@ -1,5 +1,6 @@
 package io.github.floto.core;
 
+import com.google.common.collect.Sets;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
@@ -31,14 +32,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -207,19 +201,33 @@ public class FlotoService implements Closeable {
 
 	public TaskInfo<Void> redeployContainers(List<String> containers, DeploymentMode deploymentMode) {
 
-		List<String> deploymentContainerNames = this.getImageRegistry() != null ? Lists.newArrayList("registry", "floto", "registry-ui") : Collections.emptyList();
-		List<String> actualContainers = containers.stream().filter(c -> !deploymentContainerNames.contains(c)).collect(Collectors.toList());
-		if (this.getImageRegistry() != null && actualContainers.size() < containers.size()) {
-			log.warn("Cannot redeploy deployment-containers='{}'", deploymentContainerNames);
-		}
+		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(containers) + " in mode '" + deploymentMode + "'", () -> {
+			boolean excludeDeploymentContainers = false;
+			if(this.getImageRegistry() != null) {
+				Host registryHost = this.findRegistryHost(this.manifest);
+				// Compare hostnames
+				if(registryHost.name.equals(InetAddress.getLocalHost().getHostName())) {
+					// Exclude deployment containers from being redeployed from their own hosts, prevent bricking the system
+					excludeDeploymentContainers = true;
+				};
+			}
 
-		
-		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(actualContainers) + " in mode '" + deploymentMode + "'", () -> {
-		
-			for (String containerName : actualContainers) {
-				
+			Set<String> deploymentContainerNames = Sets.newHashSet("registry", "floto");
+			int numberOfContainersDeployed = 0;
+			for (String containerName : containers) {
+				if(excludeDeploymentContainers && deploymentContainerNames.contains(containerName)) {
+					log.warn("Excluding container {} from deployment to prevent rendering system unusable", containerName);
+					continue;
+				}
+
 				log.info("Will deploy container='{}'", containerName);
-	
+				boolean useRegistry = this.getImageRegistry() != null;
+				if(deploymentContainerNames.contains(containerName)) {
+					// Deployment container - Do not use registry
+					useRegistry = false;
+				}
+
+
 				File buildLogDirectory = new File(flotoHome, "buildLog");
 				try {
 					FileUtils.forceMkdir(buildLogDirectory);
@@ -234,22 +242,24 @@ public class FlotoService implements Closeable {
 					
 	
 					if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
-						String rootImage = this.getImageRegistry() != null ? this.constructPrivateImageName(this.getRootImage(image.name)) : this.getRootImage(image.name);
-						boolean pushBaseImage = this.getImageRegistry() != null ? true : false;
-						this.redeployFromRootImage(host, container, rootImage, buildLogStream, pushBaseImage);
+						String rootImage = useRegistry ? this.constructPrivateImageName(this.getRootImage(image.name)) : this.getRootImage(image.name);
+						this.redeployFromRootImage(host, container, rootImage, buildLogStream, useRegistry);
 					} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
-						String baseImageName = this.getImageRegistry() != null ? this.constructPrivateImageName(this.createBaseImageName(image)) : this.createBaseImageName(image);
-						boolean pushFinalImage = this.getImageRegistry() != null ? true : false;
-						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, pushFinalImage);
+						String baseImageName = useRegistry ? this.constructPrivateImageName(this.createBaseImageName(image)) : this.createBaseImageName(image);
+						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, useRegistry);
 					} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
-						String finalImageName = this.getImageRegistry() != null ? this.constructPrivateImageName(container.name) : container.name;
+						String finalImageName = useRegistry ? this.constructPrivateImageName(container.name) : container.name;
 						this.rebuildContainer(container, finalImageName, true);
 					} else {
 						throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
 					}
+					numberOfContainersDeployed++;
 				} catch (Throwable t) {
 					Throwables.propagate(t);
 				}
+			}
+			if(numberOfContainersDeployed == 0) {
+				throw new IllegalStateException("No containers were deployed");
 			}
 			return null;
 		});
