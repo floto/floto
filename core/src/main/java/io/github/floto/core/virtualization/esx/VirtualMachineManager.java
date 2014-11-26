@@ -380,8 +380,12 @@ public class VirtualMachineManager {
                                 .getParent()
                                 + File.separator
                                 + ovfFileItem.getPath();
-                        String urlToPost = deviceUrl.getUrl().replace("*",
-                        		esxDesc.esxHost);
+                        log.info("DeviceURL: {}", deviceUrl.getUrl());
+                        URL url = new URL(deviceUrl.getUrl());
+                        // Use the configured esxHost Name/IP since the url name may not be resolvable
+                        String urlToPost = deviceUrl.getUrl().replace("*", esxDesc.esxHost).replace(url.getHost(),
+                                esxDesc.esxHost);
+                        log.info("urlToPost: {}", urlToPost);
 
                         tis = new TarInputStream(new BufferedInputStream(
                                 vmUrl.openStream()));
