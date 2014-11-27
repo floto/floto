@@ -30,6 +30,11 @@
             <name>Manuel Woelker</name>
             <email>floto@manuel.woelker.org</email>
         </developer>
+        <developer>
+        	<id>michas</id>
+        	<name>Michael Sorg</name>
+        	<email>michas@jarmoni.org</email>
+        </developer>
     </developers>
 
 
