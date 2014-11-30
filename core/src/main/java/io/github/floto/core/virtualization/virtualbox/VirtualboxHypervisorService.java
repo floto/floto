@@ -13,10 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -26,6 +26,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.net.PercentEscaper;
 
@@ -137,6 +138,17 @@ public class VirtualboxHypervisorService implements HypervisorService {
 	}
 
 	private void setupNetworking(final VmDescription desc) {
+		// check if host-only network is present
+		String result = vBoxManage.run("list", "hostonlyifs | grep \"^Name\" | awk '{ print $2}'");
+		/*
+		micha@cron:~$ VBoxManage hostonlyif create
+		0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%
+		Interface 'vboxnet2' was successfully created
+		micha@cron:~$ VBoxManage hostonlyif ipconfig vboxnet2 --ip 193.169.91.1
+		micha@cron:~$ VBoxManage dhcpserver add --ifname vboxnet2 --ip 193.169.91.1 --netmask 255.255.255.0 --lowerip 193.169.91.100 --upperip 193.169.91.200
+		micha@cron:~$ VBoxManage dhcpserver modify --ifname vboxnet2 --ip 193.169.91.1 --netmask 255.255.255.0 --lowerip 193.169.91.100 --upperip 193.169.91.200
+		micha@cron:~$ VBoxManage dhcpserver modify --ifname vboxnet2 --enable
+		*/
 		// Setup networking
 		vBoxManage.run("modifyvm", desc.vmName, "--nic1", "intnet");
 		vBoxManage.run("modifyvm", desc.vmName, "--nic2", "hostonly", "--hostonlyadapter2", "vboxnet1");
@@ -328,5 +340,24 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				}
 			}
 		}
+	}
+	
+	public static void main(String[] args) {
+		ExternalProgram vBoxManage = ExternalProgram.create(
+				"VBoxManage", "Oracle/VirtualBox");
+		String result = vBoxManage.run("list", "hostonlyifs");
+		System.out.println(result);
+		List<String> splittedEntries = Splitter.on(System.getProperty("line.separator") + System.getProperty("line.separator")).trimResults().splitToList(result);
+		if(splittedEntries.size() > 0) {
+			List<String> splittedLines = Splitter.on(System.getProperty("line.separator")).trimResults().splitToList(splittedEntries.get(0));
+			Optional<String> dhcpLine = splittedLines.stream().filter(s -> s.startsWith("DHCP")).findFirst();
+			if(!dhcpLine.isPresent()) {
+				throw new IllegalStateException("line 'DHCP: ....' must be present");
+			}
+			boolean dhcpEnabled = Splitter.on(":").trimResults().splitToList(dhcpLine.get()).get(1).equalsIgnoreCase("Enabled");
+		}
+		System.out.println(splittedEntries.size());
+		System.out.println(splittedEntries.get(0));
+		
 	}
 }
