@@ -17,7 +17,7 @@ import com.google.common.base.Throwables;
 public class ShellExecutor {
     private Logger log = LoggerFactory.getLogger(ShellExecutor.class);
 
-    private long timeoutInMs = 30000;
+    private long timeoutInMs = 50000;
 
     public String execute(String command, String... arguments) {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
