@@ -2,6 +2,7 @@ package io.github.floto.core.virtualization.virtualbox;
 
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
+import io.github.floto.core.virtualization.virtualbox.util.VBoxManageUtil;
 import io.github.floto.core.virtualization.workstation.ExternalProgram;
 import io.github.floto.dsl.model.VirtualboxHypervisorDescription;
 
@@ -16,11 +17,18 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import jersey.repackaged.com.google.common.collect.Maps;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
@@ -37,7 +45,7 @@ public class VirtualboxHypervisorService implements HypervisorService {
 
 	private final Logger log = LoggerFactory
 			.getLogger(VirtualboxHypervisorService.class);
-
+	
 	private File cacheDirectory;
 	private File vmDirectory;
 	private final ExternalProgram vBoxManage = ExternalProgram.create(
@@ -139,7 +147,38 @@ public class VirtualboxHypervisorService implements HypervisorService {
 
 	private void setupNetworking(final VmDescription desc) {
 		// check if host-only network is present
-		String result = vBoxManage.run("list", "hostonlyifs | grep \"^Name\" | awk '{ print $2}'");
+		String hostonlyNw = null;
+		String hostonlyIfsString = vBoxManage.run("list", "hostonlyifs");
+		if(hostonlyIfsString != null && !hostonlyIfsString.isEmpty()) {
+			List<Map<String, String>> hostOnlyIfs = VBoxManageUtil.convertVBoxManageResult(hostonlyIfsString);
+			// following block does NOT contain valid results. Try: VBoxManage list dhcpservers
+			Optional<Map<String, String>> o = hostOnlyIfs.stream().filter(e -> e.get("DHCP").equalsIgnoreCase("Enabled")).findFirst();
+			if(o.isPresent()) {
+				hostonlyNw = o.get().get("Name");
+			}
+			else {
+				hostonlyNw = hostOnlyIfs.get(0).get("Name");
+				String ip = hostOnlyIfs.get(0).get("IPAddress");
+				String mask = hostOnlyIfs.get(0).get("NetworkMask");
+				String lowerUpperIp = ip.replaceAll("\\.\\d$", ".254");
+				String result = vBoxManage.run("dhcpserver", "add", "--ifname", hostonlyNw, "--ip", ip, "--netmask", mask, "--lowerip", lowerUpperIp, "--upperip", lowerUpperIp, "--enable");
+			}
+				
+		}
+		else {
+			// create a new Host-only network with dhcp
+			String result = vBoxManage.run("hostonlyif", "create");
+			Matcher m = Pattern.compile("'vboxnet\\d+'").matcher(result);
+			if(m.find()) {
+				hostonlyNw = StringUtils.strip(m.group(0), "'");
+				vBoxManage.run("hostonlyif", "ipconfig", hostonlyNw, "--ip", "193.169.91.1");
+				vBoxManage.run("dhcpserver", "add", "--ifname", hostonlyNw, "--ip", "193.169.91.1", "--netmask", "255.255.255.0", "--lowerip", "193.169.91.254", "--upperip", "193.169.91.254", "--enable");
+			}
+			else {
+				throw new IllegalStateException("Could not obtain host-only network");
+			}
+			System.out.println(result);
+		}
 		/*
 		micha@cron:~$ VBoxManage hostonlyif create
 		0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%
@@ -151,11 +190,11 @@ public class VirtualboxHypervisorService implements HypervisorService {
 		*/
 		// Setup networking
 		vBoxManage.run("modifyvm", desc.vmName, "--nic1", "intnet");
-		vBoxManage.run("modifyvm", desc.vmName, "--nic2", "hostonly", "--hostonlyadapter2", "vboxnet1");
+		vBoxManage.run("modifyvm", desc.vmName, "--nic2", "hostonly", "--hostonlyadapter2", hostonlyNw);
 		vBoxManage.run("modifyvm", desc.vmName, "--nic3", "nat");
 		//vBoxManage.run("modifyvm", desc.vmName, "--nic3", "nat");
 	}
-
+	
 	private File getVmDirectory(final String vmName) {
 		return new File(vmDirectory, vmName);
 	}
@@ -343,21 +382,30 @@ public class VirtualboxHypervisorService implements HypervisorService {
 	}
 	
 	public static void main(String[] args) {
-		ExternalProgram vBoxManage = ExternalProgram.create(
-				"VBoxManage", "Oracle/VirtualBox");
-		String result = vBoxManage.run("list", "hostonlyifs");
-		System.out.println(result);
-		List<String> splittedEntries = Splitter.on(System.getProperty("line.separator") + System.getProperty("line.separator")).trimResults().splitToList(result);
-		if(splittedEntries.size() > 0) {
-			List<String> splittedLines = Splitter.on(System.getProperty("line.separator")).trimResults().splitToList(splittedEntries.get(0));
-			Optional<String> dhcpLine = splittedLines.stream().filter(s -> s.startsWith("DHCP")).findFirst();
-			if(!dhcpLine.isPresent()) {
-				throw new IllegalStateException("line 'DHCP: ....' must be present");
-			}
-			boolean dhcpEnabled = Splitter.on(":").trimResults().splitToList(dhcpLine.get()).get(1).equalsIgnoreCase("Enabled");
+//		ExternalProgram vBoxManage = ExternalProgram.create(
+//				"VBoxManage", "Oracle/VirtualBox");
+//		String result = vBoxManage.run("list", "hostonlyifs");
+//		System.out.println(result);
+//		List<String> splittedEntries = Splitter.on(System.getProperty("line.separator") + System.getProperty("line.separator")).trimResults().splitToList(result);
+//		if(splittedEntries.size() > 0) {
+//			List<String> splittedLines = Splitter.on(System.getProperty("line.separator")).trimResults().splitToList(splittedEntries.get(0));
+//			Optional<String> dhcpLine = splittedLines.stream().filter(s -> s.startsWith("DHCP")).findFirst();
+//			if(!dhcpLine.isPresent()) {
+//				throw new IllegalStateException("line 'DHCP: ....' must be present");
+//			}
+//			boolean dhcpEnabled = Splitter.on(":").trimResults().splitToList(dhcpLine.get()).get(1).equalsIgnoreCase("Enabled");
+//		}
+//		System.out.println(splittedEntries.size());
+//		System.out.println(splittedEntries.get(0));
+		String s = "Interface 'vboxnet0' was successfully created";
+		Pattern p = Pattern.compile("'vboxnet\\d+'");
+//		Matcher m = p.matcher(s);
+//		System.out.println(m.find());
+		Matcher m = Pattern.compile("'vboxnet\\d+'").matcher(s);
+		if(m.find()) {
+			System.out.println(StringUtils.strip(m.group(0), "'"));
 		}
-		System.out.println(splittedEntries.size());
-		System.out.println(splittedEntries.get(0));
+		System.out.println("192.168.90.1".replaceAll("\\.\\d$", ".254"));
 		
 	}
 }
