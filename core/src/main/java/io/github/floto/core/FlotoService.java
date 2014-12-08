@@ -153,7 +153,7 @@ public class FlotoService implements Closeable {
 						Enumeration e = NetworkInterface.getNetworkInterfaces();
 						while (e.hasMoreElements()) {
 							NetworkInterface n = (NetworkInterface) e.nextElement();
-							if (n.getDisplayName().startsWith("eth")) {
+							if (n.getDisplayName().startsWith("eth") || n.getDisplayName().startsWith("wlan")) {
 								Enumeration ee = n.getInetAddresses();
 								while (ee.hasMoreElements()) {
 									InetAddress i = (InetAddress) ee.nextElement();
