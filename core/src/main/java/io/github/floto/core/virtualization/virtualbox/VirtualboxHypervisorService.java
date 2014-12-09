@@ -42,14 +42,18 @@ public class VirtualboxHypervisorService implements HypervisorService {
 
 	public static final int NUM_ATTEMPTS = 9;
 	public static final long SLEEP_INTERVAL = 2000L;
+	
+	public static final String DEFAULT_HOSTONLY_IP = "193.169.91.1";
+	public static final String DEFAULT_HOSTONLY_MASK = "255.255.255.0";
+	public static final String DEFAULT_HOSTONLY_LOWER_IP = "193.169.91.254";
+	public static final String DEFAULT_HOSTONLY_UPPER_IP = "193.169.91.254";
 
 	private final Logger log = LoggerFactory
 			.getLogger(VirtualboxHypervisorService.class);
-	
+
 	private File cacheDirectory;
 	private File vmDirectory;
-	private final ExternalProgram vBoxManage = ExternalProgram.create(
-			"VBoxManage", "Oracle/VirtualBox");
+	private final ExternalProgram vBoxManage = ExternalProgram.create("VBoxManage", "Oracle/VirtualBox");
 
 	public VirtualboxHypervisorService(
 			final VirtualboxHypervisorDescription description) {
@@ -149,52 +153,74 @@ public class VirtualboxHypervisorService implements HypervisorService {
 		// check if host-only network is present
 		String hostonlyNw = null;
 		String hostonlyIfsString = vBoxManage.run("list", "hostonlyifs");
-		if(hostonlyIfsString != null && !hostonlyIfsString.isEmpty()) {
-			List<Map<String, String>> hostOnlyIfs = VBoxManageUtil.convertVBoxManageResult(hostonlyIfsString);
-			// following block does NOT contain valid results. Try: VBoxManage list dhcpservers
-			Optional<Map<String, String>> o = hostOnlyIfs.stream().filter(e -> e.get("DHCP").equalsIgnoreCase("Enabled")).findFirst();
-			if(o.isPresent()) {
-				hostonlyNw = o.get().get("Name");
-			}
-			else {
-				hostonlyNw = hostOnlyIfs.get(0).get("Name");
-				String ip = hostOnlyIfs.get(0).get("IPAddress");
-				String mask = hostOnlyIfs.get(0).get("NetworkMask");
-				String lowerUpperIp = ip.replaceAll("\\.\\d$", ".254");
-				String result = vBoxManage.run("dhcpserver", "add", "--ifname", hostonlyNw, "--ip", ip, "--netmask", mask, "--lowerip", lowerUpperIp, "--upperip", lowerUpperIp, "--enable");
-			}
-				
+		if (hostonlyIfsString != null && !hostonlyIfsString.isEmpty()) {
+			hostonlyNw = this.modifyHostonlyIf(hostonlyIfsString);
+
+		} else {
+			hostonlyNw = this.createHostonlyIf();
 		}
-		else {
-			// create a new Host-only network with dhcp
-			String result = vBoxManage.run("hostonlyif", "create");
-			Matcher m = Pattern.compile("'vboxnet\\d+'").matcher(result);
-			if(m.find()) {
-				hostonlyNw = StringUtils.strip(m.group(0), "'");
-				vBoxManage.run("hostonlyif", "ipconfig", hostonlyNw, "--ip", "193.169.91.1");
-				vBoxManage.run("dhcpserver", "add", "--ifname", hostonlyNw, "--ip", "193.169.91.1", "--netmask", "255.255.255.0", "--lowerip", "193.169.91.254", "--upperip", "193.169.91.254", "--enable");
-			}
-			else {
-				throw new IllegalStateException("Could not obtain host-only network");
-			}
-			System.out.println(result);
-		}
-		/*
-		micha@cron:~$ VBoxManage hostonlyif create
-		0%...10%...20%...30%...40%...50%...60%...70%...80%...90%...100%
-		Interface 'vboxnet2' was successfully created
-		micha@cron:~$ VBoxManage hostonlyif ipconfig vboxnet2 --ip 193.169.91.1
-		micha@cron:~$ VBoxManage dhcpserver add --ifname vboxnet2 --ip 193.169.91.1 --netmask 255.255.255.0 --lowerip 193.169.91.100 --upperip 193.169.91.200
-		micha@cron:~$ VBoxManage dhcpserver modify --ifname vboxnet2 --ip 193.169.91.1 --netmask 255.255.255.0 --lowerip 193.169.91.100 --upperip 193.169.91.200
-		micha@cron:~$ VBoxManage dhcpserver modify --ifname vboxnet2 --enable
-		*/
+		
 		// Setup networking
 		vBoxManage.run("modifyvm", desc.vmName, "--nic1", "intnet");
 		vBoxManage.run("modifyvm", desc.vmName, "--nic2", "hostonly", "--hostonlyadapter2", hostonlyNw);
 		vBoxManage.run("modifyvm", desc.vmName, "--nic3", "nat");
-		//vBoxManage.run("modifyvm", desc.vmName, "--nic3", "nat");
 	}
 	
+	String modifyHostonlyIf(String hostonlyIfsString) {
+		List<Map<String, String>> hostOnlyIfs = VBoxManageUtil
+				.convertVBoxManageResult(hostonlyIfsString);
+		String dhcpserversString = this.vBoxManage.run("list", "dhcpservers");
+		List<Map<String, String>> dhcpServers = VBoxManageUtil.convertVBoxManageResult(dhcpserversString);
+		
+		Optional<Map<String, String>> ifaceOptional = hostOnlyIfs.stream().filter(m -> {
+			return dhcpServers.stream().filter(n -> n.get("NetworkName").equals(m.get("VBoxNetworkName"))).findFirst().isPresent();
+		}).findFirst();
+		
+		if(dhcpServers.isEmpty() || !ifaceOptional.isPresent()) {
+			Map<String, String> if1 = hostOnlyIfs.get(0);
+			return this.alterDhcpNetwork("add", if1);
+		}
+		
+		return this.alterDhcpNetwork("modify", ifaceOptional.get());
+	}
+	
+	
+
+	String createHostonlyIf() {
+		// create a new Host-only network with dhcp
+		String result = vBoxManage.run("hostonlyif", "create");
+		String hostonlyNw = null;
+		Matcher m = Pattern.compile("'vboxnet\\d+'").matcher(result);
+		if (m.find()) {
+			hostonlyNw = StringUtils.strip(m.group(0), "'");
+			String ip = "193.169.91.1";
+			vBoxManage.run("hostonlyif", "ipconfig", hostonlyNw, "--ip", ip);
+			this.alterDhcpNetwork(hostonlyNw, "add", DEFAULT_HOSTONLY_IP, DEFAULT_HOSTONLY_MASK, DEFAULT_HOSTONLY_LOWER_IP, DEFAULT_HOSTONLY_UPPER_IP);
+		} else {
+			throw new IllegalStateException(
+					"Could not obtain host-only network");
+		}
+		return hostonlyNw;
+	}
+	
+	String alterDhcpNetwork(String command, Map<String, String> ifConfig) {
+		String hostonlyNw = ifConfig.get("Name");
+		String ip = ifConfig.get("IPAddress");
+		return this.alterDhcpNetwork(hostonlyNw, command, ip, ifConfig.get("NetworkMask"), ip.replaceAll("\\.\\d$", ".254"), ip.replaceAll("\\.\\d$", ".254"));
+	}
+	
+	String alterDhcpNetwork(String hostonlyNw, String command, String ip, String mask, String lowerIp, String upperIp) {
+		vBoxManage
+		.run("dhcpserver", command, 
+				"--ifname", hostonlyNw, 
+				"--ip", ip, 
+				"--netmask", mask,
+				"--lowerip", lowerIp, 
+				"--upperip", upperIp, 
+				"--enable");
+		return hostonlyNw;
+	}
+
 	private File getVmDirectory(final String vmName) {
 		return new File(vmDirectory, vmName);
 	}
@@ -379,33 +405,5 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				}
 			}
 		}
-	}
-	
-	public static void main(String[] args) {
-//		ExternalProgram vBoxManage = ExternalProgram.create(
-//				"VBoxManage", "Oracle/VirtualBox");
-//		String result = vBoxManage.run("list", "hostonlyifs");
-//		System.out.println(result);
-//		List<String> splittedEntries = Splitter.on(System.getProperty("line.separator") + System.getProperty("line.separator")).trimResults().splitToList(result);
-//		if(splittedEntries.size() > 0) {
-//			List<String> splittedLines = Splitter.on(System.getProperty("line.separator")).trimResults().splitToList(splittedEntries.get(0));
-//			Optional<String> dhcpLine = splittedLines.stream().filter(s -> s.startsWith("DHCP")).findFirst();
-//			if(!dhcpLine.isPresent()) {
-//				throw new IllegalStateException("line 'DHCP: ....' must be present");
-//			}
-//			boolean dhcpEnabled = Splitter.on(":").trimResults().splitToList(dhcpLine.get()).get(1).equalsIgnoreCase("Enabled");
-//		}
-//		System.out.println(splittedEntries.size());
-//		System.out.println(splittedEntries.get(0));
-		String s = "Interface 'vboxnet0' was successfully created";
-		Pattern p = Pattern.compile("'vboxnet\\d+'");
-//		Matcher m = p.matcher(s);
-//		System.out.println(m.find());
-		Matcher m = Pattern.compile("'vboxnet\\d+'").matcher(s);
-		if(m.find()) {
-			System.out.println(StringUtils.strip(m.group(0), "'"));
-		}
-		System.out.println("192.168.90.1".replaceAll("\\.\\d$", ".254"));
-		
 	}
 }
