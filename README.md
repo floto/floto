@@ -12,11 +12,11 @@ The description language and a templating mechanism allows services to publish t
 
 ## Prerequisites
 
-* Docker 1.1.1
+* Docker 1.3
 * Java 8
 
 ### Optional
 
 * VMware Workstation
 * VMware ESX
-* VirtualBox (planned)
+* VirtualBox
