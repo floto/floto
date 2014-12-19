@@ -571,7 +571,7 @@ public class VirtualMachineManager {
             tos.putNextEntry(entry);
             FileInputStream fis = new FileInputStream(file);
             BufferedInputStream bif = new BufferedInputStream(fis);
-            IOUtils.copy(bif, tos);
+            IOUtils.copyLarge(bif, tos);
             bif.close();
             fis.close();
             tos.closeEntry();
