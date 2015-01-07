@@ -1,0 +1,33 @@
+<tr>
+    <td style="vertical-align: top; cursor: pointer" ng-click="isExpanded = !isExpanded; false;">
+        <b><span style="display: inline-block; width: 1em;"
+                 ng-style="{visibility: isExpandable?'':'hidden'}" >{{isExpanded? '-': '+'}} </span>{{key}}</b>:
+    </td>
+    <td>
+    <span ng-if="!isExpanded">
+        <span ng-if="isArray">
+            [{{value.length}}]
+        </span>
+        <span ng-if="isObject">
+            {...}
+        </span>
+    </span>
+    <span ng-if="isExpanded">
+        <span ng-if="isArray">
+            [
+        <table style="position: relative; left: 20px;">
+            <tr ng-repeat="item in value" json-item key="$index" value="item"/>
+        </table>
+            ]</span>
+        <span ng-if="isObject">
+            {
+        <table style="position: relative; left: 20px;">
+            <tr ng-repeat="(k,v) in value" json-item key="k" value="v"/>
+        </table>
+            }</span>
+    </span>
+    <span ng-if="isSimple">
+        {{value}} <span class="text-muted">({{typeOf(value)}})</span>
+    </span>
+    </td>
+</tr>
