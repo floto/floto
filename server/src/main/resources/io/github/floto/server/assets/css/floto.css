@@ -1,21 +1,34 @@
 @font-face {
-  font-family: 'SourceSansPro';
-  src: url('/lib/fonts/SourceSansPro-Regular.ttf');
+    font-family: 'SourceSansPro';
+    src: url('/lib/fonts/SourceSansPro-Regular.ttf');
 }
 
 @font-face {
-  font-family: 'SourceCodePro';
-  src: url('/lib/fonts/SourceCodePro-Regular.ttf');
+    font-family: 'SourceCodePro';
+    src: url('/lib/fonts/SourceCodePro-Regular.ttf');
 }
 
 body {
-  font-family: 'SourceSansPro', sans-serif;
-  font-size: 15px;
+    font-family: 'SourceSansPro', sans-serif;
+    font-size: 15px;
 }
 
 pre {
-  font-family: 'SourceCodePro', sans-serif;
-  font-size: 12px;
+    font-family: 'SourceCodePro', sans-serif;
+    font-size: 12px;
 }
 
-json-structure-
+.json-structure-table {
+    position: relative;
+    left: 20px;
+}
+
+.json-structure-key {
+    vertical-align: top;
+    cursor: pointer
+}
+
+.json-structure-expander {
+    display: inline-block;
+    width: 1em;
+}

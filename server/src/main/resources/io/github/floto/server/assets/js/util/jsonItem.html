@@ -1,7 +1,6 @@
 <tr>
-    <td style="vertical-align: top; cursor: pointer" ng-click="isExpanded = !isExpanded; false;">
-        <b><span style="display: inline-block; width: 1em;"
-                 ng-style="{visibility: isExpandable?'':'hidden'}" >{{isExpanded? '-': '+'}} </span>{{key}}</b>:
+    <td class="json-structure-key" ng-click="isExpanded = !isExpanded; false;">
+        <b><span class="json-structure-expander" ng-style="{visibility: isExpandable?'':'hidden'}">{{isExpanded? '-': '+'}} </span>{{key}}</b>:
     </td>
     <td>
     <span ng-if="!isExpanded">
@@ -15,13 +14,15 @@
     <span ng-if="isExpanded">
         <span ng-if="isArray">
             [
-        <table style="position: relative; left: 20px;">
+        <table class="json-structure-table">
             <tr ng-repeat="item in value" json-item key="$index" value="item"/>
         </table>
-            ]</span>
-        <span ng-if="isObject">
-            <json-table object="value" />
+            ]
         </span>
+        <span ng-if="isObject">
+            <json-table object="value"/>
+        </span>
+    </span>
     <span ng-if="isSimple">
         {{value}} <span class="text-muted">({{typeOf(value)}})</span>
     </span>
