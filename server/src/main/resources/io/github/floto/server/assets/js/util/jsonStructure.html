@@ -1,16 +1,3 @@
 <div>
-    {
-    <table>
-        <tr json-item ng-repeat="(key,value) in object" key="key" value="value" />
-        <!--
-        <span style="cursor: pointer">+ </span>{{key}}: {{typeOf(value)}}
-        <span ng-switch on="typeOf(value)">
-            <div ng-switch-when="object">
-                <json-structure object="value" />
-            </div>
-            <span ng-switch-default>{{value}}</span>
-        </span>
-        -->
-    </table>
-    }
+    <json-table object="object" />
 </div>
