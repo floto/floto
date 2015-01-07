@@ -8,7 +8,7 @@
             [{{value.length}}]
         </span>
         <span ng-if="isObject">
-            {...}
+            {<span ng-if="value.name"><b>name: </b>{{value.name}}, </span>...}
         </span>
     </span>
     <span ng-if="isExpanded">
