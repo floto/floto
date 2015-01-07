@@ -25,7 +25,8 @@ pre {
 
 .json-structure-key {
     vertical-align: top;
-    cursor: pointer
+    cursor: pointer;
+    padding-right: 1em;
 }
 
 .json-structure-expander {
