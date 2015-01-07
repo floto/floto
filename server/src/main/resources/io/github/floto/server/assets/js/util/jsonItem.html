@@ -20,12 +20,8 @@
         </table>
             ]</span>
         <span ng-if="isObject">
-            {
-        <table style="position: relative; left: 20px;">
-            <tr ng-repeat="(k,v) in value" json-item key="k" value="v"/>
-        </table>
-            }</span>
-    </span>
+            <json-table object="value" />
+        </span>
     <span ng-if="isSimple">
         {{value}} <span class="text-muted">({{typeOf(value)}})</span>
     </span>

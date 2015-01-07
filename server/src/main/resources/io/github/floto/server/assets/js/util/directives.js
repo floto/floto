@@ -101,19 +101,6 @@
             scope: {
                 object: "=object"
             },
-            /*
-            compile: function(element) {
-                // Use the compile function from the RecursionHelper,
-                // And return the linking function(s) which it returns
-                return RecursionHelper.compile(element, {
-                    post: function(scope, element, attr) {
-
-                        scope.typeOf = function(input) {
-                            return typeof input;
-                        }
-                    }
-                });
-            },*/
             link: function(scope, element, attr) {
 
                 scope.typeOf = function(input) {
@@ -159,6 +146,17 @@
                 });
             },
             templateUrl: "js/util/jsonItem.html"
+        };
+    });
+
+    app.directive("jsonTable", function (RecursionHelper) {
+        return {
+            scope: {
+                object: "=object"
+            },
+            restrict: 'AE',
+            replace: true,
+            templateUrl: "js/util/jsonTable.html"
         };
     });
 
