@@ -7,10 +7,10 @@
             <div class="row">
 				<div class="col-md-6">
                     <button type="button" class="btn btn-default" ng-click="refresh()">Refresh</button>
-					<button type="button" class="btn btn-primary"
+					<button type="button" class="btn btn-primary" ng-disabled="!armed"
 						ng-click="redeployHosts({hosts: hostNames})">Redeploy all
 					</button>
-					<button type="button" class="btn btn-success"
+					<button type="button" class="btn btn-success" ng-disabled="!armed"
 							ng-click="exportHosts({hosts: hostNames})">Export all
 					</button>
 				</div>
@@ -26,30 +26,30 @@
                         </td>
                         <td>
                             <button type="button" class="btn btn-xs btn-primary"
-                                    ng-click="redeployHosts({hosts: [host.name]})">Redeploy
+                                    ng-click="redeployHosts({hosts: [host.name]})" ng-disabled="!armed">Redeploy
                             </button>
                         </td>
                         <td>
                             <button type="button" class="btn btn-xs btn-success"
-                                    ng-disabled="host.state != 'stopped'"
+                                    ng-disabled="host.state != 'stopped' || !armed"
                                     ng-click="startHosts({hosts: [host.name]})">Start
                             </button>
                         </td>
                         <td>
                             <button type="button" class="btn btn-xs btn-danger"
-                                    ng-disabled="host.state != 'running'"
+                                    ng-disabled="host.state != 'running' || !armed"
                                     ng-click="stopHosts({hosts: [host.name]})">Stop
                             </button>
                         </td>
                         <td>
                             <button type="button" class="btn btn-xs btn-danger"
-                                    ng-disabled="host.state != 'stopped'"
+                                    ng-disabled="host.state != 'stopped' || !armed"
                                     ng-click="deleteHosts({hosts: [host.name]})">Delete
                             </button>
                         </td>
                         <td>
                             <button type="button" class="btn btn-xs btn-success"
-                                    ng-disabled="host.state == 'not-there'"
+                                    ng-disabled="host.state == 'not-there' || !armed"
                                     ng-click="exportHosts({hosts: [host.name]})">Export
                             </button>
                         </td>

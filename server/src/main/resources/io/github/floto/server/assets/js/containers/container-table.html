@@ -6,7 +6,7 @@
         <td ng-if="configuration.canRedeploy">
 			<div class="btn-group" ng-class='{open1: open1}'>
 				<button type="button" ng-if="!container.unmanaged" data-toggle="dropdown" class="btn btn-xs btn-primary dropdown-toggle"
-						ng-click='open1=!open1'> Redeploy <span class="caret"></span>
+						ng-click='open1=!open1' ng-disabled="!armed"> Redeploy <span class="caret"></span>
 				</button>
 				<ul class="dropdown-menu">
 					<li data-ng-click="open1=false; redeployContainers({containers: [container.name],deploymentMode: 'fromRootImage'})"><a href>From Root-image</a></li>
@@ -17,21 +17,21 @@
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-success"
-                    ng-disabled="container.state.status == 'running'"
+                    ng-disabled="container.state.status == 'running' || !armed"
                     ng-click="startContainers({containers: [container.name]})">Start
             </button>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
-                    ng-disabled="container.state.status != 'running'"
+                    ng-disabled="container.state.status != 'running' || !armed"
                     ng-click="stopContainers({containers: [container.name]})">Stop
             </button>
         </td>
         <td>
-            <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
+            <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
                     ng-click="purgeContainerData({containers: [container.name]})">Purge data
             </button>
-            <button ng-if="container.unmanaged" type="button" class="btn btn-xs btn-danger"
+            <button ng-if="container.unmanaged" type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
                     ng-click="destroyUnmanagedContainer({containerName: container.name, hostName: container.state.hostName})">Destroy
             </button>
         </td>
