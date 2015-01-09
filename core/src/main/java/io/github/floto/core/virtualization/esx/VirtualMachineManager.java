@@ -550,6 +550,8 @@ public class VirtualMachineManager {
 		// tar the ovf to the ova
         // first entry has to be the ovf!
         TarOutputStream tos = new TarOutputStream(new FileOutputStream(targetFile));
+        tos.setBigNumberMode(TarOutputStream.BIGNUMBER_STAR);
+        tos.setLongFileMode(TarOutputStream.LONGFILE_POSIX);
         for (File file : exportDir.listFiles()) {
             if (file.toString().toLowerCase().endsWith(".ovf")) {
                 TarEntry entry = new TarEntry(file, file.getName());
