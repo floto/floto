@@ -199,8 +199,18 @@ public class EsxHypervisorService implements HypervisorService {
             }
             vm = vmManager.getVm(vmname);
             if (vm != null) {
-                Task task = vm.powerOffVM_Task();
-				EsxUtils.waitForTask(task, "Power off " + vmname);
+                try {
+                    Task task = vm.powerOffVM_Task();
+                    EsxUtils.waitForTask(task, "Power off " + vmname);
+                } catch(Throwable ignored) {
+                    if(!isVmRunning(vmname)) {
+                        // Something went wrong during poweroff (usually the machine is already off), but it is off now, so all is good
+                        return;
+                    }
+                    // Still not off, try harder or fail
+                    Task task = vm.powerOffVM_Task();
+                    EsxUtils.waitForTask(task, "Power off " + vmname);
+                }
             }
 
         } catch (InvalidPowerState ignored) {
