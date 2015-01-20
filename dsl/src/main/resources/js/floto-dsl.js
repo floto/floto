@@ -158,6 +158,13 @@
 		});
 	};
 
+	global.setHostOnlyIpVBoxWin = function setHostOnlyIpVBoxWin(vmname){
+		currentSteps.push({
+			type: "SET_HOST_ONLY_IP",
+			vmname: vmname
+		});
+		
+	};
 
 	global.container = function container(name, definition) {
 		definition.name = name;

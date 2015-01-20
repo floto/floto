@@ -106,6 +106,129 @@ public class VirtualboxHypervisorService implements HypervisorService {
 
 	}
 
+	@Override
+	public void setHostOnlyIpVBoxWin(String vmname, String proxy) {
+		// Default values
+		String hostOnlyAdapterPrefix = "169.254.0.0";
+		String hostOnlyAdapterNetmask = "255.255.0.0";
+
+		// Set HostOnlyAdapter
+		String hostonlyNw = null;
+		String hostonlyIfsString = vBoxManage.run("list", "hostonlyifs");
+		if (hostonlyIfsString != null && !hostonlyIfsString.isEmpty()) {
+			hostonlyNw = this.modifyHostonlyIf(hostonlyIfsString);
+
+		} else {
+			hostonlyNw = this.createHostonlyIf();
+		}
+		hostonlyNw = hostonlyNw.replace("Ethernet Adapter", "Network");
+
+		String cmd = "netsh interface ip show config name=\"" + hostonlyNw
+				+ "\"";
+
+		try {
+			// netsh interface ip show config
+			// name="VirtualBox Host-Only Network #6"
+			// Not Working: | findstr "Subnet Prefix" -> four times readline
+			Process p = Runtime.getRuntime().exec(cmd);
+			p.waitFor();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					p.getInputStream()));
+			// Format: Subnetprefix: 169.254.0.0/16 (Mask 255.255.0.0)
+			reader.readLine();
+			reader.readLine();
+			reader.readLine();
+			reader.readLine();
+			hostOnlyAdapterPrefix = reader.readLine();
+
+		} catch (Exception ex) {
+			log.error("Failed getting Host-Onyl-Adapter IP-Address: {}", ex);
+		}
+
+		if (hostOnlyAdapterPrefix.length() == 0) {
+			throw new RuntimeException("No such Host Only Adapter");
+		} else {
+			// Remove: "Subnetprefix:"
+			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix
+					.substring(hostOnlyAdapterPrefix.indexOf(':') + 1);
+			// Set Netmask
+			hostOnlyAdapterNetmask = hostOnlyAdapterPrefix.substring(
+					hostOnlyAdapterPrefix.indexOf('(') + 1,
+					hostOnlyAdapterPrefix.indexOf(')'));
+			hostOnlyAdapterNetmask = hostOnlyAdapterNetmask
+					.substring(hostOnlyAdapterNetmask.lastIndexOf(" ") + 1);
+			// Remove Netmask from Prefix String
+			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix.substring(0,
+					hostOnlyAdapterPrefix.indexOf('(') - 1);
+			// Set Prefix Length
+			// hostOnlyAdapterPrefixLenght =
+			// Integer.valueOf(hostOnlyAdapterPrefix
+			// .substring(hostOnlyAdapterPrefix.indexOf('/') + 1));
+			// Remove "/16"
+			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix.substring(0,
+					hostOnlyAdapterPrefix.indexOf('/'));
+			// Remove white spaces
+			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix
+					.substring(hostOnlyAdapterPrefix.lastIndexOf(" ") + 1);
+		}
+
+		// Set VMAddress = host-only-address and and edit editable parts
+		String[] vMAddress = hostOnlyAdapterPrefix.split("\\.");
+		String vMAddressFull = hostOnlyAdapterPrefix;
+
+		// Check editable parts of IP
+		int editableParts = 0;
+		for (int i = 0; i < vMAddress.length; i++) {
+			if (vMAddress[i].equals("0")) {
+				editableParts++;
+			}
+		}
+
+		// 2. Build IP-Address with random numbers between 2 and 254 in the
+		boolean isUnique = false;
+		while (isUnique == false) {
+			for (int i = 0; i < editableParts; i++) {
+				int randomNum = 1 + (int) (Math.random() * 255);
+				vMAddress[3 - i] = String.valueOf(randomNum);
+
+			}
+			// Build Ip-Address
+			vMAddressFull = vMAddress[0] + "." + vMAddress[1] + "."
+					+ vMAddress[2] + "." + vMAddress[3];
+
+			// 3. Check if ip is unique
+			// 4. Retrun to 2. if not unique
+			try {
+				Process p = Runtime.getRuntime().exec("ping " + vMAddressFull);
+
+				p.waitFor();
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(p.getInputStream()));
+				reader.readLine();
+				reader.readLine();
+				String line = reader.readLine();
+				// When there is no TTL then the ping went wrong -> ip net used
+				// jet
+				if (!line.contains("TTL=")) {
+					isUnique = true;
+				}
+			} catch (Exception ex) {
+				log.error("Failed ping new Address: {}", ex);
+			}
+		}
+
+		// 6. finally push interface
+		runInVm(vmname, proxy + " echo  'auto eth1' >> /etc/network/interfaces");
+		runInVm(vmname, proxy
+				+ " echo 'iface eth1 inet static' >>  /etc/network/interfaces");
+		runInVm(vmname, proxy + " echo 'address " + vMAddressFull
+				+ " ' >> /etc/network/interfaces");
+		runInVm(vmname, proxy + " echo 'netmask " + hostOnlyAdapterNetmask
+				+ "' >> /etc/network/interfaces");
+
+		runInVm(vmname, proxy + " ifdown eth1; ifup eth1");
+	}
+
 	private void deployFromImage(final File cachedFile, final VmDescription desc) {
 		// Import VM
 		vBoxManage.run("import", cachedFile.getAbsolutePath(), "--vsys", "0",
