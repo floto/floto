@@ -1,6 +1,29 @@
 (function () {
     "use strict";
 
+    app.directive("flotoRedeployButton", function (configuration) {
+        function linkRedeployButton(scope, element, attrs) {
+            scope.what = attrs.what;
+            scope.size = attrs.size;
+            scope.deploymentModes = configuration.deploymentModes;
+            scope.defaultDeploymentMode = configuration.defaultDeploymentMode;
+            scope.defaultDeploymentModeCaption = configuration.defaultDeploymentModeCaption;
+            scope.execute = function execute(mode) {
+                scope.clickHandler({deploymentMode: mode});
+            };
+        }
+
+        return {
+            restrict: 'E',
+            replace: true,
+            scope: {
+                clickHandler: "&onClick"
+            },
+            templateUrl: "/js/util/redeploy-button.html",
+            link: linkRedeployButton
+        };
+    });
+
     app.directive("flotoFillHeight", function ($window) {
         function linkFillHeight(scope, element, attrs) {
             var fillHeight = scope.fillHeight || 1.0;
