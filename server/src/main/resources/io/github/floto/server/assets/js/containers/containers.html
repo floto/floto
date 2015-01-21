@@ -9,16 +9,7 @@
                     <button type="button"
                             class="btn btn-default" ng-click="refresh()">Refresh
                     </button>
-					<div class="btn-group" ng-class='{open2: open2}'>
-						<button type="button" data-toggle="dropdown" class="btn btn-primary dropdown-toggle"
-								ng-click='open2=!open2'>Redeploy all <span class="caret"></span>
-						</button>
-						<ul class="dropdown-menu">
-							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'fromRootImage'})"><a href>From Root-image</a></li>
-							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'fromBaseImage'})"><a href>From Base-image</a></li>
-							<li data-ng-click="open2=false; redeployContainers({containers: containerNames,deploymentMode: 'containerRebuild'})"><a href>Container-rebuild only</a></li>
-						</ul>
-					</div>
+                    <floto-redeploy-button what="all" on-click="redeployContainers({containers: containerNames, deploymentMode: deploymentMode})"></floto-redeploy-button>
                     <button type="button" class="btn btn-success"
                             ng-click="startContainers({containers: containerNames})">Start all
                     </button>
@@ -56,22 +47,13 @@
 
                 <div ng-if="grouping">
                     <div ng-repeat="group in groups" ng-init="containers = group.containers">
-                        <div style="display: table">
-                            <div style="display: table-row;">
-                                <div style="display: table-cell;width: 100%">
+                        <div style="display: table; width: 100%">
+                            <div style="display: table-row;width: 100%">
+                                <div style="display: table-cell;">
                                     <h4>{{group.title}}</h4>
                                 </div>
-                                <div style="display: table-cell; white-space: nowrap">
-									<div class="btn-group" ng-class='{open3: open3}'>
-										<button type="button" data-toggle="dropdown" class="btn btn-xs btn-primary dropdown-toggle"
-												ng-click='open3=!open3'>Redeploy all <span class="caret"></span>
-										</button>
-										<ul class="dropdown-menu">
-											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'fromRootImage'})"><a href>From Root-image</a></li>
-											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'fromBaseImage'})"><a href>From Base-image</a></li>
-											<li data-ng-click="open3=false; redeployContainers({containers: group.containerNames,deploymentMode: 'containerRebuild'})"><a href>Container-rebuild only</a></li>
-										</ul>
-									</div>
+                                <div style="display: table-cell; white-space: nowrap; right: 0px; text-align: right">
+                                    <floto-redeploy-button size="xs" what="all" on-click="redeployContainers({containers: group.containerNames, deploymentMode: deploymentMode})"></floto-redeploy-button>
                                     <button type="button" class="btn btn-xs btn-success"
                                             ng-click="startContainers({containers: group.containerNames})">Start
                                     </button>

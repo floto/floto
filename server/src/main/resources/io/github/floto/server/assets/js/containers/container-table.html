@@ -4,16 +4,9 @@
                   ng-class="{'label-success': container.state.status==='running', 'label-warning': container.state.status==='stopped', 'label-danger': container.state.status === 'not-there'}">{{container.state.status}}</span>
         </td>
         <td ng-if="configuration.canRedeploy">
-			<div class="btn-group" ng-class='{open1: open1}'>
-				<button type="button" ng-if="!container.unmanaged" data-toggle="dropdown" class="btn btn-xs btn-primary dropdown-toggle"
-						ng-click='open1=!open1'> Redeploy <span class="caret"></span>
-				</button>
-				<ul class="dropdown-menu">
-					<li data-ng-click="open1=false; redeployContainers({containers: [container.name],deploymentMode: 'fromRootImage'})"><a href>From Root-image</a></li>
-					<li data-ng-click="open1=false; redeployContainers({containers: [container.name],deploymentMode: 'fromBaseImage'})"><a href>From Base-image</a></li>
-					<li data-ng-click="open1=false; redeployContainers({containers: [container.name],deploymentMode: 'containerRebuild'})"><a href>Container-rebuild only</a></li>
-				</ul>
-			</div>
+            <div style="width: 8em">
+                <floto-redeploy-button ng-if="!container.unmanaged" size="xs" what="all" on-click="redeployContainers({containers: [container.name], deploymentMode: deploymentMode})"></floto-redeploy-button>
+            </div>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-success"
