@@ -117,37 +117,37 @@ public class VirtualboxHypervisorService implements HypervisorService {
 		String hostonlyIfsString = vBoxManage.run("list", "hostonlyifs");
 		if (hostonlyIfsString != null && !hostonlyIfsString.isEmpty()) {
 			hostonlyNw = this.modifyHostonlyIf(hostonlyIfsString);
-
 		} else {
 			hostonlyNw = this.createHostonlyIf();
 		}
 		hostonlyNw = hostonlyNw.replace("Ethernet Adapter", "Network");
 
+		// netsh interface ip show config name="VirtualBox Host-Only Network #6"
+		// | findstr "Subnet Prefix"
+		// Not Working: | findstr "Subnet Prefix" -> four times readline
 		String cmd = "netsh interface ip show config name=\"" + hostonlyNw
-				+ "\"";
+				+ "\" ";
 
 		try {
-			// netsh interface ip show config
-			// name="VirtualBox Host-Only Network #6"
-			// Not Working: | findstr "Subnet Prefix" -> four times readline
 			Process p = Runtime.getRuntime().exec(cmd);
 			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					p.getInputStream()));
-			// Format: Subnetprefix: 169.254.0.0/16 (Mask 255.255.0.0)
-			reader.readLine();
-			reader.readLine();
-			reader.readLine();
-			reader.readLine();
-			hostOnlyAdapterPrefix = reader.readLine();
+			// The whole output
+			hostOnlyAdapterPrefix = org.apache.commons.io.IOUtils.toString(p
+					.getInputStream());
 
 		} catch (Exception ex) {
 			log.error("Failed getting Host-Onyl-Adapter IP-Address: {}", ex);
 		}
 
-		if (hostOnlyAdapterPrefix.length() == 0) {
+		if (hostOnlyAdapterPrefix.length() == 0
+				|| !hostOnlyAdapterPrefix.contains("255")) {
 			throw new RuntimeException("No such Host Only Adapter");
 		} else {
+			// Trim to: "Subnetprefix: 169.254.0.0/16 (Mask 255.255.0.0)"
+			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix
+					.substring(hostOnlyAdapterPrefix.indexOf("Subnet"));
+			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix.substring(0,
+					hostOnlyAdapterPrefix.indexOf(')') + 1);
 			// Remove: "Subnetprefix:"
 			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix
 					.substring(hostOnlyAdapterPrefix.indexOf(':') + 1);
@@ -160,10 +160,6 @@ public class VirtualboxHypervisorService implements HypervisorService {
 			// Remove Netmask from Prefix String
 			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix.substring(0,
 					hostOnlyAdapterPrefix.indexOf('(') - 1);
-			// Set Prefix Length
-			// hostOnlyAdapterPrefixLenght =
-			// Integer.valueOf(hostOnlyAdapterPrefix
-			// .substring(hostOnlyAdapterPrefix.indexOf('/') + 1));
 			// Remove "/16"
 			hostOnlyAdapterPrefix = hostOnlyAdapterPrefix.substring(0,
 					hostOnlyAdapterPrefix.indexOf('/'));
@@ -184,7 +180,9 @@ public class VirtualboxHypervisorService implements HypervisorService {
 			}
 		}
 
-		// 2. Build IP-Address with random numbers between 2 and 254 in the
+		// 2. Build IP-Address with random numbers between 2 and 254
+		// 3. Check if ip is unique
+		// 4. Retrun to 2. if not unique
 		boolean isUnique = false;
 		while (isUnique == false) {
 			for (int i = 0; i < editableParts; i++) {
@@ -192,12 +190,9 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				vMAddress[3 - i] = String.valueOf(randomNum);
 
 			}
-			// Build Ip-Address
 			vMAddressFull = vMAddress[0] + "." + vMAddress[1] + "."
 					+ vMAddress[2] + "." + vMAddress[3];
 
-			// 3. Check if ip is unique
-			// 4. Retrun to 2. if not unique
 			try {
 				Process p = Runtime.getRuntime().exec("ping " + vMAddressFull);
 
@@ -207,8 +202,7 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				reader.readLine();
 				reader.readLine();
 				String line = reader.readLine();
-				// When there is no TTL then the ping went wrong -> ip net used
-				// jet
+				// When ping returns with ttl -> the Ip is already in use
 				if (!line.contains("TTL=")) {
 					isUnique = true;
 				}
@@ -225,7 +219,6 @@ public class VirtualboxHypervisorService implements HypervisorService {
 				+ " ' >> /etc/network/interfaces");
 		runInVm(vmname, proxy + " echo 'netmask " + hostOnlyAdapterNetmask
 				+ "' >> /etc/network/interfaces");
-
 		runInVm(vmname, proxy + " ifdown eth1; ifup eth1");
 	}
 
