@@ -1,0 +1,7 @@
+<div class="btn-group dropdown btn-group-{{size}}" style="text-align: left">
+    <button type="button" class="btn btn-primary " title="Redeploy {{what}} - {{defaultDeploymentModeCaption}}" ng-click="execute(defaultDeploymentMode)" ng-bind="'Redeploy '+what">Redeploy all</button>
+    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown" ng-click='open=!open'><span class="caret"></span></button>
+    <ul class="dropdown-menu">
+        <li ng-repeat="mode in deploymentModes" data-ng-click="execute(mode.name)"><a href>{{mode.caption}}</a></li>
+    </ul>
+</div>
