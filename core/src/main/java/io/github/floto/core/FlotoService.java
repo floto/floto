@@ -205,12 +205,27 @@ public class FlotoService implements Closeable {
 		return manifestString;
 	}
 
-	public TaskInfo<Void> redeployContainers(List<String> containers, DeploymentMode deploymentMode) {
-
-		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(containers) + " in mode '" + deploymentMode + "'", () -> {
+	public TaskInfo<Void> redeployContainers(List<String> requestedContainers, DeploymentMode deploymentMode) {
+		final List<String> containers = new ArrayList<>(requestedContainers);
+		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(requestedContainers) + " in mode '" + deploymentMode + "'", () -> {
 			boolean excludeDeploymentContainers = false;
+			String registryContainerName = null;
 			if(this.getImageRegistry() != null) {
 				Host registryHost = this.findRegistryHost(this.manifest);
+
+				// Check that registry is running, if we are going to use it
+				// TODO: only get registry state
+				registryContainerName = this.getImageRegistry().getContainerName();
+				ContainerState containerState = getContainerStates().get(registryContainerName);
+				if(containerState != null && containerState.status.equals(ContainerState.Status.running)) {
+					// Registry is running, go ahead
+				} else {
+					// Deploy registry first
+					log.info("Deploying registry first");
+					containers.remove(registryContainerName);
+					containers.add(0, registryContainerName);
+				}
+
 				// Compare hostnames
 				if(registryHost.name.equals(InetAddress.getLocalHost().getHostName())) {
 					// Exclude deployment containers from being redeployed from their own hosts, prevent bricking the system
@@ -220,6 +235,7 @@ public class FlotoService implements Closeable {
 
 			Set<String> deploymentContainerNames = Sets.newHashSet("registry", "floto");
 			int numberOfContainersDeployed = 0;
+
 			for (String containerName : containers) {
 				if(excludeDeploymentContainers && deploymentContainerNames.contains(containerName)) {
 					log.warn("Excluding container {} from deployment to prevent rendering system unusable", containerName);
@@ -240,14 +256,16 @@ public class FlotoService implements Closeable {
 				} catch (IOException e) {
 					Throwables.propagate(e);
 				}
+				Container container = this.findContainer(containerName, this.manifest);
+				// In bootstrap mode only deploy to registry host to upload images
+				boolean isBootStrapMode = false;
 				try (FileOutputStream buildLogStream = new FileOutputStream(getContainerBuildLogFile(containerName))) {
-					Container container = this.findContainer(containerName, this.manifest);
-					Host host = this.getImageRegistry() != null ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
 					Image image = this.findImage(container.image, this.manifest);
-					
-					
-	
-					if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
+					Host host = isBootStrapMode ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
+					if(containerName.equals(registryContainerName)) {
+						// Deploy registry always from root, always from public registry
+						this.redeployFromRootImage(host, container,  this.getRootImage(image.name), buildLogStream, false);
+					} else if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
 						String rootImage = useRegistry ? this.constructPrivateImageName(this.getRootImage(image.name)) : this.getRootImage(image.name);
 						this.redeployFromRootImage(host, container, rootImage, buildLogStream, useRegistry);
 					} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
@@ -262,6 +280,27 @@ public class FlotoService implements Closeable {
 					numberOfContainersDeployed++;
 				} catch (Throwable t) {
 					Throwables.propagate(t);
+				}
+				if(containerName.equals(registryContainerName)) {
+					// Registry container - deploy root images
+
+					// registry root image is already in docker at this point
+					String registryRootImage = this.getRootImage(container.image);
+					Host registryHost = this.findRegistryHost(this.manifest);
+					this.pushToRegistry(registryHost, registryRootImage, true, false, true);
+					log.info("Uploading root image {} to registry", registryRootImage);
+					// Also push the additional root-images
+					this.manifest.containers.stream().map(c -> this.getRootImage(c.image)).filter(ri -> !ri.equals(registryRootImage)).distinct()
+							.forEach(ri -> {
+								try {
+									log.info("Download root image {} to registry host", ri);
+									this.createImage(registryHost, ri);
+									log.info("Uploading root image {} to registry", ri);
+									this.pushToRegistry(registryHost, ri, true, false, false);
+								} catch (Throwable t) {
+									throw Throwables.propagate(t);
+								}
+							});
 				}
 			}
 			if(numberOfContainersDeployed == 0) {
