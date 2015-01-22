@@ -3,7 +3,7 @@
 
     <groupId>io.github.floto</groupId>
     <artifactId>floto</artifactId>
-    <version>1.5.1</version>
+    <version>1.5.2-SNAPSHOT</version>
 
     <description>DevOps orchestration for containers</description>
     <url>http://floto.github.io/</url>
