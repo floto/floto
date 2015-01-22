@@ -202,12 +202,17 @@ public class EsxHypervisorService implements HypervisorService {
                 try {
                     Task task = vm.powerOffVM_Task();
                     EsxUtils.waitForTask(task, "Power off " + vmname);
-                } catch(Throwable ignored) {
-                    if(!isVmRunning(vmname)) {
-                        // Something went wrong during poweroff (usually the machine is already off), but it is off now, so all is good
-                        return;
-                    }
-                    // Still not off, try harder or fail
+				} catch (Throwable throwable) {
+					log.warn("Machine failed to poweroff on first try: "+ throwable.getMessage());
+					// Maybe machine is off already?
+					Thread.sleep(1000);
+					if (!isVmRunning(vmname)) {
+						// Something went wrong during poweroff (usually the
+						// machine is already off), but it is off now, so all is
+						// good
+						return;
+					}
+					// Still not off, try harder or fail
                     Task task = vm.powerOffVM_Task();
                     EsxUtils.waitForTask(task, "Power off " + vmname);
                 }
