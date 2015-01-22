@@ -264,13 +264,12 @@ public class FlotoService implements Closeable {
 					Host host = isBootStrapMode ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
 					if(containerName.equals(registryContainerName)) {
 						// Deploy registry always from root, always from public registry
-						this.redeployFromRootImage(host, container,  this.getRootImage(image.name), buildLogStream, false);
+						this.redeployFromRootImage(host, container,  buildLogStream, false);
 					} else if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
-						String rootImage = useRegistry ? this.constructPrivateImageName(this.getRootImage(image.name)) : this.getRootImage(image.name);
-						this.redeployFromRootImage(host, container, rootImage, buildLogStream, useRegistry);
+						this.redeployFromRootImage(host, container, buildLogStream, useRegistry);
 					} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
 						String baseImageName = useRegistry ? this.constructPrivateImageName(this.createBaseImageName(image)) : this.createBaseImageName(image);
-						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, useRegistry);
+						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream);
 					} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
 						String finalImageName = useRegistry ? this.constructPrivateImageName(container.name) : container.name;
 						this.rebuildContainer(container, finalImageName, true);
@@ -311,7 +310,7 @@ public class FlotoService implements Closeable {
 	}
 
 	public TaskInfo<Void> redeployDeployerContainer(Host host, Container container, boolean usePrivateRootImage, boolean pushRootImage, boolean pushBaseImage,
-			boolean pushFinalImage, boolean createContainer, boolean deleteCreatedImages, boolean startContainer) {
+													boolean createContainer, boolean deleteCreatedImages, boolean startContainer) {
 
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		List<String> images2Delete = Lists.newArrayList();
@@ -333,12 +332,6 @@ public class FlotoService implements Closeable {
 			// Create Final image
 			this.createFinalImage(host, container, baseImageName, buildLogStream);
 			String finalImageName = container.name;
-			if (pushFinalImage) {
-				finalImageName = this.pushToRegistry(host, container.name, true, false, false);
-				if (deleteCreatedImages && !createContainer) {
-					images2Delete.add(finalImageName);
-				}
-			}
 
 			if (createContainer) {
 				this.rebuildContainer(container, finalImageName, startContainer);
@@ -347,7 +340,6 @@ public class FlotoService implements Closeable {
 			if (pushRootImage) {
 				this.pushToRegistry(host, this.getRootImage(container.image), true, false, true);
 				// Also push the additional root-images
-				//this.manifest.images.stream().map(i -> this.getRootImage(i)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
 				this.manifest.containers.stream().map(c -> this.getRootImage(c.image)).filter(ri -> !ri.equals(this.getRootImage(container.image))).collect(Collectors.toSet()).stream()
 						.forEach(ri -> {
 							try {
@@ -370,20 +362,17 @@ public class FlotoService implements Closeable {
 
 	}
 
-	private void redeployFromRootImage(Host host, Container container, String rootImage, FileOutputStream buildLogStream, boolean pushImage) throws Exception {
+	private void redeployFromRootImage(Host host, Container container, FileOutputStream buildLogStream, boolean pushImage) throws Exception {
 		String baseImageName = this.createBaseImage(host, container, pushImage, buildLogStream);
 		if (pushImage) {
 			baseImageName = this.pushToRegistry(host, baseImageName, true, false, false);
 		}
-		this.redeployFromBaseImage(host, container, baseImageName, buildLogStream, pushImage);
+		this.redeployFromBaseImage(host, container, baseImageName, buildLogStream);
 	}
 
-	private void redeployFromBaseImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream, boolean pushFinalImage) throws Exception {
+	private void redeployFromBaseImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream) throws Exception {
 		this.createFinalImage(host, container, baseImageName, buildLogStream);
 		String finalImageName = container.name;
-		if (pushFinalImage) {
-			finalImageName = this.pushToRegistry(host, container.name, true, false, false);
-		}
 		this.rebuildContainer(container, finalImageName, true);
 	}
 

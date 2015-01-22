@@ -1,7 +1,6 @@
 package io.github.floto.builder;
 
 import io.github.floto.core.FlotoService;
-import io.github.floto.core.FlotoService.DeploymentMode;
 import io.github.floto.core.jobs.ExportVmJob;
 import io.github.floto.core.jobs.RedeployVmJob;
 import io.github.floto.dsl.model.Container;
@@ -9,11 +8,8 @@ import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskService;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.joda.time.Duration;
@@ -85,13 +81,13 @@ public class DeployerBuilder {
             
             
             
-            flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, false, true, false, true);
-            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, true, false, false);
+            flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, true, false, true);
+            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, false, false);
 
             manifest.containers.stream().filter(c -> !Lists.newArrayList(registryContainer, flotoContainer).contains(c)).
         	forEach(c -> {
         		try {
-        			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, true, false, true, false);
+        			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, false, true, false);
         		}
         		catch(Exception ex) {
         			throw Throwables.propagate(ex);
