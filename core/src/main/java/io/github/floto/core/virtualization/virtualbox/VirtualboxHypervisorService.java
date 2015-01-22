@@ -6,9 +6,7 @@ import io.github.floto.core.virtualization.virtualbox.util.VBoxManageUtil;
 import io.github.floto.core.virtualization.workstation.ExternalProgram;
 import io.github.floto.dsl.model.VirtualboxHypervisorDescription;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,16 +15,13 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import jersey.repackaged.com.google.common.collect.Maps;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -34,7 +29,6 @@ import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.net.PercentEscaper;
 
