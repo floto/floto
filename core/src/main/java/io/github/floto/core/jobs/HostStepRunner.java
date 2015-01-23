@@ -1,20 +1,22 @@
 package io.github.floto.core.jobs;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Throwables;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.util.TemplateUtil;
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
-import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Throwables;
 
 public class HostStepRunner {
     private Logger log = LoggerFactory.getLogger(HostStepRunner.class);
@@ -74,6 +76,17 @@ public class HostStepRunner {
                         FileUtils.deleteQuietly(ipFile);
                     }
                     break;
+			case "SET_HOST_ONLY_IP":
+				String osName = System.getProperty("os.name");
+				if (osName.indexOf("Windows") != -1) {
+					String proxy = "http_proxy='"
+							+ flotoService.getHttpProxyUrl() + "' ";
+					hypervisorService.setHostOnlyIpVBoxWin(vmName, proxy);
+				} else {
+					log.info("This method is only for Windowsusers with virtualbox. Please use DHCP");
+				}
+
+				break;
                 default:
                     throw new IllegalArgumentException("No handler for step type " + step + "\n" + step);
             }
