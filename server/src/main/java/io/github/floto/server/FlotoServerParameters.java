@@ -5,8 +5,8 @@ import io.github.floto.core.FlotoCommonParameters;
 
 public class FlotoServerParameters extends FlotoCommonParameters {
     @Parameter(names = {"--dev", "--development-mode"}, description = "Development Mode")
-    boolean developmentMode = false;
+    public boolean developmentMode = false;
 
     @Parameter(names = "--port", description = "HTTP Port")
-    int port = 40004;
+    public int port = 40004;
 }

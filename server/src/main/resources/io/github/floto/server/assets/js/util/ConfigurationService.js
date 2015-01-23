@@ -1,22 +1,26 @@
 (function () {
 	"use strict";
-	var configurationFunction = function() {
-	};
+	var configurationFunctions = [];
 	window.floto = window.floto || {};
+
 	window.floto.configure = function configure(confFn) {
-		configurationFunction = confFn;
+		configurationFunctions.push(confFn);
 	};
 	var defaultConfiguration = {
 		canRedeploy: true,
-        defaultDeploymentMode: "fromBaseImage"
+        defaultDeploymentMode: "fromBaseImage",
+        armed: false
 	};
 	app.factory('configuration', function () {
-		configurationFunction(defaultConfiguration);
-		return defaultConfiguration;
+        configurationFunctions.forEach(function (configurationFunction) {
+            configurationFunction(defaultConfiguration)
+        });
+        return defaultConfiguration;
 	});
 
 	app.run(function($rootScope, $state, configuration) {
 		$rootScope.configuration = configuration;
+        $rootScope.armed = configuration.armed;
 
         // Initialize deployment modes
         $rootScope.configuration.deploymentModes = [
