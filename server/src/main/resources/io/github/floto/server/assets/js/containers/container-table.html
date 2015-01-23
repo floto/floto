@@ -10,21 +10,21 @@
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-success"
-                    ng-disabled="container.state.status == 'running'"
+                    ng-disabled="container.state.status == 'running' || !armed"
                     ng-click="startContainers({containers: [container.name]})">Start
             </button>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
-                    ng-disabled="container.state.status != 'running'"
+                    ng-disabled="container.state.status != 'running' || !armed"
                     ng-click="stopContainers({containers: [container.name]})">Stop
             </button>
         </td>
         <td>
-            <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
+            <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
                     ng-click="purgeContainerData({containers: [container.name]})">Purge data
             </button>
-            <button ng-if="container.unmanaged" type="button" class="btn btn-xs btn-danger"
+            <button ng-if="container.unmanaged" type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
                     ng-click="destroyUnmanagedContainer({containerName: container.name, hostName: container.state.hostName})">Destroy
             </button>
         </td>

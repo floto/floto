@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    app.directive("flotoRedeployButton", function (configuration) {
+    app.directive("flotoRedeployButton", function (configuration, $rootScope) {
         function linkRedeployButton(scope, element, attrs) {
             scope.what = attrs.what;
             scope.size = attrs.size;
@@ -11,6 +11,12 @@
             scope.execute = function execute(mode) {
                 scope.clickHandler({deploymentMode: mode});
             };
+            scope.$watch(function () {
+                return scope.$parent.armed;
+            }, function(armed) {
+                   scope.armed = armed;
+                }
+            );
         }
 
         return {

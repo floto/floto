@@ -11,10 +11,10 @@
                     </button>
                     <floto-redeploy-button what="all" on-click="redeployContainers({containers: containerNames, deploymentMode: deploymentMode})"></floto-redeploy-button>
                     <button type="button" class="btn btn-success"
-                            ng-click="startContainers({containers: containerNames})">Start all
+                            ng-click="startContainers({containers: containerNames})" ng-disabled="!armed">Start all
                     </button>
                     <button type="button" class="btn btn-danger"
-                            ng-click="stopContainers({containers: containerNames})">Stop all
+                            ng-click="stopContainers({containers: containerNames})" ng-disabled="!armed">Stop all
                     </button>
 
 
@@ -57,7 +57,7 @@
                                     <button type="button" class="btn btn-xs btn-success"
                                             ng-click="startContainers({containers: group.containerNames})">Start
                                     </button>
-                                    <button type="button" class="btn btn-xs btn-danger"
+                                    <button type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
                                             ng-click="stopContainers({containers: group.containerNames})">Stop
                                     </button>
                                 </div>

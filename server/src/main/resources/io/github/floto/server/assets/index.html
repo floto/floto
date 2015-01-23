@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/lib/bootstrap/css/bootstrap-theme.css"/>
     <link rel="stylesheet" href="/lib/pnotify/jquery.pnotify.default.css"/>
     <link rel="stylesheet" href="/lib/json-explorer/gd-ui-jsonexplorer.css"/>
+    <link rel="stylesheet" href="/lib/toggle/angular-toggle-switch-bootstrap-3.css"/>
 
     <link rel="stylesheet" href="/css/floto.css"/>
     <link rel="icon" sizes="16x16 32x32" href="/img/floto-icon.png">
@@ -35,6 +36,8 @@
     <script src="/lib/angular/angular-scroll-glue.js"></script>
 
     <script src="/lib/pnotify/jquery.pnotify.js"></script>
+
+    <script src="/lib/toggle/angular-toggle-switch.js"></script>
 
     <script src="/lib/moment/moment.js"></script>
     <script src="/lib/moment/angular-moment.js"></script>
@@ -89,6 +92,16 @@
                 </ul>
                 <form class="navbar-form navbar-left" role="search">
                     <button type="button" class="btn btn-primary btn-sm" ng-click="compileManifest()">Recompile</button>
+                    <span style="margin-left: 3em;">
+                        <toggle-switch
+                                class="switch-danger"
+                                model="armed"
+                                knob-label="Safety"
+                                on-label="Armed"
+                                off-label="Safe"
+                                >
+                        </toggle-switch>
+                    </span>
                 </form>
                 <span class="navbar-brand pull-right" href="#" style="text-align: center; padding: 5px 120px">
                     <span ng-style="{color: site.siteColor}">{{site.projectName || domainName}}<span ng-if="site.environment"> ({{site.environment}})</span></span><br>
