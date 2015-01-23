@@ -3,7 +3,7 @@
     <parent>
         <groupId>io.github.floto</groupId>
         <artifactId>floto</artifactId>
-        <version>1.5.1-SNAPSHOT</version>
+        <version>1.6.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>floto-core</artifactId>
