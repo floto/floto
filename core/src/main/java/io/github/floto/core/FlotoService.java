@@ -271,8 +271,7 @@ public class FlotoService implements Closeable {
 						String baseImageName = useRegistry ? this.constructPrivateImageName(this.createBaseImageName(image)) : this.createBaseImageName(image);
 						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream);
 					} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
-						String finalImageName = useRegistry ? this.constructPrivateImageName(container.name) : container.name;
-						this.rebuildContainer(container, finalImageName, true);
+						this.rebuildContainer(container, true);
 					} else {
 						throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
 					}
@@ -331,10 +330,9 @@ public class FlotoService implements Closeable {
 			}
 			// Create Final image
 			this.createFinalImage(host, container, baseImageName, buildLogStream);
-			String finalImageName = container.name;
 
 			if (createContainer) {
-				this.rebuildContainer(container, finalImageName, startContainer);
+				this.rebuildContainer(container, startContainer);
 			}
 
 			if (pushRootImage) {
@@ -372,18 +370,13 @@ public class FlotoService implements Closeable {
 
 	private void redeployFromBaseImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream) throws Exception {
 		this.createFinalImage(host, container, baseImageName, buildLogStream);
-		String finalImageName = container.name;
-		this.rebuildContainer(container, finalImageName, true);
+		this.rebuildContainer(container, true);
 	}
 
-	private void rebuildContainer(Container container, String finalImageName, boolean startContainer) throws Exception {
+	private void rebuildContainer(Container container, boolean startContainer) throws Exception {
 		Host executingHost = this.findHost(container.host, this.manifest);
-		if(!hostHasImage(finalImageName, executingHost)) {
-			this.createImage(executingHost, finalImageName);
-		}
-		
 		destroyContainer(container.name, executingHost);
-		createContainer(container, executingHost, finalImageName);
+		createContainer(container, executingHost, container.name);
 		if(startContainer) {
 			startContainer(container.name);
 		}
