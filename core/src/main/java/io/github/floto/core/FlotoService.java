@@ -460,6 +460,10 @@ public class FlotoService implements Closeable {
 		WebTarget dockerTarget = createDockerTarget(host).path("/containers/" + container.name + "/start");
 		Map<String, Object> startConfig = Maps.newHashMap();
 
+        // Set volume ownerships if necessary
+        setVolumeOwnership(image, container, host);
+
+
 		// Host mount directories
 		ArrayList<String> binds = new ArrayList<>();
 		for (Map.Entry<String, String> entry : getContainerVolumes(image, container).entrySet()) {
@@ -477,7 +481,26 @@ public class FlotoService implements Closeable {
 		response.close();
 	}
 
-	private Map<String, String> getContainerVolumes(Image image, Container container) {
+    private void setVolumeOwnership(Image image, Container container, Host host) {
+        ArrayList<JsonNode> steps = new ArrayList<>(image.buildSteps);
+        steps.addAll(container.configureSteps);
+        for (JsonNode step : steps) {
+            String type = step.path("type").asText();
+            if (type.equals("VOLUME")) {
+                String path = step.path("path").asText();
+                String name = step.path("name").asText();
+                JsonNode uidNode = step.path("options").path("uid");
+                System.err.println("Step: " + step);
+                if (!uidNode.isMissingNode()) {
+                    String uid = uidNode.asText();
+                    String hostPath = "/data/" + container.name + "/" + name;
+                    sshService.execute(getExternalHostIp(host), "sudo mkdir -p " + hostPath + " && sudo chown " + uid + " " + hostPath);
+                }
+            }
+        }
+    }
+
+    private Map<String, String> getContainerVolumes(Image image, Container container) {
 		HashMap<String, String> volumeMap = new HashMap<>();
 		ArrayList<JsonNode> steps = new ArrayList<>(image.buildSteps);
 		steps.addAll(container.configureSteps);
