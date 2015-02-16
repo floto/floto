@@ -75,11 +75,12 @@
 		});
 	};
 
-	global.volume = function volume(path, name) {
+	global.volume = function volume(path, name, options) {
 		currentSteps.push({
 			type: "VOLUME",
 			path: path,
-			name: name
+			name: name,
+			options: options
 		});
 	};
 
