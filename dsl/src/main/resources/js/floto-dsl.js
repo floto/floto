@@ -66,6 +66,13 @@
 			line: what
 		});
 	};
+	
+	global.user = function user(user) {
+		currentSteps.push({
+			type: "USER",
+			line: user 
+		});
+	};
 
 	global.cmd = function cmd(what) {
 		currentSteps.push({
