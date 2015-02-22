@@ -34,6 +34,12 @@ pre {
     width: 1em;
 }
 
+.log-output {
+	font-family: monospace, monospace;
+	font-size: 11px;
+	line-height: 140%;
+}
+
 .log-stdout {
 	white-space: nowrap;
 }

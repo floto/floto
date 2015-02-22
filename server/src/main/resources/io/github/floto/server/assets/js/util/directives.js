@@ -41,6 +41,11 @@
 					autoScrolltop = scrollElement.scrollTop;
 				}
 			}, 10, {maxWait: 10, leading: true});
+			scope.$watch("flotoAutoScroll", function(newValue) {
+				if(newValue) {
+					scope.flotoAutoScrollTrigger();
+				}
+			});
 			element.bind('scroll', function () {
 				if (autoScrolltop !== scrollElement.scrollTop) {
 					// Different from our set scrollTop, assume it was done by user and unset the autoscroll flag
