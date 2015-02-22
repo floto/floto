@@ -29,7 +29,7 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnOpen
     public void onWebSocketConnect(Session sess) {
-        log.info("WebSocket connect");
+        log.trace("WebSocket connect");
         this.session = sess;
         this.sessionId = sess.getId();
     }
@@ -41,7 +41,7 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnMessage
     public void onWebSocketText(String messageString) {
-        log.info("WebSocket message {}", messageString);
+        log.trace("WebSocket message {}", messageString);
         try {
             JsonNode message = objectMapper.reader().readTree(messageString);
             String messageType = message.findPath("type").asText();
@@ -64,6 +64,7 @@ public class WebSocket {
     }
 
     public void sendTextMessage(String textMessage) throws IOException{
+        log.trace("Send message {}", textMessage);
         if(!session.isOpen()) {
             throw new EOFException("WebSocket closed");
         }
@@ -77,6 +78,7 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnClose
     public void onWebSocketClose(CloseReason reason) {
+        log.trace("WebSocket close {}", reason);
         try {
             this.session.close();
         } catch (IOException e) {
@@ -92,6 +94,7 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnError
     public void onWebSocketError(Throwable cause) {
+        log.trace("WebSocket error", cause);
         try {
             this.session.close();
         } catch (IOException e) {

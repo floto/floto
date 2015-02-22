@@ -18,20 +18,8 @@ import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
-import java.io.Closeable;
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -1153,9 +1141,18 @@ public class FlotoService implements Closeable {
 
         WebTarget dockerTarget = createDockerTarget(host);
 
-        InputStream inputStream = dockerTarget.path("/containers/" + containerName + "/logs").queryParam("stdout", true).queryParam("stderr", true)
-                .queryParam("timestamps", true).queryParam("follow", 1).request().buildGet().invoke(InputStream.class);
-        return inputStream;
+
+        URI uri = dockerTarget.path("/containers/" + containerName + "/logs").queryParam("stdout", true).queryParam("stderr", true)
+                .queryParam("timestamps", true).queryParam("follow", 1).getUri();
+        try {
+            // Note: an URL connection is used to properly terminate the streaming connection once we are done with it.
+            // Since it may stream forever, there is no way within the HTTP(1) protocol to signal we are no longer interested.
+            // This is why  we need to issue a TCP RST,at least until we get HTTP2 support
+            URLConnection urlConnection = uri.toURL().openConnection();
+            return urlConnection.getInputStream();
+        } catch (IOException e) {
+            throw Throwables.propagate(e);
+        }
     }
 
 
