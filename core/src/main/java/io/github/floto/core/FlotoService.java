@@ -732,7 +732,13 @@ public class FlotoService implements Closeable {
 	}
 
 	private WebTarget createDockerTarget(Host host) {
-		return client.target("http://" + getExternalHostIp(host) + ":2375");
+        String url;
+        if(host.dockerUrl == null) {
+            url = "http://" + getExternalHostIp(host) + ":2375";
+        } else {
+            url = host.dockerUrl;
+        }
+        return client.target(url);
 	}
 
 	private WebTarget createRegistryTarget() {

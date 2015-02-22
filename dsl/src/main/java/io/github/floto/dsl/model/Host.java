@@ -10,6 +10,7 @@ public class Host {
 	public String ip;
 	public VmConfiguration vmConfiguration;
     public String exportName;
+    public String dockerUrl;
     public List<JsonNode> postDeploySteps = new ArrayList<>();
     public List<JsonNode> reconfigureSteps = new ArrayList<>();
 }

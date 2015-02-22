@@ -10,7 +10,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = WorkstationHypervisorDescription.class, name = "workstation"),
         @JsonSubTypes.Type(value = EsxHypervisorDescription.class, name = "esx"),
-        @JsonSubTypes.Type(value = VirtualboxHypervisorDescription.class, name = "virtualbox")
+        @JsonSubTypes.Type(value = VirtualboxHypervisorDescription.class, name = "virtualbox"),
+        @JsonSubTypes.Type(value = BareMetalHypervisorDescription.class, name = "bare-metal")
 })
 public abstract class HypervisorDescription {
 }
