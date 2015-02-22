@@ -33,3 +33,12 @@ pre {
     display: inline-block;
     width: 1em;
 }
+
+.log-stdout {
+	white-space: nowrap;
+}
+
+.log-stderr {
+	white-space: nowrap;
+	color: #c00;
+}

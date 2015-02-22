@@ -15,6 +15,9 @@ var app;
                 parent: "containers",
                 url: "/:containerName",
                 templateUrl: '/js/containers/container.html'
+			}).state('container.log', {
+				url: "/log",
+				templateUrl: '/js/containers/container-log.html'
             }).state('container.file', {
                 url: "/file/:file",
                 templateUrl: '/js/util/file.html'

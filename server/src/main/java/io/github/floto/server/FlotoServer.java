@@ -17,6 +17,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
 import io.github.floto.server.api.*;
+import io.github.floto.server.api.websocket.handler.SubscribeToContainerLogHandler;
 import io.github.floto.server.util.ThrowableExceptionMapper;
 import io.github.floto.server.api.websocket.WebSocket;
 import io.github.floto.server.api.websocket.WebSocketBroadcaster;
@@ -149,6 +150,7 @@ public class FlotoServer {
 		try {
             ServerContainer websocketContainer = createWebSocketEndpoint(context, (WebSocket webSocket) -> {
                 webSocket.addMessageHandler("subscribeToTaskLog", new SubscribeToTaskLogHandler(taskService));
+                webSocket.addMessageHandler("subscribeToContainerLog", new SubscribeToContainerLogHandler(flotoService));
             });
             WebSocketBroadcaster webSocketBroadcaster = new WebSocketBroadcaster(websocketContainer);
 

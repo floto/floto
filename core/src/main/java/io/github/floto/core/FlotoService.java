@@ -1146,7 +1146,21 @@ public class FlotoService implements Closeable {
 		}
 	}
 
-	public void getBuildLog(String containerName, OutputStream output) {
+    public InputStream getContainerLogStream(String containerName) {
+        Manifest manifest = this.manifest;
+        Container container = findContainer(containerName, manifest);
+        Host host = findHost(container.host, manifest);
+
+        WebTarget dockerTarget = createDockerTarget(host);
+
+        InputStream inputStream = dockerTarget.path("/containers/" + containerName + "/logs").queryParam("stdout", true).queryParam("stderr", true)
+                .queryParam("timestamps", true).queryParam("follow", 1).request().buildGet().invoke(InputStream.class);
+        return inputStream;
+    }
+
+
+
+    public void getBuildLog(String containerName, OutputStream output) {
 		try (FileInputStream input = new FileInputStream(getContainerBuildLogFile(containerName))) {
 			IOUtils.copy(input, output);
 		} catch (IOException e) {

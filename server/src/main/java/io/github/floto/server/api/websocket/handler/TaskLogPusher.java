@@ -1,4 +1,4 @@
-package io.github.floto.server.api.websocket;
+package io.github.floto.server.api.websocket.handler;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -9,13 +9,13 @@ import java.io.EOFException;
 import java.io.InputStream;
 import java.util.function.Consumer;
 
-public class LogPusher {
-    private final Logger log = LoggerFactory.getLogger(LogPusher.class);
+public class TaskLogPusher {
+    private final Logger log = LoggerFactory.getLogger(TaskLogPusher.class);
     private final InputStream inputStream;
     private final String streamId;
     private Consumer<String> callback;
 
-    public LogPusher(InputStream inputStream, String streamId, Consumer<String> callback) {
+    public TaskLogPusher(InputStream inputStream, String streamId, Consumer<String> callback) {
         this.inputStream = inputStream;
         this.streamId = streamId;
         this.callback = callback;
