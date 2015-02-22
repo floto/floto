@@ -1,5 +1,6 @@
 package io.github.floto.server.api.websocket.handler;
 
+import io.github.floto.server.api.websocket.WebSocket;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,12 +14,12 @@ public class TaskLogPusher {
     private final Logger log = LoggerFactory.getLogger(TaskLogPusher.class);
     private final InputStream inputStream;
     private final String streamId;
-    private Consumer<String> callback;
+    private WebSocket webSocket;
 
-    public TaskLogPusher(InputStream inputStream, String streamId, Consumer<String> callback) {
+    public TaskLogPusher(InputStream inputStream, String streamId, WebSocket webSocket) {
         this.inputStream = inputStream;
         this.streamId = streamId;
-        this.callback = callback;
+        this.webSocket = webSocket;
     }
 
     public void start() {
@@ -45,7 +46,7 @@ public class TaskLogPusher {
                         sb.append("\"entry\": ");
                         sb.append(new String(buffer, 0, length));
                         sb.append("}");
-                        callback.accept(sb.toString());
+                        webSocket.sendTextMessage(sb.toString());
                     }
                 } catch(EOFException ignored) {
                     // EOF reached, terminate

@@ -1,5 +1,6 @@
 package io.github.floto.server.api.websocket;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
@@ -22,11 +24,13 @@ public class WebSocket {
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private Map<String, MessageHandler> messageHandlers = new HashMap<>();
+    private String sessionId;
 
     @SuppressWarnings("UnusedDeclaration")
     @OnOpen
     public void onWebSocketConnect(Session sess) {
         this.session = sess;
+        this.sessionId = sess.getId();
     }
 
     public void addMessageHandler(String messageType, MessageHandler messageHandler) {
@@ -53,15 +57,14 @@ public class WebSocket {
         }
     }
 
-    private void sendMessage(Object message) {
-        try {
-            session.getAsyncRemote().sendText(objectMapper.writeValueAsString(message));
-        } catch (Throwable throwable) {
-            log.error("Unable to send message {}", message, throwable);
-        }
+    private void sendMessage(Object message) throws IOException {
+        sendTextMessage(objectMapper.writeValueAsString(message));
     }
 
-    public void sendTextMessage(String textMessage) {
+    public void sendTextMessage(String textMessage) throws IOException{
+        if(!session.isOpen()) {
+            throw new EOFException("WebSocket closed");
+        }
         try {
             session.getAsyncRemote().sendText(textMessage);
         } catch (Throwable throwable) {
@@ -87,5 +90,9 @@ public class WebSocket {
             return;
         }
         log.error("WebSocket error", cause);
+    }
+
+    public String getSessionId() {
+        return sessionId;
     }
 }

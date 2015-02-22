@@ -17,9 +17,7 @@ public class SubscribeToTaskLogHandler implements MessageHandler {
     public void handleMessage(JsonNode message, WebSocket webSocket) {
         String streamId = message.get("streamId").asText();
         String taskId = message.get("taskId").asText();
-        TaskLogPusher logPusher = new TaskLogPusher(taskService.getLogStream(taskId), streamId, (messageString) -> {
-            webSocket.sendTextMessage(messageString);
-        });
+        TaskLogPusher logPusher = new TaskLogPusher(taskService.getLogStream(taskId), streamId, webSocket);
         logPusher.start();
 
     }

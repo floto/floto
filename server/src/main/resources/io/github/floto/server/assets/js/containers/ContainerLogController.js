@@ -36,6 +36,13 @@
 			containerName: containerName
 		});
 
+		$scope.$on("$destroy", function() {
+			WebSocketService.sendMessage({
+				type: "unsubscribeFromContainerLog",
+				streamId: myStreamId
+			});
+		});
+
 
 
 	});

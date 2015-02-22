@@ -1,5 +1,6 @@
 package io.github.floto.server.api.websocket.handler;
 
+import io.github.floto.server.api.websocket.WebSocket;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
@@ -8,18 +9,18 @@ import org.slf4j.LoggerFactory;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.InputStream;
-import java.util.function.Consumer;
 
 public class ContainerLogPusher {
     private final Logger log = LoggerFactory.getLogger(ContainerLogPusher.class);
     private final InputStream inputStream;
     private final String streamId;
-    private Consumer<String> callback;
+    private WebSocket webSocket;
+    private volatile boolean running = true;
 
-    public ContainerLogPusher(InputStream inputStream, String streamId, Consumer<String> callback) {
+    public ContainerLogPusher(InputStream inputStream, String streamId, WebSocket webSocket) {
         this.inputStream = inputStream;
         this.streamId = streamId;
-        this.callback = callback;
+        this.webSocket = webSocket;
     }
 
     public void start() {
@@ -27,7 +28,7 @@ public class ContainerLogPusher {
             try(InputStream input = inputStream) {
                 byte[] buffer = new byte[4*1024];
                 DataInputStream dataInputStream = new DataInputStream(inputStream);
-                while (true) {
+                while (running) {
                     int flags = dataInputStream.readInt();
                     int size = dataInputStream.readInt();
                     String stream = "stdout";
@@ -45,14 +46,17 @@ public class ContainerLogPusher {
                     sb.append("{\"log\": \"").append(StringEscapeUtils.escapeJson(message)).append("\", ");
                     sb.append("\"stream\": \"").append(stream).append("\"}");
                     sb.append("]}");
-                    callback.accept(sb.toString());
+                    webSocket.sendTextMessage(sb.toString());
                 }
             } catch (EOFException expected) {
-
 
             } catch(Throwable throwable) {
                 log.error("Error pushing logs", throwable);
             }
         }, "ContainerLogPusher "+streamId).start();
+    }
+
+    public void stop() {
+        running = false;
     }
 }
