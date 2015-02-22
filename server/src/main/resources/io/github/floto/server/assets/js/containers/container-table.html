@@ -5,27 +5,27 @@
         </td>
         <td ng-if="configuration.canRedeploy">
             <div style="width: 6em">
-                <floto-redeploy-button ng-if="!container.unmanaged" size="xs" on-click="redeployContainers({containers: [container.name], deploymentMode: deploymentMode})"></floto-redeploy-button>
+                <floto-redeploy-button ng-if="!container.unmanaged" size="xs" on-click="redeployContainers({containers: [container.name], deploymentMode: deploymentMode});$event.stopPropagation();"></floto-redeploy-button>
             </div>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-success"
                     ng-disabled="container.state.status == 'running' || !armed"
-                    ng-click="startContainers({containers: [container.name]})">Start
+                    ng-click="startContainers({containers: [container.name]});$event.stopPropagation();">Start
             </button>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger"
                     ng-disabled="container.state.status != 'running' || !armed"
-                    ng-click="stopContainers({containers: [container.name]})">Stop
+                    ng-click="stopContainers({containers: [container.name]});$event.stopPropagation();">Stop
             </button>
         </td>
         <td>
             <button ng-if="!container.unmanaged" type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
-                    ng-click="purgeContainerData({containers: [container.name]})">Purge data
+                    ng-click="purgeContainerData({containers: [container.name]});$event.stopPropagation();">Purge data
             </button>
             <button ng-if="container.unmanaged" type="button" class="btn btn-xs btn-danger" ng-disabled="!armed"
-                    ng-click="destroyUnmanagedContainer({containerName: container.name, hostName: container.state.hostName})">Destroy
+                    ng-click="destroyUnmanagedContainer({containerName: container.name, hostName: container.state.hostName});$event.stopPropagation();">Destroy
             </button>
         </td>
         <td>

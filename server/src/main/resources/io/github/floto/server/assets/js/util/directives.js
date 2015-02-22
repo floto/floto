@@ -3,6 +3,7 @@
 
     app.directive("flotoRedeployButton", function (configuration, $rootScope) {
         function linkRedeployButton(scope, element, attrs) {
+			scope.open = false;
             scope.what = attrs.what;
             scope.size = attrs.size;
             scope.deploymentModes = configuration.deploymentModes;
