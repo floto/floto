@@ -30,11 +30,13 @@ public class TailingInputStream extends FilterInputStream {
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         int read = super.read(b, off, len);
-        if (read <= -1) {
-            if (!fileClosed) {
+        if (read <= 0) {
+            if (fileClosed) {
+                return -1;
+            } else {
+                sleep();
                 return 0;
             }
-            sleep();
         }
         return read;
     }
