@@ -29,6 +29,7 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnOpen
     public void onWebSocketConnect(Session sess) {
+        log.info("WebSocket connect");
         this.session = sess;
         this.sessionId = sess.getId();
     }
@@ -40,6 +41,7 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnMessage
     public void onWebSocketText(String messageString) {
+        log.info("WebSocket message {}", messageString);
         try {
             JsonNode message = objectMapper.reader().readTree(messageString);
             String messageType = message.findPath("type").asText();
@@ -75,6 +77,11 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnClose
     public void onWebSocketClose(CloseReason reason) {
+        try {
+            this.session.close();
+        } catch (IOException e) {
+            log.warn("Error closing session", e);
+        }
         CloseReason.CloseCode closeCode = reason.getCloseCode();
         if(closeCode.equals(CloseReason.CloseCodes.NORMAL_CLOSURE) || closeCode.equals(CloseReason.CloseCodes.GOING_AWAY)) {
             return;
@@ -85,6 +92,11 @@ public class WebSocket {
     @SuppressWarnings("UnusedDeclaration")
     @OnError
     public void onWebSocketError(Throwable cause) {
+        try {
+            this.session.close();
+        } catch (IOException e) {
+            log.warn("Error closing session", e);
+        }
         if(cause instanceof SocketTimeoutException) {
             // ignored
             return;

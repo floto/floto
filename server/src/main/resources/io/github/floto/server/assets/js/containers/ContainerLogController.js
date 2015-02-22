@@ -19,16 +19,13 @@
 		var containerName = $stateParams["containerName"];
 		$scope.containerName = containerName;
 		var $pre = $element.find("pre");
-		var scrollElement = $pre[0].parentNode;
 		var myStreamId = streamId++;
 		handlers[myStreamId] = function (data) {
 			data.messages.forEach(function (message) {
 				var className = "log-" + message.stream;
 				$pre.append("<div class='" + className + "'>" + message.log + "</div>");
 			});
-			if ($scope.autoScroll) {
-				scrollElement.scrollTop = scrollElement.scrollHeight;
-			}
+			$scope.scrollDown();
 		};
 		WebSocketService.sendMessage({
 			type: "subscribeToContainerLog",

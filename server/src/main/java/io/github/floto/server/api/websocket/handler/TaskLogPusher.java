@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.InputStream;
-import java.util.function.Consumer;
 
 public class TaskLogPusher {
     private final Logger log = LoggerFactory.getLogger(TaskLogPusher.class);

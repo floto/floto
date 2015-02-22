@@ -31,6 +31,38 @@
         };
     });
 
+	app.directive("flotoAutoScroll", function ($window) {
+		function linkAutoScroll(scope, element, attrs) {
+			var scrollElement = element[0];
+			var autoScrolltop = -1;
+			scope.flotoAutoScrollTrigger = _.debounce(function() {
+				if(scope.flotoAutoScroll) {
+					scrollElement.scrollTop = scrollElement.scrollHeight;
+					autoScrolltop = scrollElement.scrollTop;
+				}
+			}, 10, {maxWait: 10, leading: true});
+			element.bind('scroll', function () {
+				if (autoScrolltop !== scrollElement.scrollTop) {
+					// Different from our set scrollTop, assume it was done by user and unset the autoscroll flag
+					autoScrolltop = -1;
+					scope.flotoAutoScroll = false;
+					scope.$apply();
+				}
+			});
+
+		}
+
+		return {
+			restrict: 'A',
+			replace: false,
+			scope: {
+				flotoAutoScroll: "=",
+				flotoAutoScrollTrigger: "="
+			},
+			link: linkAutoScroll
+		};
+	});
+
     app.directive("flotoFillHeight", function ($window) {
         function linkFillHeight(scope, element, attrs) {
             var fillHeight = scope.fillHeight || 1.0;
@@ -52,6 +84,7 @@
 
         return {
             restrict: 'A',
+			replace: false,
             scope: {
                 fillHeight: "=flotoFillHeight"
             },
