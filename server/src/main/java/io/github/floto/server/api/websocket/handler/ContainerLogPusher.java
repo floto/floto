@@ -38,13 +38,28 @@ public class ContainerLogPusher {
                     // TODO: check size
                     IOUtils.readFully(inputStream, buffer, 0, size);
                     String message = new String(buffer, 0, size);
+
+                    int spaceIndex = message.indexOf(" ");
+                    // separate timestamp and actual message
+                    if(spaceIndex < 0) {
+                        log.error("Malformed log message: {}", message);
+                        break;
+                    }
+                    String timeStamp = message.substring(0, spaceIndex);
+                    // Currently (docker 1.5) the timestamps are sometimes surround with brackets []
+                    int startIndex = 0;
+                    if(timeStamp.startsWith("[")) {
+                        timeStamp = timeStamp.substring(1, timeStamp.length()-1);
+                    }
+                    String log = message.substring(spaceIndex+1);
                     StringBuilder sb = new StringBuilder();
                     sb.append("{\n");
                     sb.append("\"type\": \"containerLogMessages\",\n");
                     sb.append("\"streamId\": \"").append(streamId).append("\",\n");
                     sb.append("\"messages\": [\n");
-                    sb.append("{\"log\": \"").append(StringEscapeUtils.escapeJson(message)).append("\", ");
-                    sb.append("\"stream\": \"").append(stream).append("\"}");
+                    sb.append("{\"log\": \"").append(StringEscapeUtils.escapeJson(log)).append("\", ");
+                    sb.append("\"stream\": \"").append(stream).append("\", ");
+                    sb.append("\"time\": \"").append(timeStamp).append("\"}");
                     sb.append("]}");
                     webSocket.sendTextMessage(sb.toString());
                 }

@@ -23,7 +23,8 @@
 		handlers[myStreamId] = function (data) {
 			data.messages.forEach(function (message) {
 				var className = "log-" + message.stream;
-				$pre.append("<div class='" + className + "'>" + message.log + "</div>");
+				var timestamp = message.time.substr(0, 10) + " " + message.time.substr(11, 8);
+				$pre.append("<div class='" + className + "'>" + timestamp + "Z "+ message.log + "</div>");
 			});
 			$scope.scrollDown();
 		};
