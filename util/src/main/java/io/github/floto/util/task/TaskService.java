@@ -25,6 +25,8 @@ public class TaskService {
     private Map<String, TaskInfo<?>> threadTaskMap = new HashMap<>();
     private TaskPersistence taskPersistence;
 
+    private List<BiConsumer<TaskInfo, Throwable>> taskCompletionListeners = new ArrayList<>();
+
     public TaskService() {
         initLogging();
         taskPersistence = new TaskPersistence();
@@ -65,6 +67,14 @@ public class TaskService {
         activeTaskMap.put(taskInfo.getId(), taskInfo);
         taskPersistence.save(taskInfo);
         executor.execute(new TaskRunnable(this, taskInfo, taskCallable));
+        taskInfo.getCompletionStage().whenComplete(new BiConsumer<RESULT_TYPE, Throwable>() {
+            @Override
+            public void accept(RESULT_TYPE result_type, Throwable throwable) {
+                for(BiConsumer<TaskInfo, Throwable> taskCompletionListener: taskCompletionListeners) {
+                    taskCompletionListener.accept(taskInfo, throwable);
+                }
+            }
+        });
         return taskInfo;
     }
 
@@ -111,5 +121,9 @@ public class TaskService {
             inputStream = tailingInputStream;
         }
         return inputStream;
+    }
+
+    public void addTaskCompletionListener(BiConsumer<TaskInfo, Throwable> taskCompletionListener) {
+        taskCompletionListeners.add(taskCompletionListener);
     }
 }

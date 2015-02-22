@@ -1,6 +1,5 @@
-package io.github.floto.server.websocket;
+package io.github.floto.server.api.websocket;
 
-import io.github.floto.util.task.TaskService;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +41,7 @@ public class LogPusher {
                         StringBuilder sb = new StringBuilder();
                         sb.append("{\n");
                         sb.append("\"streamId\": \"").append(streamId).append("\",\n");
-                        sb.append("\"type\": \"logEntry\",\n");
+                        sb.append("\"type\": \"taskLogEntry\",\n");
                         sb.append("\"entry\": ");
                         sb.append(new String(buffer, 0, length));
                         sb.append("}");

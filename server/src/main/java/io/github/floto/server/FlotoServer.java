@@ -18,7 +18,9 @@ import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
 import io.github.floto.server.api.*;
 import io.github.floto.server.util.ThrowableExceptionMapper;
-import io.github.floto.server.websocket.TasksWebSocket;
+import io.github.floto.server.api.websocket.WebSocket;
+import io.github.floto.server.api.websocket.WebSocketBroadcaster;
+import io.github.floto.server.api.websocket.handler.SubscribeToTaskLogHandler;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
@@ -41,6 +43,10 @@ import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerEndpoint;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class FlotoServer {
 	private Logger log = LoggerFactory.getLogger(FlotoServer.class);
@@ -141,8 +147,27 @@ public class FlotoServer {
 
 		context.addServlet(new ServletHolder(servletContainer), "/api/*");
 		try {
-            registerWebsockets(context, taskService);
-			server.start();
+            ServerContainer websocketContainer = createWebSocketEndpoint(context, (WebSocket webSocket) -> {
+                webSocket.addMessageHandler("subscribeToTaskLog", new SubscribeToTaskLogHandler(taskService));
+            });
+            WebSocketBroadcaster webSocketBroadcaster = new WebSocketBroadcaster(websocketContainer);
+
+            taskService.addTaskCompletionListener(new BiConsumer<TaskInfo, Throwable>() {
+                @Override
+                public void accept(TaskInfo taskInfo, Throwable throwable) {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("type", "taskComplete");
+                    result.put("taskId", taskInfo.getId());
+                    result.put("taskTitle", taskInfo.getTitle());
+                    result.put("status", throwable == null ? "success" : "error");
+                    if (throwable != null) {
+                        result.put("errorMessage", throwable.getMessage());
+                    }
+                    webSocketBroadcaster.sendMessage(result);
+                }
+            });
+
+            server.start();
 			log.info("Floto Server started on port {}", parameters.port);
             if(parameters.developmentMode) {
                 log.info("Open your browser to http://localhost:{}/", parameters.port);
@@ -154,22 +179,24 @@ public class FlotoServer {
 		}
 	}
 
-    private void registerWebsockets(ServletContextHandler context, final TaskService taskService) throws DeploymentException {
+    private ServerContainer createWebSocketEndpoint(ServletContextHandler context, Consumer<WebSocket> webSocketMessageHandlerAdder) throws DeploymentException {
         ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(context);
         // Add WebSocket endpoint to javax.websocket layer
-//            wscontainer.addEndpoint(EventSocket.class);
-        ServerEndpoint anno = TasksWebSocket.class.getAnnotation(ServerEndpoint.class);
-        wscontainer.addEndpoint(new AnnotatedServerEndpointConfig(TasksWebSocket.class, anno) {
+        ServerEndpoint anno = WebSocket.class.getAnnotation(ServerEndpoint.class);
+        wscontainer.addEndpoint(new AnnotatedServerEndpointConfig(WebSocket.class, anno) {
             @Override
             public Configurator getConfigurator() {
                 return new BasicServerEndpointConfigurator() {
                     @Override
                     public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
-                        return (T) new TasksWebSocket(taskService);
+                        WebSocket webSocket = new WebSocket();
+                        webSocketMessageHandlerAdder.accept(webSocket);
+                        return (T) webSocket;
                     }
                 };
             }
         });
+        return wscontainer;
     }
 
     private static class TaskInfoSerializer extends StdSerializer<TaskInfo<?>> {
