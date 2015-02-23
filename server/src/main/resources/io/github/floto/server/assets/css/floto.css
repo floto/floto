@@ -41,10 +41,10 @@ pre {
 }
 
 .log-stdout {
-	white-space: nowrap;
+	white-space: pre;
 }
 
 .log-stderr {
-	white-space: nowrap;
+	white-space: pre;
 	color: #c00;
 }
