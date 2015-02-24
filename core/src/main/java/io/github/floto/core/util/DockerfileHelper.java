@@ -20,7 +20,7 @@ public class DockerfileHelper {
         for (JsonNode step : buildSteps) {
             String type = step.path("type").asText();
             String line = step.path("line").asText();
-            if ("ADD_TEMPLATE".equals(type)) {
+            if ("ADD_TEMPLATE".equals(type) || "ADD_FILE".equals(type)) {
                 type = "ADD";
                 String destination = step.path("destination").asText();
                 String source = destination;

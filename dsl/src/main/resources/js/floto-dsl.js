@@ -111,6 +111,14 @@
 			config: config
 		});
 	};
+	
+	global.addFile = function addFile(file, destination) {
+		currentSteps.push({
+			type: "ADD_FILE",
+			file: file,
+			destination: destination,
+		});
+	};
 
 	global.addMaven = function addMaven(coordinates, destination) {
 		currentSteps.push({

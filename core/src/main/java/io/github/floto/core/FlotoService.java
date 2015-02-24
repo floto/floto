@@ -559,6 +559,17 @@ public class FlotoService implements Closeable {
 							out.putNextEntry(templateTarEntry);
 							IOUtils.write(templateBytes, out);
 							out.closeEntry();
+						}else if ("ADD_FILE".equals(type)) {
+							String destination = step.path("destination").asText();
+							String source = destination;
+							if (source.startsWith("/")) {
+								source = source.substring(1);
+							}
+							File file = new File(step.path("file").asText());
+							TarEntry fileTarEntry = new TarEntry(file, source);
+							out.putNextEntry(fileTarEntry);
+							FileUtils.copyFile(file, out);
+							out.closeEntry();
 						} else if ("ADD_MAVEN".equals(type)) {
 							String coordinates = step.path("coordinates").asText();
 							String destination = step.path("destination").asText();
