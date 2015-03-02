@@ -1,5 +1,6 @@
 package io.github.floto.server.api.websocket.handler;
 
+import com.google.common.base.Throwables;
 import io.github.floto.server.api.websocket.WebSocket;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -81,16 +82,25 @@ public class ContainerLogPusher {
     }
 
     private void flush() throws IOException {
-        if(sb.substring(sb.length()-1).equals(",")) {
+        int length = sb.length();
+        if(sb.substring(length -1).equals(",")) {
             sb.deleteCharAt(sb.length()-1);
         }
         sb.append("]}");
         webSocket.sendTextMessage(sb.toString());
         initStringBuilder();
+        if(length < 10000) {
+            // Only send a small portion last time, sleep a little to let stream catch up
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Throwables.propagate(e);
+            }
+        }
     }
 
     private void initStringBuilder() {
-        sb = new StringBuilder();
+        sb = new StringBuilder(1024*1024+10*1024);
         sb.append("{\n");
         sb.append("\"type\": \"containerLogMessages\",\n");
         sb.append("\"streamId\": \"").append(streamId).append("\",\n");

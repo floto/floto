@@ -1,8 +1,6 @@
 (function () {
 	"use strict";
 
-	var streamId = 0;
-
 	var handlers = {};
 
 	app.run(function (WebSocketService) {
@@ -21,7 +19,7 @@
 		$scope.containerName = containerName;
 		var timestampElement = $element.find(".log-timestamps");
 		var messageElement = $element.find(".log-messages");
-		var myStreamId = streamId++;
+		var myStreamId = +(new Date()) + "-" + Math.random();
 		handlers[myStreamId] = function (data) {
 			data.messages.forEach(function (message) {
 				var className = "log-" + message.stream;
