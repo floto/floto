@@ -18,6 +18,7 @@
 			name: containerName
 		};
 		$scope.fileTargets = [
+			{name: "Logfile", file: "log"},
 			{name: "Buildlog", file: "buildlog"},
 			{name: "Image", file: "dockerfile%2Fimage"},
 			{name: "Container", file: "dockerfile%2Fcontainer"}

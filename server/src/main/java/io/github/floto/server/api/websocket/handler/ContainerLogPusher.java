@@ -34,13 +34,11 @@ public class ContainerLogPusher {
                 DataInputStream dataInputStream = new DataInputStream(inputStream);
                 while (running) {
                     if(dataInputStream.available() < 8) {
+                        // No more bytes to read, probably going into tail mode, send what we've got buffered now
                         flush();
                     }
                     int flags = dataInputStream.readInt();
                     int size = dataInputStream.readInt();
-                    if(dataInputStream.available() < size) {
-                        flush();
-                    }
                     String stream = "stdout";
                     if((flags & 0x2000000) != 0) {
                         stream = "stderr";
@@ -69,7 +67,8 @@ public class ContainerLogPusher {
                     sb.append("\"stream\": \"").append(stream).append("\", ");
                     sb.append("\"time\": \"").append(timeStamp).append("\"}");
                     sb.append(",");
-                    if(sb.length() > 1024*1024) {
+                    if(sb.length() > 16*1024) {
+                        // Maximum size, flush
                         flush();
                     }
                 }
@@ -89,18 +88,10 @@ public class ContainerLogPusher {
         sb.append("]}");
         webSocket.sendTextMessage(sb.toString());
         initStringBuilder();
-        if(length < 10000) {
-            // Only send a small portion last time, sleep a little to let stream catch up
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Throwables.propagate(e);
-            }
-        }
     }
 
     private void initStringBuilder() {
-        sb = new StringBuilder(1024*1024+10*1024);
+        sb = new StringBuilder();
         sb.append("{\n");
         sb.append("\"type\": \"containerLogMessages\",\n");
         sb.append("\"streamId\": \"").append(streamId).append("\",\n");

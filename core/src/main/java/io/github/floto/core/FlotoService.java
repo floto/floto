@@ -1127,7 +1127,7 @@ public class FlotoService implements Closeable {
 		WebTarget dockerTarget = createDockerTarget(host);
 
 		try (InputStream inputStream = dockerTarget.path("/containers/" + containerName + "/logs").queryParam("stdout", true).queryParam("stderr", true)
-				.queryParam("timestamps", false).request().buildGet().invoke(InputStream.class)) {
+				.queryParam("timestamps", true).request().buildGet().invoke(InputStream.class)) {
 			DataInputStream dataInputStream = new DataInputStream(inputStream);
 			while (true) {
 				int flags = dataInputStream.readInt();
@@ -1154,7 +1154,7 @@ public class FlotoService implements Closeable {
 
 
         URI uri = dockerTarget.path("/containers/" + containerName + "/logs").queryParam("stdout", true).queryParam("stderr", true)
-                .queryParam("timestamps", true).queryParam("follow", 1).getUri();
+                .queryParam("timestamps", true).queryParam("follow", 1).queryParam("tail", 1000).getUri();
         try {
             // Note: an URL connection is used to properly terminate the streaming connection once we are done with it.
             // Since it may stream forever, there is no way within the HTTP(1) protocol to signal we are no longer interested.
