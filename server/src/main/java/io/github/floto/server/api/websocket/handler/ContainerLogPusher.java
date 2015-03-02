@@ -8,12 +8,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.DataInputStream;
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class ContainerLogPusher {
     private final Logger log = LoggerFactory.getLogger(ContainerLogPusher.class);
     private final InputStream inputStream;
     private final String streamId;
+    private StringBuilder sb;
     private WebSocket webSocket;
     private volatile boolean running = true;
 
@@ -26,11 +28,18 @@ public class ContainerLogPusher {
     public void start() {
         new Thread(() -> {
             try(InputStream input = inputStream) {
+                initStringBuilder();
                 byte[] buffer = new byte[4*1024];
                 DataInputStream dataInputStream = new DataInputStream(inputStream);
                 while (running) {
+                    if(dataInputStream.available() < 8) {
+                        flush();
+                    }
                     int flags = dataInputStream.readInt();
                     int size = dataInputStream.readInt();
+                    if(dataInputStream.available() < size) {
+                        flush();
+                    }
                     String stream = "stdout";
                     if((flags & 0x2000000) != 0) {
                         stream = "stderr";
@@ -55,16 +64,13 @@ public class ContainerLogPusher {
                         timeStamp = timeStamp.substring(1, timeStamp.length()-1);
                     }
                     String log = message.substring(spaceIndex+1);
-                    StringBuilder sb = new StringBuilder();
-                    sb.append("{\n");
-                    sb.append("\"type\": \"containerLogMessages\",\n");
-                    sb.append("\"streamId\": \"").append(streamId).append("\",\n");
-                    sb.append("\"messages\": [\n");
                     sb.append("{\"log\": \"").append(StringEscapeUtils.escapeJson(log)).append("\", ");
                     sb.append("\"stream\": \"").append(stream).append("\", ");
                     sb.append("\"time\": \"").append(timeStamp).append("\"}");
-                    sb.append("]}");
-                    webSocket.sendTextMessage(sb.toString());
+                    sb.append(",");
+                    if(sb.length() > 1024*1024) {
+                        flush();
+                    }
                 }
             } catch (EOFException expected) {
 
@@ -72,6 +78,23 @@ public class ContainerLogPusher {
                 log.error("Error pushing logs", throwable);
             }
         }, "ContainerLogPusher "+streamId).start();
+    }
+
+    private void flush() throws IOException {
+        if(sb.substring(sb.length()-1).equals(",")) {
+            sb.deleteCharAt(sb.length()-1);
+        }
+        sb.append("]}");
+        webSocket.sendTextMessage(sb.toString());
+        initStringBuilder();
+    }
+
+    private void initStringBuilder() {
+        sb = new StringBuilder();
+        sb.append("{\n");
+        sb.append("\"type\": \"containerLogMessages\",\n");
+        sb.append("\"streamId\": \"").append(streamId).append("\",\n");
+        sb.append("\"messages\": [\n");
     }
 
     public void stop() {
