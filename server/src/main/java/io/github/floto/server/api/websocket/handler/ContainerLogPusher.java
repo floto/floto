@@ -35,7 +35,10 @@ public class ContainerLogPusher {
                     if((flags & 0x2000000) != 0) {
                         stream = "stderr";
                     }
-                    // TODO: check size
+                    if(size > buffer.length) {
+                        // Resize buffer
+                        buffer = new byte[size];
+                    }
                     IOUtils.readFully(inputStream, buffer, 0, size);
                     String message = new String(buffer, 0, size);
 
