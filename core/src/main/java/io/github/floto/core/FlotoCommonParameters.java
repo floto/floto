@@ -14,4 +14,8 @@ public class FlotoCommonParameters {
 
     @Parameter(names = "--proxy-url", description = "Set custom HTTP-proxy address")
     public String proxyUrl;
+
+    @Parameter(names = "--proxy-prefix", description = "When several IP addresses are available for proxying, choose the one with the given prefix")
+    public String proxyPrefix;
+
 }

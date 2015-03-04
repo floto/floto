@@ -150,13 +150,24 @@ public class FlotoService implements Closeable {
 										return -o1.getHostAddress().compareTo(o2.getHostAddress());
 									}
 								});
-								for(InetAddress address: addresses) {
-									if (address instanceof Inet4Address) {
-										ownAddress = address.getHostAddress();
-										break;
-									}
-								}
-							}
+                                if(commonParameters.proxyPrefix != null) {
+                                    // Use first address with prefix
+                                    for(InetAddress address: addresses) {
+                                        if(address.getHostAddress().startsWith(commonParameters.proxyPrefix)) {
+                                            ownAddress = address.getHostAddress();
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    // Use first ipv4 address
+                                    for (InetAddress address : addresses) {
+                                        if (address instanceof Inet4Address) {
+                                            ownAddress = address.getHostAddress();
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
 						}
 					}
 				}
