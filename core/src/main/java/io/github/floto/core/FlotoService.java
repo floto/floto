@@ -1,5 +1,6 @@
 package io.github.floto.core;
 
+import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.google.common.collect.Sets;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
@@ -192,16 +193,6 @@ public class FlotoService implements Closeable {
             boolean useRegistry = imageRegistry != null;
             if (useRegistry) {
                 log.info("Will use image-registry=" + imageRegistry);
-                // manipulate FROM instructions to point to registry images
-                manifest.images.forEach(new Consumer<Image>() {
-                    @Override
-                    public void accept(Image image) {
-                        if (!DEPLOYMENT_CONTAINER_NAMES.contains(image.name)) {
-                            String originalRootImageName = getRootImage(image);
-                            setRootImage(image, constructPrivateImageName(originalRootImageName));
-                        }
-                    }
-                });
             } else {
                 log.info("Will run without image-registry");
             }
@@ -397,6 +388,15 @@ public class FlotoService implements Closeable {
 		Image image = findImage(container.image, this.manifest);
         log.info("Will use root-image={}", this.getRootImage(image));
         String baseImageName = this.createBaseImageName(image);
+        List<JsonNode> imageSteps = new ArrayList<>(image.buildSteps);
+        if(getImageRegistry() != null && !DEPLOYMENT_CONTAINER_NAMES.contains(container.image)) {
+            // Use registry image
+            ObjectNode originalFromBuildStep = (ObjectNode) imageSteps.get(0);
+            String originalFromImage = originalFromBuildStep.get("line").asText();
+            String registryFromImage = constructPrivateImageName(originalFromImage);
+            ObjectNode fromBuildStep = JsonNodeFactory.instance.objectNode().put("type", "FROM").put("line", registryFromImage);
+            imageSteps.set(0, fromBuildStep);
+        }
         this.buildImage(baseImageName, image.buildSteps, host, this.manifest, Collections.emptyMap(), buildLogStream);
         return baseImageName;
 	}
