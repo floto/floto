@@ -33,6 +33,7 @@ public class TaskInfo<RESULT_TYPE> implements Serializable {
     private Instant startDate;
     private Instant endDate;
     private Duration duration;
+    private Long durationInMs;
     private List<LogEntry> logEntries = new ArrayList<>();
     private Status status = Status.QUEUED;
 
@@ -96,6 +97,7 @@ public class TaskInfo<RESULT_TYPE> implements Serializable {
     protected void setEndDate(Instant endDate) {
         this.endDate = endDate;
         this.duration = Duration.between(startDate, endDate);
+        this.durationInMs = this.duration.toMillis();
     }
 
     @JsonIgnore
@@ -119,5 +121,9 @@ public class TaskInfo<RESULT_TYPE> implements Serializable {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public Long getDurationInMs() {
+        return durationInMs;
     }
 }
