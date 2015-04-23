@@ -179,7 +179,7 @@ public class EsxHypervisorService implements HypervisorService {
             return;
         }
         try {
-            int SHUTDOWN_GRACE_PERIOD = 20;
+            int SHUTDOWN_GRACE_PERIOD = 60;
             VirtualMachine vm = vmManager.getVm(vmname);
 
             if (vm != null) {
@@ -212,9 +212,18 @@ public class EsxHypervisorService implements HypervisorService {
 						// good
 						return;
 					}
-					// Still not off, try harder or fail
-                    Task task = vm.powerOffVM_Task();
-                    EsxUtils.waitForTask(task, "Power off " + vmname);
+					// Still not off, try harder
+                    try {
+                        Task task = vm.powerOffVM_Task();
+                        EsxUtils.waitForTask(task, "Power off " + vmname);
+                    } catch (InvalidPowerState invalidPowerState) {
+                        log.warn("Machine failed to poweroff on second try: "+ invalidPowerState.getMessage());
+                        // ESX seems to be really inconsistent here, this code is usually reached when ESX won't power
+                        // off the machine, because it already _is_ off, while the PowerState queried by isVmRunning
+                        // insists it is ON.
+                        // We assume (i.e. hope) that the machine is off (one way or another) and we can proceed.
+                        // If that assumption is wrong, the next step should fail anyway if the machine is still running
+                    }
                 }
             }
 
