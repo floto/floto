@@ -84,6 +84,8 @@ public class FlotoServer {
 			// Load assets from src directory during development, do not require recompilation
 			resourceBase = "src/main/resources/io/github/floto/server/assets";
 		}
+
+		context.setInitParameter("org.eclipse.jetty.servlet.Default.cacheControl", "no-cache, no-store, must-revalidate");
 		context.setResourceBase(resourceBase);
 		context.setContextPath("/");
 		server.setHandler(context);
