@@ -7,7 +7,8 @@
 		$rootScope.$on("$stateChangeStart", function(event, toState, toParams, fromState, fromParams) {
 			if(fromState.name === "container.file") {
 				lastFile = fromParams.file;
-
+			} else if(fromState.name === "container.log") {
+				lastFile = "logtail";
 			}
 		});
 	});
@@ -24,6 +25,9 @@
 			{name: "Container", file: "dockerfile%2Fcontainer"}
 		];
 
+		if(lastFile === "logtail") {
+			$state.go("container.log");
+		}
 		FlotoService.getContainerTemplates(containerName).then(function (templates) {
 			templates.forEach(function (template) {
 				$scope.fileTargets.push({
