@@ -925,7 +925,7 @@ public class FlotoService implements Closeable {
 	private void tagImage(Host host, String imageName, String privateName, String tag) {
 		WebTarget dockerTarget = createDockerTarget(host);
 		try {
-			Response response = dockerTarget.path("/images/" + imageName + "/tag").queryParam("repo", privateName).queryParam("tag", tag).queryParam("force", "0").request()
+			Response response = dockerTarget.path("/images/" + imageName + "/tag").queryParam("repo", privateName).queryParam("tag", tag).queryParam("force", "true").request()
 					.post(Entity.text(""));
 			response.close();
 		} catch (Throwable t) {
@@ -936,7 +936,7 @@ public class FlotoService implements Closeable {
 	private void pushImage(Host host, String imageName, String privateName, String tag) {
 		WebTarget dockerTarget = createDockerTarget(host);
 		try {
-			Response response = dockerTarget.path("/images/" + privateName + "/push").queryParam("tag", tag).request().header("X-Registry-Auth", "aaa").post(Entity.text(""));
+			Response response = dockerTarget.path("/images/" + privateName + "/push").queryParam("tag", tag).queryParam("force", "true").request().header("X-Registry-Auth", "aaa").post(Entity.text(""));
 			response.close();
 		} catch (Throwable t) {
 			Throwables.propagate(t);
