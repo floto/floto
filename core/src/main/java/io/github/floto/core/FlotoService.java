@@ -87,7 +87,7 @@ public class FlotoService implements Closeable {
 
 	private Map<String, String> externalHostIpMap = new HashMap<>();
     Set<String> DEPLOYMENT_CONTAINER_NAMES = Sets.newHashSet("registry", "floto");
-
+	private boolean ignoreRegistry = false;
 
 //	private ImageRegistry imageRegistry;
 
@@ -213,7 +213,7 @@ public class FlotoService implements Closeable {
 		return taskService.startTask("Redeploy containers "	+ Joiner.on(", ").join(requestedContainers) + " in mode '" + deploymentMode + "'", () -> {
 			boolean excludeDeploymentContainers = false;
 			String registryContainerName = null;
-			if(this.getImageRegistry() != null) {
+			if(useImageRegistry()) {
 				Host registryHost = this.findRegistryHost(this.manifest);
 
 				// Check that registry is running, if we are going to use it
@@ -245,7 +245,7 @@ public class FlotoService implements Closeable {
 				}
 
 				log.info("Will deploy container='{}'", containerName);
-				boolean useRegistry = this.getImageRegistry() != null;
+				boolean useRegistry = useImageRegistry();
 				if(DEPLOYMENT_CONTAINER_NAMES.contains(containerName)) {
 					// Deployment container - Do not use registry
 					useRegistry = false;
@@ -308,6 +308,10 @@ public class FlotoService implements Closeable {
 			}
 			return null;
 		});
+	}
+
+	private boolean useImageRegistry() {
+		return this.getImageRegistry() != null && !ignoreRegistry;
 	}
 
 	public TaskInfo<Void> redeployDeployerContainer(Host host, Container container, boolean usePrivateRootImage, boolean pushRootImage, boolean pushBaseImage,
@@ -389,7 +393,7 @@ public class FlotoService implements Closeable {
         log.info("Will use root-image={}", this.getRootImage(image));
         String baseImageName = this.createBaseImageName(image);
         List<JsonNode> imageSteps = new ArrayList<>(image.buildSteps);
-        if(getImageRegistry() != null && !DEPLOYMENT_CONTAINER_NAMES.contains(container.image)) {
+        if(useImageRegistry() && !DEPLOYMENT_CONTAINER_NAMES.contains(container.image)) {
             // Use registry image
             ObjectNode originalFromBuildStep = (ObjectNode) imageSteps.get(0);
             String originalFromImage = originalFromBuildStep.get("line").asText();
@@ -571,7 +575,7 @@ public class FlotoService implements Closeable {
 							out.putNextEntry(templateTarEntry);
 							IOUtils.write(templateBytes, out);
 							out.closeEntry();
-						}else if ("ADD_FILE".equals(type)) {
+						} else if ("ADD_FILE".equals(type)) {
 							String destination = step.path("destination").asText();
 							String source = destination;
 							if (source.startsWith("/")) {
@@ -838,7 +842,7 @@ public class FlotoService implements Closeable {
 	}
 
 	String getRegistryName() {
-		return this.getImageRegistry() != null ? this.getImageRegistry().getIp() + ":" + this.getImageRegistry().getPort() : null;
+		return useImageRegistry() ? this.getImageRegistry().getIp() + ":" + this.getImageRegistry().getPort() : null;
 	}
 
 	private Container findRegistryContainer(Manifest manifest) {
@@ -1359,7 +1363,7 @@ public class FlotoService implements Closeable {
 
 	public URL getTemplateUrl(Host host) throws Exception {
 		URL url = new URL(host.vmConfiguration.ovaUrl);
-		if(this.getImageRegistry() != null) {
+		if(useImageRegistry()) {
 			Host registryHost = this.findRegistryHost(this.manifest);
             if(registryHost.name.equals(InetAddress.getLocalHost().getHostName())) {
                 // Running on registry host, deploy templates locally
@@ -1368,4 +1372,15 @@ public class FlotoService implements Closeable {
 		}
 		return url;
 	}
+
+	public void setIgnoreRegistry(boolean ignoreRegistry) {
+		this.ignoreRegistry = ignoreRegistry;
+	}
+
+	public boolean isIgnoreRegistry() {
+		return ignoreRegistry;
+	}
+
+
+
 }
