@@ -88,10 +88,9 @@ public class VirtualMachineManager {
         log.info("Clone vm " + templateVmName + " -> " + vmDesc);
 
         Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-        Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
-        ResourcePool rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
-        Folder vmFolder = (Folder)new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        Folder vmFolder = (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
+        ResourcePool rp = getResourcePool(host);
 
         if (!existsVm(templateVmName)) {
             log.error("Template " + templateVmName + " not found");
@@ -255,11 +254,9 @@ public class VirtualMachineManager {
 
         ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
         Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-        Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
-        ResourcePool rp = (ResourcePool) new InventoryNavigator(dc).searchManagedEntities("ResourcePool")[0];
-        Folder vmFolder = (Folder)new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        Folder vmFolder = (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
-
+        ResourcePool rp = getResourcePool(host);
         // find the datastore
         Datastore datastore = host.getDatastores()[0];
         for (Datastore ds : host.getDatastores()) {
@@ -312,6 +309,11 @@ public class VirtualMachineManager {
         OvfCreateImportSpecResult ovfImportResult = si.getOvfManager()
                 .createImportSpec(ovfDescriptor, rp, datastore,
                         importSpecParams);
+        if (ovfImportResult.error != null && ovfImportResult.error.length > 0) {
+            for (LocalizedMethodFault error : ovfImportResult.error) {
+                throw new RuntimeException(error.getLocalizedMessage());
+            }
+        }
 
         if (ovfImportResult == null) {
             throw new RuntimeException("ovfImportResult=null");
@@ -421,6 +423,31 @@ public class VirtualMachineManager {
 
         markAsTemplate(vm);
 
+    }
+
+    private ResourcePool getResourcePool(HostSystem host) {
+        try {
+            ResourcePool targetResourcePool = null;
+            Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
+            Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+            Object[] resourcePools = new InventoryNavigator(dc).searchManagedEntities("ResourcePool");
+            for (Object resourcePool : resourcePools) {
+                if (isSameManagedObject(((ResourcePool) resourcePool).getParent(),host.getParent())) {
+                    targetResourcePool = (ResourcePool) resourcePool;
+                }
+            }
+            if(targetResourcePool == null) {
+                throw new RuntimeException("Could not find resource pool for host " + host.getName());
+            }
+            return targetResourcePool;
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
+    }
+
+    public static boolean isSameManagedObject(ManagedObject a, ManagedObject b) {
+        return a.getMOR().getType().equals(b.getMOR().getType()) &&
+                a.getMOR().get_value().equals(b.getMOR().get_value());
     }
 
     private void uploadVmdkFile(boolean put, InputStream diskInputStream,
