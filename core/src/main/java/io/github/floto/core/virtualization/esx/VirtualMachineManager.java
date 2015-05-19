@@ -18,6 +18,7 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class VirtualMachineManager {
@@ -50,7 +51,11 @@ public class VirtualMachineManager {
 
 	public VirtualMachine getVm(String vmName) throws Exception {
 		Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-        return (VirtualMachine) new InventoryNavigator(rootFolder).searchManagedEntity("VirtualMachine", vmName);
+        Folder vmFolder = (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        if(vmFolder == null) {
+            throw new RuntimeException("could not find vm folder "+ domainName);
+        }
+        return (VirtualMachine) new InventoryNavigator(vmFolder).searchManagedEntity("VirtualMachine", vmName);
 	}
 
 	public ManagedEntity[] getVms() throws Exception {
@@ -73,10 +78,7 @@ public class VirtualMachineManager {
 
 	private boolean existsVm(String vmName) {
 		try {
-			Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-
-			VirtualMachine vm = (VirtualMachine) new InventoryNavigator(
-					rootFolder).searchManagedEntity("VirtualMachine", vmName);
+			VirtualMachine vm = getVm(vmName);
 			return (vm != null);
 		} catch (Exception e) {
 			return false;
@@ -96,7 +98,7 @@ public class VirtualMachineManager {
             log.error("Template " + templateVmName + " not found");
             return;
         }
-        VirtualMachine vm = (VirtualMachine) new InventoryNavigator(rootFolder)
+        VirtualMachine vm = (VirtualMachine) new InventoryNavigator(vmFolder)
                 .searchManagedEntity("VirtualMachine", templateVmName);
 
         if (existsVm(vmDesc.vmName)) {
