@@ -65,34 +65,28 @@ public class DeployerBuilder {
 
 	        Manifest manifest = flotoService.getManifest();
 
-            // Find host
-	        Container registryContainer = manifest.findContainer("registry");
-	        if(registryContainer == null) {
-	        	throw new IllegalStateException("Cannot create deployer-VM without registry");
-	        }
+            // Find floto container
 	        Container flotoContainer = manifest.findContainer("floto");
 	        if(flotoContainer == null) {
 	        	throw new IllegalStateException("Cannot create deployer-VM without floto");
 	        }
-	        Host deploymentHost = manifest.findHost(registryContainer.host);
+	        Host deploymentHost = manifest.findHost(flotoContainer.host);
 
             RedeployVmJob redeployVmJob = new RedeployVmJob(flotoService, deploymentHost.name);
             redeployVmJob.execute();
             
             
             
-            flotoService.redeployDeployerContainer(deploymentHost, registryContainer, false, true, false, true, false, true);
             flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, false, false);
 
-            manifest.containers.stream().filter(c -> !Lists.newArrayList(registryContainer, flotoContainer).contains(c)).
-        	forEach(c -> {
-        		try {
-        			flotoService.redeployDeployerContainer(deploymentHost, c, true, false, true, false, true, false);
-        		}
-        		catch(Exception ex) {
-        			throw Throwables.propagate(ex);
-        		}
-        	});
+            manifest.containers.stream().filter(container -> container != flotoContainer).
+        	forEach(container -> {
+                try {
+                    flotoService.redeployDeployerContainer(deploymentHost, container, true, false, true, false, true, false);
+                } catch (Exception ex) {
+                    throw Throwables.propagate(ex);
+                }
+            });
             flotoService.startContainer("floto");
 
 	        ExportVmJob exportVmJob = new ExportVmJob(flotoService, deploymentHost.name);

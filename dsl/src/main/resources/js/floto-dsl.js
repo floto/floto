@@ -28,8 +28,9 @@
 		manifest.images.push(imageDef);
 	};
 	
+	// deprecated
 	global.setImageRegistry = function setImageRegistry(imageRegistry) {
-		manifest.site.imageRegistry = imageRegistry;
+		java.lang.System.out.println("WARNING: using deprecated command 'setImageRegistry()' in configuration, a registry is not needed anymore in floto >= 2.0");
 	};
 
 	global.run = function run(what) {

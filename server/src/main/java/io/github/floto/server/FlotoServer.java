@@ -125,9 +125,6 @@ public class FlotoServer {
 
         TaskService taskService = new TaskService();
         FlotoService flotoService = new FlotoService(parameters, taskService);
-        if(parameters.developmentMode) {
-            flotoService.setIgnoreRegistry(true);
-        }
         HostService hostService = new HostService(flotoService);
         try {
             flotoService.compileManifest().getCompletionStage().thenAccept((x)->{
