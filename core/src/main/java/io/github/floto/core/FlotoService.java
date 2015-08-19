@@ -970,7 +970,7 @@ public class FlotoService implements Closeable {
 			log.info("Stopping containers {}", containers);
 
 			List<Exception> errors = new ArrayList<>();
-			for (String container: containers) {
+			for (String container : containers) {
 				try {
 					stopContainer(container);
 				} catch (Exception e) {
@@ -1381,6 +1381,22 @@ public class FlotoService implements Closeable {
 		return ignoreRegistry;
 	}
 
+	public TaskInfo<Void> createGenesisPatch() {
+		return taskService.startTask("Create genesis patch", () -> {
+			Manifest manifest = this.manifest;
+			Host host = manifest.hosts.get(0);
+			WebTarget dockerTarget = createDockerTarget(host);
+
+			LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image+"-image"));
+
+			WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", imageNames.toArray());
+			log.info("Retrieving images: {}", imageNames);
+			Response response = webTarget.request().buildGet().invoke();
+			InputStream is = response.readEntity(InputStream.class);
+			FileUtils.copyInputStreamToFile(is, new File("target/images.tar"));
+			return null;
+		});
+	}
 
 
 }

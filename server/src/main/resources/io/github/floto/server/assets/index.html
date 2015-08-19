@@ -90,6 +90,7 @@
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="api/export/container-logs">Container Logs</a></li>
                             <li><a href="api/manifest" download="manifest-{{domainName}}-{{site.projectRevision}}.json">Manifest</a></li>
+                            <li><a ng-click="createPatch()">Create patch</a></li>
                         </ul>
                     </li>
                     <li ui-sref-active="active"><a ui-sref="manifest">Manifest</a></li>
