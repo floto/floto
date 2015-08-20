@@ -16,6 +16,8 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
+import io.github.floto.core.patch.PatchService;
+import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.server.api.*;
 import io.github.floto.server.api.websocket.handler.SubscribeToContainerLogHandler;
 import io.github.floto.server.util.ThrowableExceptionMapper;
@@ -43,6 +45,7 @@ import org.woelker.jimix.servlet.JimixServlet;
 import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerEndpoint;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -126,6 +129,7 @@ public class FlotoServer {
         TaskService taskService = new TaskService();
         FlotoService flotoService = new FlotoService(parameters, taskService);
         HostService hostService = new HostService(flotoService);
+        PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry());
         try {
             flotoService.compileManifest().getCompletionStage().thenAccept((x)->{
                 hostService.reconfigureVms();
@@ -144,7 +148,7 @@ public class FlotoServer {
 		resourceConfig.register(new ConfigResource());
 		resourceConfig.register(new BaseConfigResource(parameters));
 		resourceConfig.register(new VmTemplateResource());
-        resourceConfig.register(new PatchResource(flotoService));
+        resourceConfig.register(new PatchResource(flotoService, patchService));
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);

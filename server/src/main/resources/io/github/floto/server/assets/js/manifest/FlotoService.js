@@ -33,9 +33,9 @@
             return  recompilePromise;
         };
 
-        FlotoService.createPatch = function createPatch() {
-            var createPatchPromise = TaskService.httpPost(app.urlPrefix + 'patch/create');
-            return  createPatchPromise;
+        FlotoService.createInitialPatch = function createPatch() {
+            var createPatchPromise = TaskService.httpPost(app.urlPrefix + 'patch/create-initial');
+            return createPatchPromise;
         };
 
         FlotoService.getContainerStates = function getContainerStates() {

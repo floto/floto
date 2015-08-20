@@ -1,12 +1,18 @@
 package io.github.floto.core;
 
-import com.fasterxml.jackson.databind.node.ContainerNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
-import com.google.inject.util.Types;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.proxy.HttpProxy;
-import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.core.ssh.SshService;
 import io.github.floto.core.util.DockerfileHelper;
@@ -20,37 +26,13 @@ import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
-
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.AndFileFilter;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.NotFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
@@ -62,16 +44,19 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.function.Consumer;
 
 public class FlotoService implements Closeable {
     private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -638,7 +623,7 @@ public class FlotoService implements Closeable {
         }
     }
 
-    private WebTarget createDockerTarget(Host host) {
+    public WebTarget createDockerTarget(Host host) {
         String url;
         if (host.dockerUrl == null) {
             url = "http://" + getExternalHostIp(host) + ":2375";
@@ -1154,67 +1139,12 @@ public class FlotoService implements Closeable {
         return url;
     }
 
-    public TaskInfo<Void> createGenesisPatch() {
-        return taskService.startTask("Create genesis patch", () -> {
-            Manifest manifest = this.manifest;
-            Host host = manifest.hosts.get(0);
-            WebTarget dockerTarget = createDockerTarget(host);
+    public ImageRegistry getImageRegistry() {
+        return imageRegistry;
+    }
 
-            LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image + "-image:latest"));
-            imageNames.clear();
-            imageNames.add("dns-image:latest");
-
-            List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
-            // Map image descriptions to image names
-            Map<String, DockerImageDescription> imageDescriptionMap = new HashMap<String, DockerImageDescription>();
-            Map<String, DockerImageDescription> imageDescriptionIdMap = new HashMap<String, DockerImageDescription>();
-            for (DockerImageDescription imageDescription : imageDescriptions) {
-                imageDescriptionIdMap.put(imageDescription.Id, imageDescription);
-                for (String tag : imageDescription.RepoTags) {
-                    imageDescriptionMap.put(tag, imageDescription);
-                }
-            }
-
-            List<String> imageNamesToDownload = new ArrayList<String>();
-            List<String> imageNamesToSkip = new ArrayList<String>();
-            Set<String> allRequiredImageIds = new HashSet<String>();
-
-
-            for (String imageName : imageNames) {
-                boolean haveAllImages = true;
-                String imageId = imageDescriptionMap.get(imageName).Id;
-                while(imageId != null) {
-                    if(!imageRegistry.hasImage(imageId)) {
-                        haveAllImages = false;
-                    }
-                    allRequiredImageIds.add(imageId);
-                    DockerImageDescription imageDescription = imageDescriptionIdMap.get(imageId);
-                    if(imageDescription == null || imageDescription.ParentId.isEmpty()) {
-                        break;
-                    } else {
-                        imageId = imageDescription.ParentId;
-                    }
-                }
-                if (haveAllImages) {
-                    imageNamesToSkip.add(imageName);
-                } else {
-                    imageNamesToDownload.add(imageName);
-                }
-            }
-
-            // Genesis patch all images
-
-            // Other patches delta to existing images
-
-            log.trace("Required image ids {}", allRequiredImageIds);
-            log.info("Skipping images (already in local image registry): {}", imageNamesToSkip);
-            WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", imageNamesToDownload.toArray());
-            log.info("Retrieving images: {}", imageNamesToDownload);
-            Response response = webTarget.request().buildGet().invoke();
-            InputStream imageTarballInputStream = response.readEntity(InputStream.class);
-            imageRegistry.storeImages(imageTarballInputStream);
-            return null;
-        });
+    public File getFlotoHome() {
+        return flotoHome;
     }
 
 

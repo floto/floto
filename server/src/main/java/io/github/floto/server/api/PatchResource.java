@@ -1,6 +1,7 @@
 package io.github.floto.server.api;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.patch.PatchService;
 import io.github.floto.util.task.TaskInfo;
 
 import javax.ws.rs.GET;
@@ -12,15 +13,17 @@ import javax.ws.rs.core.MediaType;
 @Path("patch")
 public class PatchResource {
 	private FlotoService flotoService;
+	private PatchService patchService;
 
-	public PatchResource(FlotoService flotoService) {
+	public PatchResource(FlotoService flotoService, PatchService patchService) {
 		this.flotoService = flotoService;
+		this.patchService = patchService;
 	}
 
 	@POST
-	@Path("create")
-	public TaskInfo<Void> createPatch() {
-		return flotoService.createGenesisPatch();
+	@Path("create-initial")
+	public TaskInfo<Void> createInitialPatch() {
+		return patchService.createInitialPatch();
 	}
 
 }

@@ -7,7 +7,7 @@
 		};
 
 		$scope.createPatch = function createPatch() {
-			FlotoService.createPatch();
+			FlotoService.createInitialPatch();
 		};
 	});
 })();
