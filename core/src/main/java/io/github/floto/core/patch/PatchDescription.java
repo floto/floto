@@ -2,7 +2,9 @@ package io.github.floto.core.patch;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PatchDescription {
 
@@ -23,5 +25,8 @@ public class PatchDescription {
 
     // The list of required docker images
     public List<String> containedImages = new ArrayList<>();
+
+    // Map of base image names to to image ids
+    public Map<String, String> imageMap = new HashMap<>();
 
 }

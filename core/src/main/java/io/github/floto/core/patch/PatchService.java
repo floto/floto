@@ -79,9 +79,9 @@ public class PatchService {
             Host host = manifest.hosts.get(0);
             WebTarget dockerTarget = flotoService.createDockerTarget(host);
 
-            LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image + "-image:latest"));
+            LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
             imageNames.clear();
-            imageNames.add("dns-image:latest");
+            imageNames.add("dns");
 
             List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
             // Map image descriptions to image names
@@ -97,11 +97,12 @@ public class PatchService {
             List<String> imageNamesToDownload = new ArrayList<>();
             List<String> imageNamesToSkip = new ArrayList<>();
             Set<String> allRequiredImageIds = new HashSet<>();
-
+            Map<String, String> imageMap = new HashMap<String, String>();
 
             for (String imageName : imageNames) {
                 boolean haveAllImages = true;
-                String imageId = imageDescriptionMap.get(imageName).Id;
+                String imageId = imageDescriptionMap.get(imageName + "-image:latest").Id;
+                imageMap.put(imageName, imageId);
                 while (imageId != null) {
                     if (!imageRegistry.hasImage(imageId)) {
                         haveAllImages = false;
@@ -123,7 +124,7 @@ public class PatchService {
 
             log.trace("Required image ids {}", allRequiredImageIds);
             log.info("Skipping images (already in local image registry): {}", imageNamesToSkip);
-            WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", imageNamesToDownload.toArray());
+            WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", Lists.transform(imageNamesToDownload, name -> name + "-image:latest").toArray());
             log.info("Retrieving images: {}", imageNamesToDownload);
             Response response = webTarget.request().buildGet().invoke();
             InputStream imageTarballInputStream = response.readEntity(InputStream.class);
@@ -149,6 +150,7 @@ public class PatchService {
 
             // TODO: remove image ids already present
             patchDescription.containedImages.addAll(allRequiredImageIds);
+            patchDescription.imageMap = imageMap;
 
             File patchDescriptionFile = getPatchDescriptionFile(sitePatchDirectory);
             objectMapper.writeValue(patchDescriptionFile, patchDescription);
