@@ -59,6 +59,11 @@ public class PatchService {
 
     }
 
+    private File getSitePatchesDirectory(Manifest manifest) {
+        String siteName = manifest.site.get("projectName").asText();
+        return new File(patchesDirectory, safeFilename(siteName));
+    }
+
     public TaskInfo<Void> createInitialPatch() {
         return taskService.startTask("Create initial patch", () -> {
             Instant creationDate = Instant.now();
@@ -123,15 +128,15 @@ public class PatchService {
             String siteName = manifest.site.get("projectName").asText();
             String revision = manifest.site.get("projectRevision").asText();
             String patchName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
-            File patchDirectory = new File(patchesDirectory, safeFilename(siteName) + "/" + patchName);
-            FileUtils.forceMkdir(patchDirectory);
+            File sitePatchDirectory = new File(getSitePatchesDirectory(manifest) + "/" + patchName);
+            FileUtils.forceMkdir(sitePatchDirectory);
 
             PatchDescription patchDescription = new PatchDescription();
             patchDescription.creationDate = creationDate;
             patchDescription.siteName = siteName;
             patchDescription.revision = revision;
 
-            File patchDescriptionFile = new File(patchDirectory, "patch-description.json");
+            File patchDescriptionFile = getPatchDescriptionFile(sitePatchDirectory);
             objectMapper.writeValue(patchDescriptionFile, patchDescription);
 
 
@@ -139,9 +144,36 @@ public class PatchService {
         });
     }
 
+    private File getPatchDescriptionFile(File sitePatchDirectory) {
+        return new File(sitePatchDirectory, "patch-description.json");
+    }
+
     private static Pattern sanitarizationPattern = Pattern.compile("[^a-zA-Z0-9\\-_.]");
+
     private static String safeFilename(String unsafeFilename) {
         return sanitarizationPattern.matcher(unsafeFilename).replaceAll("-");
     }
 
+    public List<PatchDescription> getPatches() {
+        Manifest manifest = flotoService.getManifest();
+        ArrayList<PatchDescription> patchDescriptions = new ArrayList<>();
+        File[] directories = getSitePatchesDirectory(manifest).listFiles(File::isDirectory);
+        for (File directory : directories) {
+            if (directory.getName().startsWith(".")) {
+                // skip "hidden" directories
+                continue;
+            }
+            try {
+                File patchDescriptionFile = getPatchDescriptionFile(directory);
+                PatchDescription patchDescription = objectMapper.readValue(patchDescriptionFile, PatchDescription.class);
+                patchDescriptions.add(patchDescription);
+            } catch (Throwable throwable) {
+                log.warn("Error reading patch in directory " + directory, throwable);
+            }
+        }
+        patchDescriptions.sort((PatchDescription a, PatchDescription b) -> -a.creationDate.compareTo(b.creationDate));
+
+        return patchDescriptions;
+
+    }
 }

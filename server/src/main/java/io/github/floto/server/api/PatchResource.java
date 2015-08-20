@@ -4,13 +4,15 @@ import io.github.floto.core.FlotoService;
 import io.github.floto.core.patch.PatchService;
 import io.github.floto.util.task.TaskInfo;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-@Path("patch")
+@Path("patches")
 public class PatchResource {
 	private FlotoService flotoService;
 	private PatchService patchService;
@@ -19,6 +21,15 @@ public class PatchResource {
 		this.flotoService = flotoService;
 		this.patchService = patchService;
 	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, Object> getPatches() {
+		HashMap<String, Object> result = new HashMap<>();
+		result.put("patches", patchService.getPatches());
+		return result;
+	}
+
 
 	@POST
 	@Path("create-initial")

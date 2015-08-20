@@ -15,30 +15,19 @@
             <br>
 
             <div floto-fill-height>
+                {{patches}}
                 <table class="table table-bordered table-striped table-hover table-condensed">
-                    <th style="width: 3em; text-align: right">ID</th>
-                    <th>Title</th>
-                    <th style="width: 10em">Started</th>
-                    <th style="width: 10em">Completed</th>
-                    <th style="width: 10em">Duration</th>
-                    <!-- <tr ng-repeat="task in tasks" ng-class="task.id == $stateParams.taskId ? 'info':task.class"
+                    <th style="width: 12em;">Created</th>
+                    <th>Revision</th>
+                    <tr ng-repeat="patch in patchInfos.patches"
                         ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer">
-                        <td class="text-muted" style="text-align: right">
-                            #{{task.id}}
+                        <td>
+                            {{patch.creationDate}}
                         </td>
                         <td>
-                            <span class="glyphicon" ng-class="task.icon" title="{{task.status}}"></span> {{task.title}}
+                            {{patch.revision}}
                         </td>
-                        <td title="{{task.startDate}}">
-                            <span am-time-ago="task.startDate"></span>
-                        </td>
-                        <td title="{{task.endDate}}">
-                            <span am-time-ago="task.endDate"></span>
-                        </td>
-                        <td title="{{task.durationInMs | duration }}">
-                            {{task.durationInMs | humanDuration }}
-                        </td>
-                    </tr> -->
+                    </tr>
                 </table>
             </div>
         </div>
