@@ -1,11 +1,11 @@
 <table class="table table-bordered table-striped table-hover table-condensed">
     <tr ng-repeat="container in containers" ng-class="{'info': $stateParams.containerName === container.name, 'warning': container.unmanaged}" ng-click="$state.go('container', {containerName: container.name})" style="cursor: pointer">
-        <td><span style="display: inline-block;width: 100px" class="label label-default"
+        <td title="{{container.state.projectRevision}}"><span style="display: inline-block;width: 100px" class="label label-default"
                   ng-class="{'label-success': container.state.status==='running', 'label-warning': container.state.status==='stopped', 'label-danger': container.state.status === 'not-there'}">{{container.state.status}}</span>
         </td>
         <td ng-if="configuration.canRedeploy">
             <div style="width: 6em">
-                <floto-redeploy-button ng-if="!container.unmanaged" size="xs" on-click="redeployContainers({containers: [container.name], deploymentMode: deploymentMode});$event.stopPropagation();"></floto-redeploy-button>
+                <floto-redeploy-button ng-if="!container.unmanaged" button-class="container.state.needsRedeploy ? 'btn-primary': 'btn-default'" size="xs" on-click="redeployContainers({containers: [container.name], deploymentMode: deploymentMode});$event.stopPropagation();"></floto-redeploy-button>
             </div>
         </td>
         <td>

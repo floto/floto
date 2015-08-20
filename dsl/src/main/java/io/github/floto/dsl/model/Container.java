@@ -11,5 +11,6 @@ public class Container {
 	public JsonNode config;
 	public List<JsonNode> configureSteps;
     public boolean priviledged = false;
+	public String projectRevision;
 
 }

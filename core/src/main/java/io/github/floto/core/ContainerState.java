@@ -9,4 +9,6 @@ public class ContainerState {
     public String containerName;
     public Status status;
     public String hostName;
+    public boolean needsRedeploy;
+    public String projectRevision;
 }

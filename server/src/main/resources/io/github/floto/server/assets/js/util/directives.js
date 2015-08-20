@@ -24,6 +24,7 @@
             restrict: 'E',
             replace: true,
             scope: {
+                buttonClass: "=",
                 clickHandler: "&onClick"
             },
             templateUrl: "/js/util/redeploy-button.html",

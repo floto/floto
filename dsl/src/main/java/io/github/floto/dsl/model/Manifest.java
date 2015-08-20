@@ -11,6 +11,7 @@ public class Manifest {
 	public JsonNode site;
     public Map<String, Object> files = new HashMap<>();
     public String rootFile;
+    public String projectRevision;
 
     public Host findHost(String hostName) {
         for (Host candidate : hosts) {

@@ -179,6 +179,9 @@ public class FlotoService implements Closeable {
             log.info("Compiling manifest");
             String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
             manifest = flotoDsl.toManifest(manifestString);
+            String projectRevision = manifest.site.get("projectRevision").asText();
+            manifest.projectRevision = projectRevision;
+            manifest.containers.forEach(container -> container.projectRevision = projectRevision);
 
             this.manifestString = manifestString;
             log.info("Compiled manifest");
@@ -398,6 +401,10 @@ public class FlotoService implements Closeable {
         createConfig.put("Image", imageName);
         createConfig.put("PortSpecs", null);
         createConfig.put("ExposedPorts", Maps.newHashMap());
+
+        HashMap<Object, Object> labels = Maps.newHashMap();
+        labels.put("projectRevision", container.projectRevision);
+        createConfig.put("Labels", labels);
 
         Builder request = dockerTarget.request();
         Response response = request.post(Entity.json(createConfig));
@@ -850,6 +857,18 @@ public class FlotoService implements Closeable {
                         }
                         state.containerName = name;
                         state.hostName = host.name;
+
+                        state.needsRedeploy = false;
+                        Container manifestContainer = findContainer(name, manifest);
+                        state.projectRevision = manifestContainer.projectRevision;
+                        if(manifestContainer != null && manifestContainer.projectRevision != null) {
+                            String projectRevision = container.path("Labels").path("projectRevision").textValue();
+                            if(projectRevision != null) {
+                                if(!projectRevision.equals(manifestContainer.projectRevision)) {
+                                    state.needsRedeploy = true;
+                                }
+                            }
+                        }
                         states.put(name, state);
                     }
                 }
