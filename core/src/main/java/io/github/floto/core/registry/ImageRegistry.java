@@ -72,6 +72,10 @@ public class ImageRegistry {
 
 
     public boolean hasImage(String imageId) {
-        return new File(imageDirectory, imageId).isDirectory();
+        return getImageDirectory(imageId).isDirectory();
+    }
+
+    public File getImageDirectory(String imageId) {
+        return new File(imageDirectory, imageId);
     }
 }

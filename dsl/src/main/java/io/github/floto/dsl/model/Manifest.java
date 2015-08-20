@@ -1,5 +1,6 @@
 package io.github.floto.dsl.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
@@ -24,5 +25,10 @@ public class Manifest {
     
     public Container findContainer(String containerName) {
     	return containers.stream().filter(c -> c.name.equals(containerName)).findFirst().orElse(null);
+    }
+
+    @JsonIgnore
+    public String getSiteName() {
+        return site.get("projectName").asText();
     }
 }

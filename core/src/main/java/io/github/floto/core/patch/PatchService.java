@@ -11,21 +11,28 @@ import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
+import io.github.floto.dsl.util.FilenameUtils;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.slf4j.Logger;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -60,12 +67,13 @@ public class PatchService {
     }
 
     private File getSitePatchesDirectory(Manifest manifest) {
-        String siteName = manifest.site.get("projectName").asText();
+        String siteName = manifest.getSiteName();
         return new File(patchesDirectory, safeFilename(siteName));
     }
 
     public TaskInfo<Void> createInitialPatch() {
         return taskService.startTask("Create initial patch", () -> {
+            // TODO: tempdir
             Instant creationDate = Instant.now();
             Manifest manifest = flotoService.getManifest();
             Host host = manifest.hosts.get(0);
@@ -135,12 +143,55 @@ public class PatchService {
             patchDescription.creationDate = creationDate;
             patchDescription.siteName = siteName;
             patchDescription.revision = revision;
+            patchDescription.requiredImageIds.addAll(allRequiredImageIds);
+
+            List<String> containedImageIds = new ArrayList<String>(allRequiredImageIds);
+
+            // TODO: remove image ids already present
+            patchDescription.containedImages.addAll(allRequiredImageIds);
 
             File patchDescriptionFile = getPatchDescriptionFile(sitePatchDirectory);
             objectMapper.writeValue(patchDescriptionFile, patchDescription);
 
+            File patchFile = new File(sitePatchDirectory, sitePatchDirectory.getName() + "." + safeFilename(manifest.getSiteName()) + ".floto-patch.zip");
+            try (ZipOutputStream patchOutputStream = new ZipOutputStream(new FileOutputStream(patchFile))) {
+                // Version
+                addEntryToZipFile(patchOutputStream, "VERSION.txt", (outputStream -> IOUtils.write("floto patch v1", outputStream)));
+
+                // Description
+                addEntryToZipFile(patchOutputStream, "patch-description.json", new FileInputStream(patchDescriptionFile));
+
+                // Images
+                for (String imageId : containedImageIds) {
+                    File imageDirectory = imageRegistry.getImageDirectory(imageId);
+                    Path imagePath = imageDirectory.toPath();
+                    for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
+                        Path filePath = file.toPath();
+                        Path relativePath = imagePath.relativize(filePath);
+                        System.err.println(relativePath);
+                        addEntryToZipFile(patchOutputStream, "images/" + imageId + "/" + relativePath.toString(), new FileInputStream(file));
+                    }
+                }
+
+                // conf
+            }
 
             return null;
+        });
+    }
+
+    private void addEntryToZipFile(ZipOutputStream zipOutputStream, String filename, Consumer_WithExceptions<OutputStream> writer) throws Exception {
+        zipOutputStream.putNextEntry(new ZipEntry(filename));
+        writer.accept(new CloseShieldOutputStream(zipOutputStream));
+    }
+
+    private void addEntryToZipFile(ZipOutputStream zipOutputStream, String filename, InputStream inputStream) throws Exception {
+        addEntryToZipFile(zipOutputStream, filename, (OutputStream outputStream) -> {
+            try {
+                IOUtils.copy(inputStream, outputStream);
+            } finally {
+                IOUtils.closeQuietly(inputStream);
+            }
         });
     }
 
@@ -175,5 +226,10 @@ public class PatchService {
 
         return patchDescriptions;
 
+    }
+
+    @FunctionalInterface
+    public interface Consumer_WithExceptions<T> {
+        void accept(T t) throws Exception;
     }
 }
