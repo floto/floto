@@ -13,4 +13,5 @@ public class Container {
     public boolean priviledged = false;
 	public String projectRevision;
 
+	public String buildHash;
 }

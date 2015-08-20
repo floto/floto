@@ -28,6 +28,8 @@ import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -55,6 +57,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.net.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -183,11 +187,47 @@ public class FlotoService implements Closeable {
             manifest.projectRevision = projectRevision;
             manifest.containers.forEach(container -> container.projectRevision = projectRevision);
 
+            generateContainerHashes(manifest);
             this.manifestString = manifestString;
             log.info("Compiled manifest");
             validateTemplates();
             return null;
         });
+    }
+
+    private void generateContainerHashes(Manifest manifest) {
+        manifest.images.forEach(image -> image.buildHash = generateBuildHash(image.buildSteps));
+        manifest.containers.forEach(container ->
+        {
+            Image image = findImage(container.image, manifest);
+            container.buildHash = generateBuildHash(container.configureSteps, image.buildHash);
+        });
+    }
+
+    private String generateBuildHash(List<JsonNode> buildSteps, String... additionalInputs) {
+        Map<String, Object> globalConfig = createGlobalConfig(manifest);
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA");
+            for(String additionalInput: additionalInputs) {
+                md.update(additionalInput.getBytes(Charsets.UTF_8));
+            }
+            buildSteps.forEach(step -> {
+                md.update(step.toString().getBytes(Charsets.UTF_8));
+
+                String type = step.path("type").asText();
+                // TODO: Files
+                if ("ADD_TEMPLATE".equals(type)) {
+                    String template = new TemplateUtil().getTemplate(step, globalConfig);
+                    md.update(template.getBytes(Charsets.UTF_8));
+                }
+
+            });
+            return Hex.encodeHexString(md.digest());
+        } catch (Throwable e) {
+            log.warn("Unable to generate buildHash",e);
+            // Fallback to UUID
+            return UUID.randomUUID().toString();
+        }
     }
 
     public String getManifestString() {
@@ -404,6 +444,7 @@ public class FlotoService implements Closeable {
 
         HashMap<Object, Object> labels = Maps.newHashMap();
         labels.put("projectRevision", container.projectRevision);
+        labels.put("buildHash", container.buildHash);
         createConfig.put("Labels", labels);
 
         Builder request = dockerTarget.request();
@@ -666,12 +707,20 @@ public class FlotoService implements Closeable {
     }
 
     private Container findContainer(String containerName, Manifest manifest) {
+        Container containerMaybe = findContainerMaybe(containerName, manifest);
+        if(containerMaybe == null) {
+            throw new IllegalArgumentException("Unknown container: " + containerName);
+        }
+        return containerMaybe;
+    }
+
+    private Container findContainerMaybe(String containerName, Manifest manifest) {
         for (Container candidate : manifest.containers) {
             if (containerName.equals(candidate.name)) {
                 return candidate;
             }
         }
-        throw new IllegalArgumentException("Unknown container: " + containerName);
+        return null;
     }
 
     private String getRootImage(String imageName) {
@@ -859,12 +908,13 @@ public class FlotoService implements Closeable {
                         state.hostName = host.name;
 
                         state.needsRedeploy = false;
-                        Container manifestContainer = findContainer(name, manifest);
-                        state.projectRevision = manifestContainer.projectRevision;
-                        if(manifestContainer != null && manifestContainer.projectRevision != null) {
-                            String projectRevision = container.path("Labels").path("projectRevision").textValue();
-                            if(projectRevision != null) {
-                                if(!projectRevision.equals(manifestContainer.projectRevision)) {
+                        String projectRevision = container.path("Labels").path("projectRevision").textValue();
+                        state.projectRevision = projectRevision;
+                        Container manifestContainer = findContainerMaybe(name, manifest);
+                        if(manifestContainer != null && manifestContainer.buildHash != null) {
+                            String buildHash = container.path("Labels").path("buildHash").textValue();
+                            if(buildHash != null) {
+                                if(!buildHash.equals(manifestContainer.buildHash)) {
                                     state.needsRedeploy = true;
                                 }
                             }
@@ -1043,13 +1093,8 @@ public class FlotoService implements Closeable {
             new ManifestJob<Void>(manifest) {
                 @Override
                 public Void execute() throws Exception {
-                    for (Image image : manifest.images) {
-                        verifyTemplates(image.buildSteps);
-                    }
+                    // Image and container templates are validated during buildHash generation
 
-                    for (Container container : manifest.containers) {
-                        verifyTemplates(container.configureSteps);
-                    }
 
                     for (Host host : manifest.hosts) {
                         verifyTemplates(host.postDeploySteps);
