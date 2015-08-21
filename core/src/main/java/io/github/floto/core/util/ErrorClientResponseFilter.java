@@ -14,6 +14,9 @@ public class ErrorClientResponseFilter implements ClientResponseFilter {
 	public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext)
 			throws IOException {
 		if (!Response.Status.Family.SUCCESSFUL.equals(responseContext.getStatusInfo().getFamily())) {
+			if(responseContext.getStatusInfo().getStatusCode() == 404 && Boolean.TRUE.equals(requestContext.getProperty("passThrough404"))) {
+				return;
+			}
 			String body = IOUtils.toString(responseContext.getEntityStream());
 			throw new RuntimeException("Server error: " + responseContext.getStatus() + "  " + responseContext.getStatusInfo().getReasonPhrase()+"\n"+body);
 		}

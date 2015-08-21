@@ -35,6 +35,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
@@ -42,6 +43,7 @@ import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.ClientResponse;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +59,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.net.*;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -324,6 +327,73 @@ public class FlotoService implements Closeable {
     }
 
     private void redeployFromBaseImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream) throws Exception {
+        // verify that the correct base image is on the host
+
+        // TODO: get correct base image id
+        String baseImageId = "356e37784c30a9f6481959890d5b0c0fded2c8ba78f87417aab119d7b84f1ae2";
+        WebTarget dockerTarget = createDockerTarget(host).path("/images/" + baseImageId + "/json");
+        Response response = dockerTarget.request().property("passThrough404", true).get(Response.class);
+        if(response.getStatusInfo().getStatusCode() == 404) {
+            log.info("Base Image <{}> not found, uploading to host", baseImageName);
+            List<String> imageIds = new ArrayList<>();
+            String currentImageId = baseImageId;
+            // find all parents
+            while(currentImageId != null && !currentImageId.isEmpty()) {
+                // TODO: skip present images
+                imageIds.add(currentImageId);
+                currentImageId = imageRegistry.getImageDescription(currentImageId).parent;
+            }
+            // add images in reverse order
+            Lists.reverse(imageIds);
+            log.info("Uploading image layers: {}", imageIds);
+
+            final String finalImageId = baseImageId;
+            Response createResponse = createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
+                @Override
+                public void write(OutputStream output) throws IOException, WebApplicationException {
+                    System.err.println("Start write");
+                    try(TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
+                        for(String imageId: imageIds) {
+                            File imageDirectory = imageRegistry.getImageDirectory(imageId);
+                            Path imagePath = imageDirectory.toPath();
+                            for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
+                                Path filePath = file.toPath();
+                                Path relativePath = imagePath.relativize(filePath);
+                                String tarFilename = imageId + "/" + relativePath.toString();
+                                System.err.println(tarFilename);
+                                tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
+                                try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                                    IOUtils.copy(fileInputStream, tarBallOutputStream);
+                                }
+                                tarBallOutputStream.closeEntry();
+                            }
+                        }
+                        // TODO: generate repository file?
+                        Map<String, Object> repository = new HashMap<String, Object>();
+                        HashMap<String, String> tags = new HashMap<String, String>();
+                        tags.put("latest", finalImageId);
+                        repository.put(baseImageName, tags);
+                        ObjectMapper mapper = new ObjectMapper();
+                        byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
+                        System.err.println(new String(repositoryBytes));
+
+                        TarEntry repositoriesTarEntry = new TarEntry("repositories");
+                        repositoriesTarEntry.setSize(repositoryBytes.length);
+                        tarBallOutputStream.putNextEntry(repositoriesTarEntry);
+                        IOUtils.write(repositoryBytes, tarBallOutputStream);
+                        tarBallOutputStream.closeEntry();
+
+                    }
+                }
+            }, "application/octet-stream")).invoke();
+            System.err.println(createResponse);
+            log.info("Base Image <{}> uploaded", baseImageName);
+        } else {
+            log.info("Base Image <{}> already on host", baseImageName);
+        }
+
+
+
         this.createFinalImage(host, container, baseImageName, buildLogStream);
         this.rebuildContainer(container, true);
     }
@@ -590,6 +660,7 @@ public class FlotoService implements Closeable {
 
                             for (File file : files) {
 //								TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
+
                                 String targetDirName = newName != null && !newName.isMissingNode() ? newName.asText() : sourceFile.getName();
                                 String relative = targetDirName + "/" + FilenameUtils.separatorsToUnix(sourceFile.toURI().relativize(file.toURI()).getPath());
                                 TarEntry templateTarEntry = new TarEntry(file, destination + "/" + relative);

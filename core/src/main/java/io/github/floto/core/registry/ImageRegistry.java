@@ -1,6 +1,7 @@
 package io.github.floto.core.registry;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.CloseShieldInputStream;
@@ -23,6 +24,7 @@ public class ImageRegistry {
     private final Logger log = getLogger(ImageRegistry.class);
 
     private File imageDirectory;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     public ImageRegistry(File imageDirectory) {
         this.imageDirectory = imageDirectory;
@@ -45,7 +47,7 @@ public class ImageRegistry {
                 }
                 File filename = new File(tarEntry.getName());
                 String parent = filename.getParent();
-                if(parent == null) {
+                if (parent == null) {
                     continue;
                 }
                 File directory = new File(tempDir, parent);
@@ -55,10 +57,10 @@ public class ImageRegistry {
 
             // copy to final destination
             File[] directories = tempDir.listFiles(File::isDirectory);
-            for(File directory: directories) {
+            for (File directory : directories) {
                 String name = directory.getName();
                 File targetDirectory = new File(imageDirectory, name);
-                if(targetDirectory.exists()) {
+                if (targetDirectory.exists()) {
                     FileUtils.forceDelete(targetDirectory);
                 }
                 FileUtils.moveDirectory(directory, targetDirectory);
@@ -77,5 +79,14 @@ public class ImageRegistry {
 
     public File getImageDirectory(String imageId) {
         return new File(imageDirectory, imageId);
+    }
+
+    public DockerLayerDescription getImageDescription(String imageId) {
+        File layerFile = new File(getImageDirectory(imageId), "json");
+        try {
+            return objectMapper.readValue(layerFile, DockerLayerDescription.class);
+        } catch (Throwable e) {
+            throw new RuntimeException("Unable to read image layer file " + layerFile, e);
+        }
     }
 }
