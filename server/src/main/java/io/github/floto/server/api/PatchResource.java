@@ -1,40 +1,36 @@
 package io.github.floto.server.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.patch.PatchDescription;
+import io.github.floto.core.patch.PatchInfo;
 import io.github.floto.core.patch.PatchService;
-import io.github.floto.util.task.TaskInfo;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 
-@Path("patches")
 public class PatchResource {
-	private FlotoService flotoService;
-	private PatchService patchService;
+    private final FlotoService flotoService;
+    private final PatchService patchService;
+    private final String patchId;
 
-	public PatchResource(FlotoService flotoService, PatchService patchService) {
-		this.flotoService = flotoService;
-		this.patchService = patchService;
-	}
+    public PatchResource(FlotoService flotoService, PatchService patchService, String patchId) {
+        this.flotoService = flotoService;
+        this.patchService = patchService;
+        this.patchId = patchId;
+    }
 
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String, Object> getPatches() {
-		HashMap<String, Object> result = new HashMap<>();
-		result.put("patches", patchService.getPatches());
-		return result;
-	}
-
-
-	@POST
-	@Path("create-initial")
-	public TaskInfo<Void> createInitialPatch() {
-		return patchService.createInitialPatch();
-	}
+    @GET
+    @Path("patchInfo")
+    @Produces(MediaType.APPLICATION_JSON)
+    public PatchInfo getPatchInfo() {
+        return patchService.getPatchInfo(patchId);
+    }
 
 }

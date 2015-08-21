@@ -14,17 +14,23 @@ public class PatchDescription {
     // The site name (site.projectName)
     public String siteName;
 
+    // The site-unique patch id
+    public String id;
+
     // The revision string of this patch
     public String revision;
 
     // The revision string that this patch is based on (null in case of an initial patch)
     public String parentRevision;
 
+    // The id of the patch that this patch is based on (null in case of an initial patch)
+    public String parentId;
+
     // The list of required docker image ids
     public List<String> requiredImageIds = new ArrayList<>();
 
     // The list of required docker images
-    public List<String> containedImages = new ArrayList<>();
+    public List<String> containedImageIds = new ArrayList<>();
 
     // Map of base image names to to image ids
     public Map<String, String> imageMap = new HashMap<>();

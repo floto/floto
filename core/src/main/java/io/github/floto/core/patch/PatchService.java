@@ -11,7 +11,6 @@ import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
-import io.github.floto.dsl.util.FilenameUtils;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -26,10 +25,8 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -136,11 +133,14 @@ public class PatchService {
 
             String siteName = manifest.site.get("projectName").asText();
             String revision = manifest.site.get("projectRevision").asText();
-            String patchName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
-            File sitePatchDirectory = new File(getSitePatchesDirectory(manifest) + "/" + patchName);
+            String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
+            File sitePatchesDirectory = getSitePatchesDirectory(manifest);
+            String patchId = patchDirName + "." + safeFilename(manifest.getSiteName());
+            File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
             FileUtils.forceMkdir(sitePatchDirectory);
 
             PatchDescription patchDescription = new PatchDescription();
+            patchDescription.id = patchId;
             patchDescription.creationDate = creationDate;
             patchDescription.siteName = siteName;
             patchDescription.revision = revision;
@@ -149,13 +149,13 @@ public class PatchService {
             List<String> containedImageIds = new ArrayList<String>(allRequiredImageIds);
 
             // TODO: remove image ids already present
-            patchDescription.containedImages.addAll(allRequiredImageIds);
+            patchDescription.containedImageIds.addAll(allRequiredImageIds);
             patchDescription.imageMap = imageMap;
 
             File patchDescriptionFile = getPatchDescriptionFile(sitePatchDirectory);
             objectMapper.writeValue(patchDescriptionFile, patchDescription);
 
-            File patchFile = new File(sitePatchDirectory, sitePatchDirectory.getName() + "." + safeFilename(manifest.getSiteName()) + ".floto-patch.zip");
+            File patchFile = new File(sitePatchDirectory, patchId + ".floto-patch.zip");
             try (ZipOutputStream patchOutputStream = new ZipOutputStream(new FileOutputStream(patchFile))) {
                 // Version
                 addEntryToZipFile(patchOutputStream, "VERSION.txt", (outputStream -> IOUtils.write("floto patch v1", outputStream)));
@@ -170,7 +170,6 @@ public class PatchService {
                     for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
                         Path filePath = file.toPath();
                         Path relativePath = imagePath.relativize(filePath);
-                        System.err.println(relativePath);
                         addEntryToZipFile(patchOutputStream, "images/" + imageId + "/" + relativePath.toString(), new FileInputStream(file));
                     }
                 }
@@ -199,6 +198,23 @@ public class PatchService {
 
     private File getPatchDescriptionFile(File sitePatchDirectory) {
         return new File(sitePatchDirectory, "patch-description.json");
+    }
+
+    public PatchInfo getPatchInfo(String patchId) {
+        try {
+            File patchDirectory = getPatchDirectory(patchId);
+            File patchDescriptionFile = getPatchDescriptionFile(patchDirectory);
+            PatchInfo patchInfo = objectMapper.readValue(patchDescriptionFile, PatchInfo.class);
+            patchInfo.patchSize = new File(patchDirectory, patchId + ".floto-patch.zip").length();
+            return patchInfo;
+        } catch (Throwable throwable) {
+            throw new RuntimeException("Error getting patch info for patch id "+patchId, throwable);
+        }
+    }
+
+    private File getPatchDirectory(String patchId) {
+        Manifest manifest = flotoService.getManifest();
+        return new File(getSitePatchesDirectory(manifest), patchId);
     }
 
     private static Pattern sanitarizationPattern = Pattern.compile("[^a-zA-Z0-9\\-_.]");
@@ -234,4 +250,5 @@ public class PatchService {
     public interface Consumer_WithExceptions<T> {
         void accept(T t) throws Exception;
     }
+
 }

@@ -17,7 +17,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.HostService;
 import io.github.floto.core.patch.PatchService;
-import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.server.api.*;
 import io.github.floto.server.api.websocket.handler.SubscribeToContainerLogHandler;
 import io.github.floto.server.util.ThrowableExceptionMapper;
@@ -148,7 +147,7 @@ public class FlotoServer {
 		resourceConfig.register(new ConfigResource());
 		resourceConfig.register(new BaseConfigResource(parameters));
 		resourceConfig.register(new VmTemplateResource());
-        resourceConfig.register(new PatchResource(flotoService, patchService));
+        resourceConfig.register(new PatchesResource(flotoService, patchService));
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);

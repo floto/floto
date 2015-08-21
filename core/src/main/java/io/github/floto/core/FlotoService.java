@@ -351,7 +351,6 @@ public class FlotoService implements Closeable {
             Response createResponse = createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
                 @Override
                 public void write(OutputStream output) throws IOException, WebApplicationException {
-                    System.err.println("Start write");
                     try(TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
                         for(String imageId: imageIds) {
                             File imageDirectory = imageRegistry.getImageDirectory(imageId);
@@ -360,7 +359,6 @@ public class FlotoService implements Closeable {
                                 Path filePath = file.toPath();
                                 Path relativePath = imagePath.relativize(filePath);
                                 String tarFilename = imageId + "/" + relativePath.toString();
-                                System.err.println(tarFilename);
                                 tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
                                 try (FileInputStream fileInputStream = new FileInputStream(file)) {
                                     IOUtils.copy(fileInputStream, tarBallOutputStream);
@@ -375,7 +373,6 @@ public class FlotoService implements Closeable {
                         repository.put(baseImageName, tags);
                         ObjectMapper mapper = new ObjectMapper();
                         byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
-                        System.err.println(new String(repositoryBytes));
 
                         TarEntry repositoriesTarEntry = new TarEntry("repositories");
                         repositoriesTarEntry.setSize(repositoryBytes.length);
@@ -386,7 +383,6 @@ public class FlotoService implements Closeable {
                     }
                 }
             }, "application/octet-stream")).invoke();
-            System.err.println(createResponse);
             log.info("Base Image <{}> uploaded", baseImageName);
         } else {
             log.info("Base Image <{}> already on host", baseImageName);

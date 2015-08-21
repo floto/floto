@@ -44,6 +44,10 @@ var app;
             }).state('patches', {
                 url: "/patches",
                 templateUrl: '/js/patches/patches.html'
+            }).state('patch', {
+                parent: "patches",
+                url: "/:patchId",
+                templateUrl: '/js/patches/patch.html'
             });
     });
 

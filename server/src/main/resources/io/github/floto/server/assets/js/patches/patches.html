@@ -19,13 +19,17 @@
                 <table class="table table-bordered table-striped table-hover table-condensed">
                     <th style="width: 12em;">Created</th>
                     <th>Revision</th>
-                    <tr ng-repeat="patch in patchInfos.patches"
-                        ng-click="$state.go('task', {taskId: task.id})" style="cursor: pointer">
+                    <th>Parent</th>
+                    <tr ng-repeat="patch in patchInfos.patches" ng-class="patch.id == $stateParams.patchId ? 'info':''"
+                        ng-click="$state.go('patch', {patchId: patch.id})" style="cursor: pointer">
                         <td>
                             {{patch.creationDate}}
                         </td>
                         <td>
                             {{patch.revision}}
+                        </td>
+                        <td>
+                            {{patch.parentRevision || '-'}}
                         </td>
                     </tr>
                 </table>

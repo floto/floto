@@ -42,6 +42,10 @@
             return $resource(app.urlPrefix + 'patches').get();
         };
 
+        FlotoService.getPatchInfo = function getPatchInfo(patchId) {
+            return $resource(app.urlPrefix + 'patches/' + patchId + '/patchInfo').get();
+        };
+
         FlotoService.getContainerStates = function getContainerStates() {
             return $resource(app.urlPrefix + 'containers/_state').get();
         };
