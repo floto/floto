@@ -37,6 +37,7 @@ import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.util.EntityUtils;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
@@ -239,7 +240,12 @@ public class FlotoService implements Closeable {
 
     public TaskInfo<Void> redeployContainers(List<String> requestedContainers, DeploymentMode deploymentMode) {
         final List<String> containers = new ArrayList<>(requestedContainers);
-        return taskService.startTask("Redeploy containers " + Joiner.on(", ").join(requestedContainers) + " in mode '" + deploymentMode + "'", () -> {
+        String taskName = "Redeploy containers " + Joiner.on(", ").join(requestedContainers) + " in mode '" + deploymentMode + "'";
+        if(requestedContainers.size() > 3) {
+            taskName = "Redeploy " + requestedContainers.size() + " containers in mode '" + deploymentMode + "'";
+        }
+        return taskService.startTask(taskName, () -> {
+            log.info("Redeploying containers " + Joiner.on(", "));
             boolean excludeDeploymentContainers = false;
             // TODO: when to exclude?
 
@@ -333,7 +339,9 @@ public class FlotoService implements Closeable {
         String baseImageId = "356e37784c30a9f6481959890d5b0c0fded2c8ba78f87417aab119d7b84f1ae2";
         WebTarget dockerTarget = createDockerTarget(host).path("/images/" + baseImageId + "/json");
         Response response = dockerTarget.request().property("passThrough404", true).get(Response.class);
-        if(response.getStatusInfo().getStatusCode() == 404) {
+        int statusCode = response.getStatusInfo().getStatusCode();
+        response.close();
+        if(statusCode == 404) {
             log.info("Base Image <{}> not found, uploading to host", baseImageName);
             List<String> imageIds = new ArrayList<>();
             String currentImageId = baseImageId;

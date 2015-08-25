@@ -26,13 +26,14 @@ public class PatchDescription {
     // The id of the patch that this patch is based on (null in case of an initial patch)
     public String parentId;
 
+    // Map of base image names to to image ids
+    public Map<String, String> imageMap = new HashMap<>();
+
     // The list of required docker image ids
     public List<String> requiredImageIds = new ArrayList<>();
 
     // The list of required docker images
     public List<String> containedImageIds = new ArrayList<>();
 
-    // Map of base image names to to image ids
-    public Map<String, String> imageMap = new HashMap<>();
 
 }

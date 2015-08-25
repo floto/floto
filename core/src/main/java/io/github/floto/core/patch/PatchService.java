@@ -69,16 +69,24 @@ public class PatchService {
     }
 
     public TaskInfo<Void> createInitialPatch() {
-        return taskService.startTask("Create initial patch", () -> {
+        return taskService.startTask("Create full patch", () -> {
+
+
             // TODO: tempdir
             Instant creationDate = Instant.now();
             Manifest manifest = flotoService.getManifest();
+            File sitePatchesDirectory = getSitePatchesDirectory(manifest);
+            File tempDir = new File(sitePatchesDirectory, ".tmp-" + UUID.randomUUID());
+            FileUtils.forceMkdir(tempDir);
+
             Host host = manifest.hosts.get(0);
             WebTarget dockerTarget = flotoService.createDockerTarget(host);
 
             LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
-            imageNames.clear();
-            imageNames.add("dns");
+
+            // TODO: remove
+            //imageNames.clear();
+            //imageNames.add("dns");
 
             List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
             // Map image descriptions to image names
@@ -98,14 +106,18 @@ public class PatchService {
 
             for (String imageName : imageNames) {
                 boolean haveAllImages = true;
-                String imageId = imageDescriptionMap.get(imageName + "-image:latest").Id;
+                DockerImageDescription imageDescription = imageDescriptionMap.get(imageName + "-image:latest");
+                if(imageDescription == null) {
+                    throw new IllegalStateException("No docker image found for "+ imageName);
+                }
+                String imageId = imageDescription.Id;
                 imageMap.put(imageName, imageId);
                 while (imageId != null) {
                     if (!imageRegistry.hasImage(imageId)) {
                         haveAllImages = false;
                     }
                     allRequiredImageIds.add(imageId);
-                    DockerImageDescription imageDescription = imageDescriptionIdMap.get(imageId);
+                    imageDescription = imageDescriptionIdMap.get(imageId);
                     if (imageDescription == null || imageDescription.ParentId.isEmpty()) {
                         break;
                     } else {
@@ -124,8 +136,9 @@ public class PatchService {
             WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", Lists.transform(imageNamesToDownload, name -> name + "-image:latest").toArray());
             log.info("Retrieving images: {}", imageNamesToDownload);
             Response response = webTarget.request().buildGet().invoke();
-            InputStream imageTarballInputStream = response.readEntity(InputStream.class);
-            imageRegistry.storeImages(imageTarballInputStream);
+            try(InputStream imageTarballInputStream = response.readEntity(InputStream.class)) {
+                    imageRegistry.storeImages(imageTarballInputStream);
+            };
 
             // Genesis patch: all images
 
@@ -134,10 +147,7 @@ public class PatchService {
             String siteName = manifest.site.get("projectName").asText();
             String revision = manifest.site.get("projectRevision").asText();
             String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
-            File sitePatchesDirectory = getSitePatchesDirectory(manifest);
             String patchId = patchDirName + "." + safeFilename(manifest.getSiteName());
-            File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
-            FileUtils.forceMkdir(sitePatchDirectory);
 
             PatchDescription patchDescription = new PatchDescription();
             patchDescription.id = patchId;
@@ -152,10 +162,10 @@ public class PatchService {
             patchDescription.containedImageIds.addAll(allRequiredImageIds);
             patchDescription.imageMap = imageMap;
 
-            File patchDescriptionFile = getPatchDescriptionFile(sitePatchDirectory);
+            File patchDescriptionFile = getPatchDescriptionFile(tempDir);
             objectMapper.writeValue(patchDescriptionFile, patchDescription);
 
-            File patchFile = new File(sitePatchDirectory, patchId + ".floto-patch.zip");
+            File patchFile = new File(tempDir, patchId + ".floto-patch.zip");
             try (ZipOutputStream patchOutputStream = new ZipOutputStream(new FileOutputStream(patchFile))) {
                 // Version
                 addEntryToZipFile(patchOutputStream, "VERSION.txt", (outputStream -> IOUtils.write("floto patch v1", outputStream)));
@@ -176,6 +186,8 @@ public class PatchService {
 
                 // conf
             }
+            File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
+            FileUtils.moveDirectory(tempDir, sitePatchDirectory);
 
             return null;
         });
