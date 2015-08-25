@@ -540,7 +540,7 @@ public class FlotoService implements Closeable {
 
         WebTarget dockerTarget = createDockerTarget(host);
         WebTarget buildTarget = dockerTarget.path("build");
-        Response response = buildTarget.queryParam("t", imageName).request().post(Entity.entity(new StreamingOutput() {
+        Response response = buildTarget.queryParam("t", imageName).queryParam("forcerm", "true").request().post(Entity.entity(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException, WebApplicationException {
                 try (TarOutputStream out = new TarOutputStream(outputStream)) {
