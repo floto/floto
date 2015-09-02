@@ -1,11 +1,12 @@
 import {Navbar, Nav, NavItem, NavDropdown, MenuItem, Button} from "react-bootstrap";
+import {NavItemLink} from 'react-router-bootstrap';
 
 export default React.createClass({
 	render() {
 		return <Navbar fluid brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
 			<Nav>
-				<NavItem eventKey={1} href='#'>Containers</NavItem>
-				<NavItem eventKey={2} href='#'>Hosts</NavItem>
+				<NavItemLink to="containers">Containers</NavItemLink>
+				<NavItemLink to="hosts">Hosts</NavItemLink>
 				<NavItem eventKey={3} href='#'>Tasks</NavItem>
 				<NavDropdown eventKey={4} title='Export' id='basic-nav-dropdown'>
 					<MenuItem eventKey='1'>Container Logs</MenuItem>

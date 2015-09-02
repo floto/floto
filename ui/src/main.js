@@ -1,6 +1,6 @@
 require("babel/polyfill");
 
-import Application from "./app/Application";
+import Root from "./app/Root";
 
 //import Router from "react-router";
 
@@ -52,7 +52,7 @@ let debugPanel = <DebugPanel top right bottom>
 
 window.onload = function () {
 		React.render(
-		<Application />,
+		<Root />,
 	document.getElementById('application'));
 };
 
