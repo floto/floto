@@ -2,6 +2,7 @@ require("babel/polyfill");
 
 import Root from "./app/Root";
 
+
 //import Router from "react-router";
 
 /*
@@ -18,7 +19,9 @@ import reducers from './app/reducers';
 
 */
 require("bootstrap/dist/css/bootstrap.css");
+require("../lib/pnotify/pnotify.custom.min.css");
 require("./style/style.css");
+
 
 /*
 const finalCreateStore = compose(

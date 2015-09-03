@@ -35,7 +35,9 @@ module.exports = {
 	plugins: [
 		new webpack.ProvidePlugin({
 			React: "react",
-			_: "lodash"
+			_: "lodash",
+//			$: "jquery",
+//			jQuery: "jquery"
 		})
 //    new webpack.HotModuleReplacementPlugin(),
 //    new webpack.NoErrorsPlugin()
