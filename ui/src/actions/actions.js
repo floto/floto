@@ -1,11 +1,16 @@
 import * as rest from "../util/rest.js";
+import EventConstants from "../events/constants.js";
 
 export function updateManifest(dispatch, manifest) {
 	dispatch({
-		type: "MANIFEST_UPDATED",
+		type: EventConstants.MANIFEST_UPDATED,
 		payload: manifest
 	});
 }
+
+
+
+
 
 
 export function refreshManifest(dispatch) {

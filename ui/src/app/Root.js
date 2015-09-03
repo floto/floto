@@ -12,7 +12,7 @@ import reducers from '../reducers/reducers';
 
 import * as actions from "../actions/actions";
 
-const store = createStore(reducers, {manifest: {site: "foobar"}});
+const store = createStore(reducers, {manifest: {}});
 
 if (module.hot) {
 	// Enable Webpack hot module replacement for reducers
@@ -33,7 +33,6 @@ let routes = () => {
 };
 export default React.createClass({
 	render() {
-		//		let containers = [{name: "foo"}];
 		return <div style={{position: "absolute", width: "100%", top: 0, bottom: 80}}>
 			<Provider key="provider" store={store}>
 				{routes}

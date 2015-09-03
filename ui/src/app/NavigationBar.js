@@ -12,6 +12,7 @@ export default connect(state => {
 		actions.recompileManifest(this.props.dispatch);
 	},
 
+
 	render() {
 		return <Navbar fluid brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
 			<Nav>

@@ -36,6 +36,7 @@
     "babel": "^5.8.23",
     "bluebird": "^2.9.34",
     "bootstrap": "^3.3.4",
+    "lodash": "^3.10.1",
     "react": "^0.13.3",
     "react-bootstrap": "^0.25.1",
     "react-redux": "^2.0.0",
