@@ -33,7 +33,7 @@ let routes = () => {
 export default React.createClass({
 	render() {
 		//		let containers = [{name: "foo"}];
-		return <div>
+		return <div style={{position: "absolute", width: "100%", top: 0, bottom: 80}}>
 			<Provider key="provider" store={store}>
 				{routes}
 			</Provider>
