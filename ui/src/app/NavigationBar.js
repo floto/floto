@@ -1,7 +1,17 @@
 import {Navbar, Nav, NavItem, NavDropdown, MenuItem, Button} from "react-bootstrap";
 import {NavItemLink} from 'react-router-bootstrap';
+import { connect } from 'react-redux';
 
-export default React.createClass({
+import * as actions from "../actions/actions.js";
+
+export default connect(state => {
+	return {containers: state.manifest.containers}
+})(React.createClass({
+
+	recompileManifest() {
+		actions.recompileManifest(this.props.dispatch);
+	},
+
 	render() {
 		return <Navbar fluid brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
 			<Nav>
@@ -14,9 +24,9 @@ export default React.createClass({
 				</NavDropdown>
 				<NavItem eventKey={5} href='#'>Manifest</NavItem>
 				<form className="navbar-form navbar-left">
-					<Button bsStyle='primary' bsSize='small'>Recompile</Button>
+					<Button bsStyle='primary' bsSize='small' onClick={this.recompileManifest}>Recompile</Button>
 				</form>
 			</Nav>
 		</Navbar>;
 	}
-});
+}));

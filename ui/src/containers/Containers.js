@@ -19,7 +19,7 @@ export default connect(state => {
 										<td><Label bsStyle='default'>{container.state || "unknown" }</Label></td>
 										<td>
 											<div style={{width: 100}}><SplitButton bsStyle="primary" bsSize="xs"
-																				   title="Redeploy">
+																				   title="Redeploy" id="redeploy">
 												<MenuItem eventKey='1'>Action</MenuItem>
 												<MenuItem eventKey='2'>Another action</MenuItem>
 												<MenuItem eventKey='3'>Something else here</MenuItem>

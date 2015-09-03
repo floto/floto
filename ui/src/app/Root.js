@@ -10,6 +10,7 @@ import Hosts from "../hosts/Hosts"
 
 import reducers from '../reducers/reducers';
 
+import * as actions from "../actions/actions";
 
 const store = createStore(reducers, {manifest: {site: "foobar"}});
 
@@ -41,17 +42,6 @@ export default React.createClass({
 	}
 });
 window.addEventListener("load", function () {
-	console.log("ONLOAD");
-	let getManifest = () => {
-		var oReq = new XMLHttpRequest();
-		oReq.addEventListener("load", function reqListener() {
-			let responseJson = JSON.parse(this.responseText);
-			store.dispatch({type: "UPDATE_MANIFEST", payload: responseJson});
-		});
-		oReq.open("GET", "api/manifest", true);
-		oReq.send();
-	};
-	setInterval(getManifest, 1000);
-	getManifest();
+	actions.refreshManifest(store.dispatch);
 });
 
