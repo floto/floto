@@ -2,17 +2,27 @@ import {Navbar, Nav, NavItem, NavDropdown, MenuItem, Button} from "react-bootstr
 import {NavItemLink} from 'react-router-bootstrap';
 import { connect } from 'react-redux';
 
+var Icon = require('react-fa');
+
 import * as actions from "../actions/actions.js";
 
-var Icon = require('react-fa');
+import Switch from "../components/Switch.js";
+
 
 
 export default connect(state => {
 	return {serverState: state.serverState}
 })(React.createClass({
 
+	getInitialState() {
+		return {}
+	},
+
 	recompileManifest() {
 		actions.recompileManifest(this.props.dispatch);
+	},
+
+	onChangeSafety(newState) {
 	},
 
 
@@ -30,7 +40,11 @@ export default connect(state => {
 				</NavDropdown>
 				<NavItem eventKey={5} href='#'><Icon name="file-text-o" />&nbsp;&nbsp;Manifest</NavItem>
 				<form className="navbar-form navbar-left">
-					<Button disabled={isCompiling} bsStyle='primary' bsSize='small' onClick={this.recompileManifest} style={{width: "10em", textAlign: "left"}}><Icon spin={isCompiling} name="cog" />&nbsp;&nbsp;{isCompiling ? "Recompiling..." : "Recompile"}</Button>
+					<div className="form-group">
+						<Button disabled={isCompiling} bsStyle='primary' bsSize='small' onClick={this.recompileManifest} style={{width: "10em", textAlign: "left"}}><Icon spin={isCompiling} name="cog" />&nbsp;&nbsp;{isCompiling ? "Recompiling..." : "Recompile"}</Button>
+						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+						<Switch checked={this.state.safetyState} onChange={this.onChangeSafety}/>
+					</div>
 				</form>
 			</Nav>
 		</Navbar>;
