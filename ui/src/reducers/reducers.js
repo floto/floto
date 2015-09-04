@@ -23,6 +23,14 @@ addReducers({
 		return {manifest};
 	},
 
+	MANIFEST_COMPILATION_STARTED(state) {
+		return {serverState: _.extend({}, state.serverState, {isCompiling: true})};
+	},
+
+	MANIFEST_COMPILATION_FINISHED(state) {
+		return {serverState: _.extend({}, state.serverState, {isCompiling: false})};
+	},
+
 	TASKS_UPDATED(state, tasks) {
 		return {tasks}
 	}

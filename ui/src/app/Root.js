@@ -14,7 +14,8 @@ import reducers from '../reducers/reducers';
 
 import * as actions from "../actions/actions";
 
-const store = createStore(reducers, {manifest: {}});
+var initialState = {manifest: {}, serverState: {}};
+const store = createStore(reducers, initialState);
 
 if (module.hot) {
 	// Enable Webpack hot module replacement for reducers

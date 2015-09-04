@@ -24,6 +24,9 @@ require("../lib/pnotify/pnotify.custom.min.css");
 require("./style/style.css");
 
 
+import websocketService from "./util/websocketService.js";
+import taskService from "./tasks/taskService.js";
+
 /*
 const finalCreateStore = compose(
 	// Provides support for DevTools:
@@ -58,6 +61,8 @@ window.onload = function () {
 		React.render(
 		<Root />,
 	document.getElementById('application'));
+	websocketService.start();
+
 };
 
 

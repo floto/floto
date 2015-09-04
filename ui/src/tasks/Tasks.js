@@ -42,8 +42,8 @@ export default connect(state => {
 				return <tr key={task.id} className={className}>
 					<td><span className="text-muted">#{task.id}</span></td>
 					<td><Icon spin={spin} name={icon} /> {task.title}</td>
-					<td title={task.creationDate}><TimeAgo date={task.creationDate} /></td>
-					<td title={task.endDate}><TimeAgo date={task.endDate} /></td>
+					<td title={task.creationDate}>{task.creationDate  ? <TimeAgo date={task.creationDate} />: ""}</td>
+					<td title={task.endDate}>{task.endDate  ? <TimeAgo date={task.endDate} />: ""}</td>
 					<td>{moment.duration(task.durationInMs, "ms").humanize()}</td>
 				</tr>;
 			},

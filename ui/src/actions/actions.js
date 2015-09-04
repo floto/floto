@@ -1,7 +1,7 @@
 import * as rest from "../util/rest.js";
 import EventConstants from "../events/constants.js";
 import notificationService from "../util/notificationService.js";
-
+import taskService from "../tasks/taskService.js";
 
 export function updateManifest(dispatch, manifest) {
 	dispatch({
@@ -30,11 +30,11 @@ export function refreshManifest(dispatch) {
 }
 
 export function recompileManifest(dispatch) {
-	notificationService.notify({
-		title: 'Recompiling',
-		text: 'Now recompiling.'
-	});
-	rest.send({method: "POST", url: "manifest/compile"}).then((result) => {
+	dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
+	taskService.httpPost(dispatch, "manifest/compile").then(() => {
+		console.log("DONE COMPILING");
 		refreshManifest(dispatch);
+	}).finally(() => {
+		dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED})
 	});
 }
