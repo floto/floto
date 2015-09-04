@@ -12,13 +12,17 @@ Promise.onPossiblyUnhandledRejection(function(error){
 	throw error;
 });
 
-window.onerror =  (error,b ) => {
+window.addEventListener("error",(error) => {
 	notificationService.notify({
 		title: 'Internal error',
-		text: error,
+		text: error.message,
 		type: 'error'
 	});
-};
+});
+
+
+
+
 
 
 

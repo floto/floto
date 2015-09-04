@@ -11,6 +11,17 @@ export function updateManifest(dispatch, manifest) {
 }
 
 
+export function loadTasks(dispatch) {
+	rest.send({method: "GET", url: "tasks"}).then((tasks) => {
+		dispatch({
+			type: EventConstants.TASKS_UPDATED,
+			payload: tasks
+		});
+	});
+}
+
+
+
 
 export function refreshManifest(dispatch) {
 	rest.send({method: "GET", url: "manifest"}).then((result) => {

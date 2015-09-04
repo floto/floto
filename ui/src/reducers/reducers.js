@@ -21,6 +21,10 @@ addReducers({
 
 	MANIFEST_UPDATED(state, manifest) {
 		return {manifest};
+	},
+
+	TASKS_UPDATED(state, tasks) {
+		return {tasks}
 	}
 });
 

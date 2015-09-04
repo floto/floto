@@ -5,8 +5,10 @@ import { history } from 'react-router/lib/HashHistory';
 
 import NavigationBar from "./NavigationBar.js"
 import Application from "./Application"
+
 import Containers from "../containers/Containers"
 import Hosts from "../hosts/Hosts"
+import Tasks from "../tasks/Tasks"
 
 import reducers from '../reducers/reducers';
 
@@ -28,6 +30,7 @@ let routes = () => {
 		<Route component={Application}>
 			<Route path="/containers" component={Containers} />
 			<Route path="/hosts" component={Hosts} />
+			<Route path="/tasks" component={Tasks} />
 		</Route>
 	</Router>
 };
