@@ -1,3 +1,5 @@
+import Promise from "bluebird";
+
 let urlPrefix = "/api/";
 
 export function send(request) {
@@ -13,5 +15,17 @@ export function send(request) {
 		xhr.send(null);
 	});
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 

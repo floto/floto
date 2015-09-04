@@ -1,5 +1,6 @@
 require("babel/polyfill");
 
+import ErrorHandling from "./util/ErrorHandling.js";
 import Root from "./app/Root";
 
 

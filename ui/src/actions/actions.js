@@ -12,9 +12,6 @@ export function updateManifest(dispatch, manifest) {
 
 
 
-
-
-
 export function refreshManifest(dispatch) {
 	rest.send({method: "GET", url: "manifest"}).then((result) => {
 		updateManifest(dispatch, result);
