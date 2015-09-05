@@ -9,7 +9,7 @@ import Application from "./Application"
 import Containers from "../containers/Containers"
 import Hosts from "../hosts/Hosts"
 import Tasks from "../tasks/Tasks"
-import Tasklog from "../tasks/Tasklog"
+import Task from "../tasks/Task"
 import Manifest from "../manifest/Manifest"
 
 import reducers from '../reducers/reducers';
@@ -36,7 +36,7 @@ let routes = () => {
 			<Route path="/containers" component={Containers}/>
 			<Route path="/hosts" component={Hosts}/>
 			<Route path="tasks" component={Tasks}>
-				<Route path=":taskId" component={Tasklog} onEnter={
+				<Route path=":taskId" component={Task} onEnter={
 				(nextState, transition)=>{
 					store.dispatch({type: EventConstants.TASK_ACTIVATED, payload: nextState.params.taskId});
 				}}/>

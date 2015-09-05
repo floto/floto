@@ -63,6 +63,34 @@ websocketService.addMessageHandler("taskComplete", function(message) {
 	}
 });
 
+var logSubscriptions = {};
+
+function sendMessage(message) {
+	websocketService.sendMessage(message);
+}
+websocketService.addMessageHandler("taskLogEntry", function(message) {
+	var streamId = message.streamId;
+	logSubscriptions[streamId](message.entry);
+});
+
+
+var nextStreamId = 1;
+function getNextStreamId() {
+	var streamId = nextStreamId;
+	nextStreamId++;
+	return streamId;
+}
+taskService.subscribeToLog = function subscribeToLog(taskId, callback) {
+	var streamId = getNextStreamId();
+	logSubscriptions[ streamId] = callback;
+	var message = {
+		type: "subscribeToTaskLog",
+		taskId: taskId,
+		streamId: streamId
+	};
+	sendMessage(message);
+};
+
 export default taskService;
 
 

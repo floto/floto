@@ -85,10 +85,8 @@ export default connect(state => {
 							</div>
 						</div>
 
-						<div style={{flex: "1", paddingLeft: 20}}>
-							{React.Children.map(this.props.children, function (child) {
-								return React.cloneElement(child, {task: {id: "foo", title: "bar"}});
-							})}
+						<div style={{flex: "1", paddingLeft: 20, height: "100%"}}>
+							{this.props.children}
 						</div>
 					</div>
 				</div>;
