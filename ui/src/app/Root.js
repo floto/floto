@@ -18,7 +18,13 @@ import * as actions from "../actions/actions";
 
 import EventConstants from "../events/constants.js";
 
-var initialState = {manifest: {}, serverState: {}};
+var initialState = {
+	manifest: {},
+	serverState: {},
+	clientState: {
+		safetyArmed: true
+	}
+};
 const store = createStore(reducers, initialState);
 
 if (module.hot) {

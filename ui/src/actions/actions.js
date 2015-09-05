@@ -32,9 +32,13 @@ export function refreshManifest(dispatch) {
 export function recompileManifest(dispatch) {
 	dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
 	taskService.httpPost(dispatch, "manifest/compile").then(() => {
-		console.log("DONE COMPILING");
 		refreshManifest(dispatch);
 	}).finally(() => {
 		dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED})
 	});
+}
+
+
+export function changeSafety(dispatch, safetyArmed) {
+	dispatch({type: EventConstants.SAFETY_CHANGED, payload: safetyArmed});
 }

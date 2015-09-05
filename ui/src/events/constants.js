@@ -7,6 +7,8 @@ export default _.indexBy([
 
 	"TASK_ACTIVATED",
 
+	"SAFETY_CHANGED",
+
 
 	"@@redux/INIT"
 ]);

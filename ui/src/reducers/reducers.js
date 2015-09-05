@@ -39,6 +39,10 @@ addReducers({
 	TASK_ACTIVATED(state, taskId) {
 		var activeTask = _.findWhere(state.tasks, {id: taskId});
 		return {activeTask, activeTaskId: taskId};
+	},
+
+	SAFETY_CHANGED(state, safetyArmed) {
+		return {clientState: _.extend({}, state.clientState, {safetyArmed})};
 	}
 
 });

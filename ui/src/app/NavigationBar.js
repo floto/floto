@@ -11,7 +11,7 @@ import Switch from "../components/Switch.js";
 
 
 export default connect(state => {
-	return {serverState: state.serverState}
+	return {serverState: state.serverState, clientState: state.clientState}
 })(React.createClass({
 
 	getInitialState() {
@@ -22,7 +22,8 @@ export default connect(state => {
 		actions.recompileManifest(this.props.dispatch);
 	},
 
-	onChangeSafety(newState) {
+	onChangeSafety(safetyArmed) {
+		actions.changeSafety(this.props.dispatch, safetyArmed);
 	},
 
 
@@ -43,7 +44,7 @@ export default connect(state => {
 					<div className="form-group">
 						<Button disabled={isCompiling} bsStyle='primary' bsSize='small' onClick={this.recompileManifest} style={{width: "10em", textAlign: "left"}}><Icon spin={isCompiling} name="cog" />&nbsp;&nbsp;{isCompiling ? "Recompiling..." : "Recompile"}</Button>
 						&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-						<Switch checked={this.state.safetyState} onChange={this.onChangeSafety}/>
+						<Switch checked={this.props.clientState.safetyArmed} onChange={this.onChangeSafety}/>
 					</div>
 				</form>
 			</Nav>
