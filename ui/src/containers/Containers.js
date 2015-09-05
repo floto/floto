@@ -8,7 +8,7 @@ export default connect(state => {
 
 			render() {
 				let containers = this.props.containers || [];
-				return <div style={{padding: "0px 20px"}}>
+				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap"}}>
 						<div style={{flex: 1}}>
 							<h2>Containers</h2>
@@ -43,3 +43,7 @@ export default connect(state => {
 		}
 	)
 );
+
+
+
+

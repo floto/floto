@@ -6,14 +6,12 @@ import { Redirect, Router, Route } from 'react-router'
 
 export default React.createClass({
 	render() {
-		let containers = [{name: "foox"}];
-		return <div style={{height: "100%"}}>
+		return <div style={{height: "100vh"}}>
 			<NavigationBar />
-			<div style={{position: "absolute", top: 50, bottom: 0, width: "100%"}}>
+			<div style={{position: "absolute", top: 40, height: "calc(100vh - 60px)", left: 20, width: "calc(100vw - 40px)"}}>
 			{this.props.children}
 				</div>
 		</div>;
 	}
 });
 
-// 			<Containers containers={containers} />

@@ -9,6 +9,7 @@ import Application from "./Application"
 import Containers from "../containers/Containers"
 import Hosts from "../hosts/Hosts"
 import Tasks from "../tasks/Tasks"
+import Manifest from "../manifest/Manifest"
 
 import reducers from '../reducers/reducers';
 
@@ -32,12 +33,13 @@ let routes = () => {
 			<Route path="/containers" component={Containers} />
 			<Route path="/hosts" component={Hosts} />
 			<Route path="/tasks" component={Tasks} />
+			<Route path="/manifest" component={Manifest} />
 		</Route>
 	</Router>
 };
 export default React.createClass({
 	render() {
-		return <div style={{position: "absolute", width: "100%", top: 0, bottom: 80}}>
+		return <div style={{}}>
 			<Provider key="provider" store={store}>
 				{routes}
 			</Provider>

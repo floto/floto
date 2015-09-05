@@ -38,7 +38,7 @@ export default connect(state => {
 					<MenuItem eventKey='1'>Container Logs</MenuItem>
 					<MenuItem eventKey='2'>Manifest</MenuItem>
 				</NavDropdown>
-				<NavItem eventKey={5} href='#'><Icon name="file-text-o" />&nbsp;&nbsp;Manifest</NavItem>
+				<NavItemLink to="manifest"><Icon name="file-text-o" />&nbsp;&nbsp;Manifest</NavItemLink>
 				<form className="navbar-form navbar-left">
 					<div className="form-group">
 						<Button disabled={isCompiling} bsStyle='primary' bsSize='small' onClick={this.recompileManifest} style={{width: "10em", textAlign: "left"}}><Icon spin={isCompiling} name="cog" />&nbsp;&nbsp;{isCompiling ? "Recompiling..." : "Recompile"}</Button>
