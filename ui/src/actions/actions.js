@@ -35,6 +35,13 @@ export function refreshManifest(dispatch) {
 	});
 }
 
+export function getFlotoInfo(dispatch) {
+	rest.send({method: "GET", url: "info"}).then((info) => {
+		dispatch({type: EventConstants.FLOTO_INFO_UPDATED, payload: info});
+
+	});
+}
+
 export function recompileManifest(dispatch) {
 	dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
 	taskService.httpPost(dispatch, "manifest/compile").then(() => {

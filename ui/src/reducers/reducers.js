@@ -23,6 +23,10 @@ addReducers({
 		return {manifest};
 	},
 
+	FLOTO_INFO_UPDATED(state, flotoInfo) {
+		return {flotoInfo};
+	},
+
 	MANIFEST_COMPILATION_STARTED(state) {
 		return {serverState: _.extend({}, state.serverState, {isCompiling: true})};
 	},

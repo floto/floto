@@ -20,12 +20,19 @@ export default React.createClass({
 		});
 	},
 
+	onChange() {
+		// handled by bootstrapSwitch;
+	},
+
 	componentDidUpdate() {
 		var domNode = React.findDOMNode(this);
 		$(domNode).bootstrapSwitch('state', this.props.checked, true);
 	},
 
 	render() {
-		return <input type="checkbox" name="my-checkbox" checked />;
+		return <input type="checkbox" name="my-checkbox" checked onChange={this.onChange} />;
 	}
 });
+
+
+

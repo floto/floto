@@ -23,7 +23,8 @@ var initialState = {
 	serverState: {},
 	clientState: {
 		safetyArmed: true
-	}
+	},
+	flotoInfo: {}
 };
 const store = createStore(reducers, initialState);
 
@@ -62,5 +63,6 @@ export default React.createClass({
 });
 window.addEventListener("load", function () {
 	actions.refreshManifest(store.dispatch);
+	actions.getFlotoInfo(store.dispatch);
 });
 

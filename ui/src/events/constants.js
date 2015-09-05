@@ -9,6 +9,8 @@ export default _.indexBy([
 
 	"SAFETY_CHANGED",
 
+	"FLOTO_INFO_UPDATED",
+
 
 	"@@redux/INIT"
 ]);
