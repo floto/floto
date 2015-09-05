@@ -10,10 +10,14 @@ var classMap = {
 export default React.createClass({
 
 	componentDidMount() {
-		this.scrollDown = _.debounce(this.scrollDown, 10, {maxWait: 10, leading: true});
 		var table = $(React.findDOMNode(this.refs.table));
 
 		taskService.subscribeToLog(this.props.taskId, (entry) => {
+			if(!this.isMounted()) {
+				// Not mounted anymore, bail early
+				// TODO: unsubscribe on unmount
+				return;
+			}
 			var cls = classMap[entry.level];
 			var classPart = "";
 			if (cls) {
@@ -30,16 +34,8 @@ export default React.createClass({
 			row += "<td>" + entry.logger + "</td>";
 			row += "</tr>";
 			table.append(row);
-			this.scrollDown();
+			this.props.scrollDown();
 		});
-	},
-
-	scrollDown() {
-//			if(scope.flotoAutoScroll) {
-		let scrollElement = React.findDOMNode(this).parentElement;
-		scrollElement.scrollTop = scrollElement.scrollHeight;
-//				autoScrolltop = scrollElement.scrollTop;
-//			}
 	},
 
 	render() {

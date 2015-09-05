@@ -6,9 +6,42 @@ export default connect(state => {
 	return {task: state.activeTask}
 })(React.createClass({
 	getInitialState() {
+		this.scrollDown = _.debounce(this.scrollDown, 10, {maxWait: 10, leading: true});
+		this.autoScrollTop = 0;
 		return {
 			autoScroll: true
 		}
+	},
+
+	componentWillUpdate(nextProps) {
+		if(nextProps.task.id !== this.props.task.id) {
+			this.autoScrollTop = 0;
+		}
+	},
+
+	scrollDown(override) {
+		if (this.state.autoScroll  || override) {
+			let scrollElement = React.findDOMNode(this.refs.scrollContainer);
+			scrollElement.scrollTop = scrollElement.scrollHeight;
+			this.autoScrollTop = scrollElement.scrollTop;
+		}
+	},
+
+	onScroll() {
+		let scrollElement = React.findDOMNode(this.refs.scrollContainer);
+		if (this.autoScrollTop !== scrollElement.scrollTop) {
+			// Different from our set scrollTop, assume it was done by user and unset the autoscroll flag
+			this.autoScrolltop = -1;
+			this.setState({autoScroll: false});
+		}
+	},
+
+	onChangeAutoscroll() {
+		let autoScroll = React.findDOMNode(this.refs.autoScroll).checked;
+		if (autoScroll) {
+			this.scrollDown(true);
+		}
+		this.setState({autoScroll});
 	},
 
 	render() {
@@ -22,12 +55,13 @@ export default connect(state => {
 
 				<div className="checkbox pull-right">
 					<label>
-						<input type="checkbox" checked={this.state.autoScroll}> Auto-Scroll</input>
+						<input ref="autoScroll" type="checkbox" checked={this.state.autoScroll}
+							   onChange={this.onChangeAutoscroll}> Auto-Scroll</input>
 					</label>
 				</div>
 			</div>
-			<div style={{flex: "1 1 auto", overflow: "scroll"}}>
-				<Tasklog key={task.id} taskId={task.id} autoScroll={this.state.autoScroll}/>
+			<div ref="scrollContainer" style={{flex: "1 1 auto", overflow: "scroll"}} onScroll={this.onScroll}>
+				<Tasklog key={task.id} taskId={task.id} scrollDown={this.scrollDown}/>
 			</div>
 		</div>;
 	}
