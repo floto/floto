@@ -9,11 +9,14 @@ import Application from "./Application"
 import Containers from "../containers/Containers"
 import Hosts from "../hosts/Hosts"
 import Tasks from "../tasks/Tasks"
+import Tasklog from "../tasks/Tasklog"
 import Manifest from "../manifest/Manifest"
 
 import reducers from '../reducers/reducers';
 
 import * as actions from "../actions/actions";
+
+import EventConstants from "../events/constants.js";
 
 var initialState = {manifest: {}, serverState: {}};
 const store = createStore(reducers, initialState);
@@ -28,12 +31,17 @@ if (module.hot) {
 
 let routes = () => {
 	return <Router history={history}>
-		<Redirect from="/" to="/containers" />
+		<Redirect from="/" to="/containers"/>
 		<Route component={Application}>
-			<Route path="/containers" component={Containers} />
-			<Route path="/hosts" component={Hosts} />
-			<Route path="/tasks" component={Tasks} />
-			<Route path="/manifest" component={Manifest} />
+			<Route path="/containers" component={Containers}/>
+			<Route path="/hosts" component={Hosts}/>
+			<Route path="tasks" component={Tasks}>
+				<Route path=":taskId" component={Tasklog} onEnter={
+				(nextState, transition)=>{
+					store.dispatch({type: EventConstants.TASK_ACTIVATED, payload: nextState.params.taskId});
+				}}/>
+			</Route>
+			<Route path="/manifest" component={Manifest}/>
 		</Route>
 	</Router>
 };

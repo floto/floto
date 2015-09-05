@@ -5,6 +5,8 @@ export default _.indexBy([
 
 	"TASKS_UPDATED",
 
+	"TASK_ACTIVATED",
+
 
 	"@@redux/INIT"
 ]);

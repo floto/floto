@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import {Table, Label, Button, SplitButton, MenuItem} from "react-bootstrap";
-
+import { Navigation } from 'react-router';
 
 var Icon = require('react-fa')
 
@@ -24,22 +24,29 @@ const classMap = {
 	ERROR: "danger"
 };
 export default connect(state => {
-	return {tasks: state.tasks}
+	return {tasks: state.tasks, activeTask: state.activeTask}
 })(React.createClass({
+			mixins: [Navigation],
 
 			componentDidMount() {
 				this.refreshTasks();
 			},
 
+
 			refreshTasks() {
 				actions.loadTasks(this.props.dispatch);
 			},
+
 
 			renderTask(task) {
 				let icon = iconMap[task.status] || "question";
 				let spin = task.status === "RUNNING";
 				let className = classMap[task.status];
-				return <tr key={task.id} className={className}>
+				if(task === this.props.activeTask) {
+					className = "info";
+				}
+				return <tr key={task.id} className={className}
+						   onClick={() => this.transitionTo('/tasks/'+task.id)}>
 					<td><span className="text-muted">#{task.id}</span></td>
 					<td><Icon spin={spin} name={icon}/> {task.title}</td>
 					<td title={task.creationDate}>{task.creationDate ? <TimeAgo date={task.creationDate}/> : ""}</td>
@@ -55,9 +62,11 @@ export default connect(state => {
 						<div style={{height: "100%", flex: "1 1"}}>
 							<div style={{height: "100%", display: "flex", flexDirection: "column", flexWrap: "nowrap"}}>
 								<div style={{flex: "0 0 auto"}}>
-									<h2>Tasks</h2>
+									<h2>Tasks<Button className="pull-right" bsStyle="default"
+													 onClick={this.refreshTasks}>Refresh</Button>
+									</h2>
 								</div>
-								<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
+								<div style={{flex: "1 1 auto", overflowY: "scroll", cursor: "pointer"}}>
 									<Table bordered striped hover condensed>
 										<thead>
 										<tr>
@@ -77,7 +86,9 @@ export default connect(state => {
 						</div>
 
 						<div style={{flex: "1", paddingLeft: 20}}>
-							<h3>nginx</h3>
+							{React.Children.map(this.props.children, function (child) {
+								return React.cloneElement(child, {task: {id: "foo", title: "bar"}});
+							})}
 						</div>
 					</div>
 				</div>;

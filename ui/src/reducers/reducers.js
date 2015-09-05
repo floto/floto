@@ -32,8 +32,15 @@ addReducers({
 	},
 
 	TASKS_UPDATED(state, tasks) {
-		return {tasks}
+		var activeTask = _.findWhere(tasks, {id: state.activeTaskId});
+		return {tasks, activeTask}
+	},
+
+	TASK_ACTIVATED(state, taskId) {
+		var activeTask = _.findWhere(state.tasks, {id: taskId});
+		return {activeTask, activeTaskId: taskId};
 	}
+
 });
 
 // TODO: check that all event types have a reducer?
