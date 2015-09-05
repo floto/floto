@@ -11,7 +11,7 @@ import Switch from "../components/Switch.js";
 
 
 export default connect(state => {
-	return {serverState: state.serverState, clientState: state.clientState}
+	return {serverState: state.serverState, clientState: state.clientState, site: state.manifest.site}
 })(React.createClass({
 
 	getInitialState() {
@@ -29,6 +29,7 @@ export default connect(state => {
 
 	render() {
 		let isCompiling = this.props.serverState.isCompiling;
+		let site = this.props.site ||  {projectName: "?", projectRevision: "?"};
 		return <Navbar fixedTop fluid brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
 			<Nav>
 				<NavItemLink to="containers"><Icon name="cubes" />&nbsp;&nbsp;Containers</NavItemLink>
@@ -47,7 +48,14 @@ export default connect(state => {
 						<Switch checked={this.props.clientState.safetyArmed} onChange={this.onChangeSafety}/>
 					</div>
 				</form>
+				<span className="navbar-brand pull-right" href="#">
+				</span>
 			</Nav>
+			<div className="nav navbar-nav navbar-right" style={{textAlign: "center", paddingTop: "10px", paddingRight: "20px", height: "20px"}}>
+				<span style={{color: site.siteColor}}>{site.projectName || site.domainName}{site.environment?<span ng-if="site.environment"> ({site.environment})</span>:null}</span><br />
+				<span style={{fontSize: "80%", position: "relative", top: "-4px"}} className="text-muted">{site.projectRevision}</span>
+				</div>
 		</Navbar>;
 	}
 }));
+

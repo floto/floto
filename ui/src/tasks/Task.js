@@ -14,6 +14,9 @@ export default connect(state => {
 	},
 
 	componentWillUpdate(nextProps) {
+		if(!this.props.task) {
+			return;
+		}
 		if(nextProps.task.id !== this.props.task.id) {
 			this.autoScrollTop = 0;
 		}
@@ -50,7 +53,7 @@ export default connect(state => {
 			return null;
 		}
 		return <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
-			<div style={{flex: "0 0 auto"}}>
+			<div style={{flex: "0 0 auto", paddingRight: "20px"}}>
 				<h3>{task.title}<span className="text-muted pull-right">#{task.id}</span></h3>
 
 				<div className="checkbox pull-right">

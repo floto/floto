@@ -24,8 +24,14 @@ export function loadTasks(dispatch) {
 
 
 export function refreshManifest(dispatch) {
-	rest.send({method: "GET", url: "manifest"}).then((result) => {
-		updateManifest(dispatch, result);
+	rest.send({method: "GET", url: "manifest"}).then((manifest) => {
+		updateManifest(dispatch, manifest);
+		let title = "floto - " + (manifest.site.projectName || manifest.site.domainName);
+		if(manifest.site.environment) {
+			title += " (" + manifest.site.environment + ")";
+		}
+		document.title = title;
+
 	});
 }
 
