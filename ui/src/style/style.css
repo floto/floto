@@ -17,3 +17,15 @@ pre {
 	font-family: 'SourceCodePro', sans-serif;
 	font-size: 12px;
 }
+
+
+.json-inspector__search {
+	border: 2px solid #eee;
+	border-radius: 3px;
+}
+
+.json-inspector__search:focus {
+	border: 2px solid #ccc;
+	outline: none;
+}
+
