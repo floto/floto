@@ -1,19 +1,6 @@
-export default _.indexBy([
-	"MANIFEST_UPDATED",
-	"MANIFEST_COMPILATION_STARTED",
-	"MANIFEST_COMPILATION_FINISHED",
+import {eventConstants} from "../reducers/reducers.js";
 
-	"TASKS_UPDATED",
+export default eventConstants;
 
-	"TASK_ACTIVATED",
 
-	"SAFETY_CHANGED",
 
-	"FLOTO_INFO_UPDATED",
-
-	"CONTAINER_SELECTED",
-	"CONTAINER_FILE_SELECTED",
-	"CONTAINER_FILE_ERROR",
-
-	"@@redux/INIT"
-]);

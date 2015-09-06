@@ -1,16 +1,7 @@
-import EventConstants from "../events/constants.js";
-
-
 const reducerMap = {};
 
 function addReducers(reducers) {
 	_.extend(reducerMap, reducers);
-	_.forEach(reducers, (value, key) => {
-		if (!EventConstants[key]) {
-			console.warn("Invalid event type: " + key);
-			console.trace(value);
-		}
-	});
 }
 
 
@@ -99,6 +90,8 @@ addReducers({
 
 });
 
+export const eventConstants = _.indexBy(_.keys(reducerMap));
+
 // TODO: check that all event types have a reducer?
 
 export default (state, event) => {
@@ -112,3 +105,4 @@ export default (state, event) => {
 	}
 	return result;
 }
+
