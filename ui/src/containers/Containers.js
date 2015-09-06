@@ -34,7 +34,7 @@ export default connect(state => {
 										<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}>Stop</Button></td>
 										<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}>Purge Data</Button></td>
 										<td style={{whiteSpace: "nowrap"}}>{container.config.webUrl ? <a href={container.config.webUrl}><Icon name="globe" />&nbsp;&nbsp;Web UI</a> : null}</td>
-										<td style={{width: "100%"}}>{container.name}</td>
+										<td style={{width: "100%"}}>{container.name}<span className="text-muted pull-right">{container.config.version}</span></td>
 									</tr>)}
 								</tbody>
 							</Table>
