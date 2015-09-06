@@ -30,6 +30,7 @@ export default connect(state => {
 	render() {
 		let isCompiling = this.props.serverState.isCompiling;
 		let site = this.props.site ||  {projectName: "?", projectRevision: "?"};
+		let siteName = site.projectName || site.domainName;
 		return <Navbar fixedTop fluid brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
 			<Nav>
 				<NavItemLink to="containers"><Icon name="cubes" />&nbsp;&nbsp;Containers</NavItemLink>
@@ -37,8 +38,8 @@ export default connect(state => {
 				<NavItemLink to="tasks"><Icon name="list" />&nbsp;&nbsp;Tasks</NavItemLink>
 				<NavItemLink to="tasks"><Icon name="file-archive-o" />&nbsp;&nbsp;Patches</NavItemLink>
 				<NavDropdown eventKey={4} title={<span><Icon name="download" />&nbsp;&nbsp;Export</span>} id='basic-nav-dropdown'>
-					<MenuItem eventKey='1'>Container Logs</MenuItem>
-					<MenuItem eventKey='2'>Manifest</MenuItem>
+					<li><a href="api/export/container-logs">Container Logs</a></li>
+					<li><a href="api/manifest" download={`manifest-${siteName}-${site.projectRevision}.json`}>Manifest</a></li>
 				</NavDropdown>
 				<NavItemLink to="manifest"><Icon name="file-text-o" />&nbsp;&nbsp;Manifest</NavItemLink>
 				<form className="navbar-form navbar-left">
@@ -52,7 +53,7 @@ export default connect(state => {
 				</span>
 			</Nav>
 			<div className="nav navbar-nav navbar-right" style={{textAlign: "center", paddingTop: "10px", paddingRight: "20px", height: "20px"}}>
-				<span style={{color: site.siteColor}}>{site.projectName || site.domainName}{site.environment?<span ng-if="site.environment"> ({site.environment})</span>:null}</span><br />
+				<span style={{color: site.siteColor}}>{siteName}{site.environment?<span ng-if="site.environment"> ({site.environment})</span>:null}</span><br />
 				<span style={{fontSize: "80%", position: "relative", top: "-4px"}} className="text-muted">{site.projectRevision}</span>
 				</div>
 		</Navbar>;
