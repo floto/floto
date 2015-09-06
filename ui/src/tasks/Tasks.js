@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {Table, Label, Button, SplitButton, MenuItem} from "react-bootstrap";
 import { Navigation } from 'react-router';
 
-var Icon = require('react-fa')
+var Icon = require('react-fa');
 
 import TimeAgo from "react-timeago";
 

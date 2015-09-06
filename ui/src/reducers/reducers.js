@@ -6,13 +6,17 @@ const reducerMap = {};
 function addReducers(reducers) {
 	_.extend(reducerMap, reducers);
 	_.forEach(reducers, (value, key) => {
-		if(!EventConstants[key]) {
-			console.warn("Invalid event type: "+key);
+		if (!EventConstants[key]) {
+			console.warn("Invalid event type: " + key);
 			console.trace(value);
 		}
 	});
 }
 
+
+function getShortFileName(filename) {
+	return filename.replace(/^.*(\\|\/|\:)/, '');
+}
 
 addReducers({
 	"@@redux/INIT"() {
@@ -20,7 +24,38 @@ addReducers({
 	},
 
 	MANIFEST_UPDATED(state, manifest) {
-		return {manifest};
+		var selectedContainer = _.findWhere(manifest.containers, {name: state.selectedContainerName});
+		var templateMap = {};
+		_.forEach(manifest.images, (image) => {
+			let templates = [];
+			templateMap[`image:${image.name}`] = templates;
+			var steps = image.buildSteps;
+			steps.forEach(function (buildStep) {
+				if (buildStep.type === "ADD_TEMPLATE") {
+					templates.push({
+						name: getShortFileName(buildStep.destination),
+						destination: buildStep.destination
+					});
+				}
+			});
+
+		});
+		_.forEach(manifest.containers, (container) => {
+			let imageTemplates = templateMap[`image:${container.image}`];
+			let templates = [].concat(imageTemplates);
+			templateMap[`container:${container.name}`] = templates;
+			var steps = container.configureSteps;
+			steps.forEach(function (buildStep) {
+				if (buildStep.type === "ADD_TEMPLATE") {
+					templates.push({
+						name: getShortFileName(buildStep.destination),
+						destination: buildStep.destination
+					});
+				}
+			});
+
+		});
+		return {selectedContainer, manifest, templateMap};
 	},
 
 	FLOTO_INFO_UPDATED(state, flotoInfo) {
@@ -33,6 +68,11 @@ addReducers({
 
 	MANIFEST_COMPILATION_FINISHED(state) {
 		return {serverState: _.extend({}, state.serverState, {isCompiling: false})};
+	},
+
+	CONTAINER_SELECTED(state, containerName) {
+		var selectedContainer = _.findWhere(state.manifest.containers, {name: containerName});
+		return {selectedContainer, selectedContainerName: containerName};
 	},
 
 	TASKS_UPDATED(state, tasks) {
@@ -56,7 +96,7 @@ addReducers({
 export default (state, event) => {
 	let reducer = reducerMap[event.type];
 	let result = state;
-	if(reducer) {
+	if (reducer) {
 		result = _.extend({}, state, reducer(state, event.payload));
 	} else {
 		console.warn(`Warning: No reducer registered for event type ${event.type}}`);

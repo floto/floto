@@ -11,6 +11,7 @@ export default _.indexBy([
 
 	"FLOTO_INFO_UPDATED",
 
+	"CONTAINER_SELECTED",
 
 	"@@redux/INIT"
 ]);

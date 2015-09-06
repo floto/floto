@@ -1,11 +1,15 @@
 import { connect } from 'react-redux';
 
+import { Navigation } from 'react-router';
+
 import {Table, Label, Button, SplitButton, MenuItem} from "react-bootstrap";
 var Icon = require('react-fa');
 
 export default connect(state => {
 	return {containers: state.manifest.containers, clientState: state.clientState}
 })(React.createClass({
+			mixins: [Navigation],
+
 			render() {
 				let containers = this.props.containers || [];
 				let safetyArmed = this.props.clientState.safetyArmed;
@@ -13,10 +17,10 @@ export default connect(state => {
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap"}}>
 						<div style={{flex: 1}}>
 							<h2>Containers</h2>
-							<Table bordered striped hover condensed>
+							<Table bordered striped hover condensed style={{cursor: "pointer"}}>
 								<tbody>
 								{containers.map((container) =>
-									<tr key={container.name}>
+									<tr key={container.name} onClick={() => this.transitionTo('/containers/'+container.name)}>
 										<td><Label bsStyle='default'>{container.state || "unknown" }</Label></td>
 										<td>
 											<div style={{width: 100}}><SplitButton bsStyle="primary" bsSize="xs"
@@ -36,7 +40,7 @@ export default connect(state => {
 							</Table>
 						</div>
 						<div style={{flex: 1, paddingLeft: 20}}>
-							<h3>nginx</h3>
+							{this.props.children}
 						</div>
 					</div>
 				</div>;

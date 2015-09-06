@@ -7,6 +7,7 @@ import NavigationBar from "./NavigationBar.js"
 import Application from "./Application"
 
 import Containers from "../containers/Containers"
+import Container from "../containers/Container"
 import Hosts from "../hosts/Hosts"
 import Tasks from "../tasks/Tasks"
 import Task from "../tasks/Task"
@@ -20,6 +21,7 @@ import EventConstants from "../events/constants.js";
 
 var initialState = {
 	manifest: {},
+	templateMap: {},
 	serverState: {},
 	clientState: {
 		safetyArmed: true
@@ -40,7 +42,12 @@ let routes = () => {
 	return <Router history={history}>
 		<Redirect from="/" to="/containers"/>
 		<Route component={Application}>
-			<Route path="/containers" component={Containers}/>
+			<Route path="/containers" component={Containers}>
+				<Route path=":containerName" component={Container} onEnter={
+				(nextState, transition)=>{
+					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
+				}}/>
+			</Route>
 			<Route path="/hosts" component={Hosts}/>
 			<Route path="tasks" component={Tasks}>
 				<Route path=":taskId" component={Task} onEnter={
