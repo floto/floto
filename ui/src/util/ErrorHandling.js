@@ -15,7 +15,6 @@ Promise.onPossiblyUnhandledRejection(function(error){
 });
 
 window.addEventListener("error",(error) => {
-	debugger;
 	notificationService.notify({
 		title: 'Internal error',
 		text: error.message || error,

@@ -37,8 +37,8 @@ export default connect(state => {
 				<NavItemLink to="hosts"><Icon name="server" />&nbsp;&nbsp;Hosts</NavItemLink>
 				<NavItemLink to="tasks"><Icon name="list" />&nbsp;&nbsp;Tasks</NavItemLink>
 				<NavItemLink to="tasks"><Icon name="file-archive-o" />&nbsp;&nbsp;Patches</NavItemLink>
-				<NavDropdown eventKey={4} title={<span><Icon name="download" />&nbsp;&nbsp;Export</span>} id='basic-nav-dropdown'>
-					<li><a href="api/export/container-logs">Container Logs</a></li>
+				<NavDropdown title={<span><Icon name="download" />&nbsp;&nbsp;Export</span>} id='basic-nav-dropdown'>
+					<MenuItem href="api/export/container-logs">Container Logs</MenuItem>
 					<li><a href="api/manifest" download={`manifest-${siteName}-${site.projectRevision}.json`}>Manifest</a></li>
 				</NavDropdown>
 				<NavItemLink to="manifest"><Icon name="file-text-o" />&nbsp;&nbsp;Manifest</NavItemLink>

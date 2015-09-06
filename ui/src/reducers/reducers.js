@@ -76,7 +76,11 @@ addReducers({
 	},
 
 	CONTAINER_FILE_SELECTED(state, selectedFile) {
-		return {selectedFile};
+		return {selectedFile, selectedFileError: null};
+	},
+
+	CONTAINER_FILE_ERROR(state, error) {
+		return {selectedFileError: error, selectedFile: null};
 	},
 
 	TASKS_UPDATED(state, tasks) {

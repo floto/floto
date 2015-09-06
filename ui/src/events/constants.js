@@ -13,6 +13,7 @@ export default _.indexBy([
 
 	"CONTAINER_SELECTED",
 	"CONTAINER_FILE_SELECTED",
+	"CONTAINER_FILE_ERROR",
 
 	"@@redux/INIT"
 ]);
