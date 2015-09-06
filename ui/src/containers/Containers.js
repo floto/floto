@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
 import {Table, Label, Button, SplitButton, MenuItem} from "react-bootstrap";
+var Icon = require('react-fa');
 
 export default connect(state => {
 	return {containers: state.manifest.containers, clientState: state.clientState}
@@ -28,6 +29,7 @@ export default connect(state => {
 										<td><Button bsStyle="success" bsSize="xs" disabled={!safetyArmed}>Start</Button></td>
 										<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}>Stop</Button></td>
 										<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}>Purge Data</Button></td>
+										<td style={{whiteSpace: "nowrap"}}>{container.config.webUrl ? <a href={container.config.webUrl}><Icon name="globe" />&nbsp;&nbsp;Web UI</a> : null}</td>
 										<td style={{width: "100%"}}>{container.name}</td>
 									</tr>)}
 								</tbody>
