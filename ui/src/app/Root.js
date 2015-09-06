@@ -8,6 +8,8 @@ import Application from "./Application"
 
 import Containers from "../containers/Containers"
 import Container from "../containers/Container"
+import ContainerFile from "../containers/ContainerFile"
+
 import Hosts from "../hosts/Hosts"
 import Tasks from "../tasks/Tasks"
 import Task from "../tasks/Task"
@@ -46,7 +48,12 @@ let routes = () => {
 				<Route path=":containerName" component={Container} onEnter={
 				(nextState, transition)=>{
 					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
+				}}>
+					<Route path="file/*" component={ContainerFile} onEnter={
+				(nextState, transition)=>{
+					actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat)
 				}}/>
+				</Route>
 			</Route>
 			<Route path="/hosts" component={Hosts}/>
 			<Route path="tasks" component={Tasks}>

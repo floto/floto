@@ -75,6 +75,10 @@ addReducers({
 		return {selectedContainer, selectedContainerName: containerName};
 	},
 
+	CONTAINER_FILE_SELECTED(state, selectedFile) {
+		return {selectedFile};
+	},
+
 	TASKS_UPDATED(state, tasks) {
 		var activeTask = _.findWhere(tasks, {id: state.activeTaskId});
 		return {tasks, activeTask}

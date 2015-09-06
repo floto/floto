@@ -7,25 +7,17 @@ export function send(request) {
 		var xhr = new XMLHttpRequest;
 		xhr.addEventListener("error", reject);
 		xhr.addEventListener("load", (result) => {
-			let responseJson = JSON.parse(xhr.responseText);
-			resolve(responseJson);
+			if(!request.accept) {
+				let responseJson = JSON.parse(xhr.responseText);
+				resolve(responseJson);
+			} else {
+				resolve(xhr.responseText);
+			}
 		} );
 		xhr.open(request.method || "GET", urlPrefix + request.url);
-		xhr.setRequestHeader("Accept", "application/json");
+		xhr.setRequestHeader("Accept", request.accept || "application/json");
 		xhr.send(null);
 	});
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -20,6 +20,17 @@ export function loadTasks(dispatch) {
 	});
 }
 
+export function loadFile(dispatch, containerName, fileName) {
+	// Fixup template path to handle double slash
+	fileName = fileName.replace("template//", "template/%2F");
+	rest.send({method: "GET", url: `containers/${containerName}/${(fileName)}`, accept: "*"}).then((file) => {
+		console.log(file);
+		dispatch({
+			type: EventConstants.CONTAINER_FILE_SELECTED,
+			payload: file
+		});
+	});
+}
 
 
 

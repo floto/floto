@@ -14,8 +14,8 @@ export default connect(state => {
 				let containers = this.props.containers || [];
 				let safetyArmed = this.props.clientState.safetyArmed;
 				return <div style={{height: "100%"}}>
-					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap"}}>
-						<div style={{flex: 1}}>
+					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
+						<div style={{flex: 1, height: "100%"}}>
 							<h2>Containers</h2>
 							<Table bordered striped hover condensed style={{cursor: "pointer"}}>
 								<tbody>
@@ -39,7 +39,7 @@ export default connect(state => {
 								</tbody>
 							</Table>
 						</div>
-						<div style={{flex: 1, paddingLeft: 20}}>
+						<div style={{flex: 1, paddingLeft: 20, height: "100%"}}>
 							{this.props.children}
 						</div>
 					</div>
@@ -49,6 +49,9 @@ export default connect(state => {
 		}
 	)
 );
+
+
+
 
 
 
