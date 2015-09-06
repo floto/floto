@@ -16,7 +16,12 @@ export function send(request) {
 		} );
 		xhr.open(request.method || "GET", urlPrefix + request.url);
 		xhr.setRequestHeader("Accept", request.accept || "application/json");
-		xhr.send(null);
+		xhr.setRequestHeader("Content-Type", "application/json");
+		if(request.request) {
+			xhr.send(JSON.stringify(request.request));
+		} else {
+			xhr.send();
+		}
 	});
 }
 

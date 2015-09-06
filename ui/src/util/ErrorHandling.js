@@ -4,18 +4,21 @@ import Promise from "bluebird";
 Promise.longStackTraces();
 
 Promise.onPossiblyUnhandledRejection(function(error){
+	if(error && error.suppressLog) {
+		return;
+	}
 	notificationService.notify({
-		title: 'Internal error',
-		text: error,
+		title: 'Internal error in callback',
+		text: error.message || error,
 		type: 'error'
 	});
-	throw error;
 });
 
 window.addEventListener("error",(error) => {
+	debugger;
 	notificationService.notify({
 		title: 'Internal error',
-		text: error.message,
+		text: error.message || error,
 		type: 'error'
 	});
 });

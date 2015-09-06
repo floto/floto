@@ -5,6 +5,10 @@ import { Navigation } from 'react-router';
 import {Table, Label, Button, SplitButton, MenuItem} from "react-bootstrap";
 var Icon = require('react-fa');
 
+import * as actions from "../actions/actions.js";
+
+import RedeployButton from "../components/RedeployButton.js";
+
 export default connect(state => {
 	return {containers: state.manifest.containers, clientState: state.clientState}
 })(React.createClass({
@@ -13,6 +17,7 @@ export default connect(state => {
 			render() {
 				let containers = this.props.containers || [];
 				let safetyArmed = this.props.clientState.safetyArmed;
+				let dispatch = this.props.dispatch;
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%"}}>
@@ -23,12 +28,7 @@ export default connect(state => {
 									<tr key={container.name} onClick={() => this.transitionTo('/containers/'+container.name)}>
 										<td><Label bsStyle='default'>{container.state || "unknown" }</Label></td>
 										<td>
-											<div style={{width: 100}}><SplitButton bsStyle="primary" bsSize="xs"
-																				   title="Redeploy" id="redeploy" disabled={!safetyArmed}>
-												<MenuItem eventKey='1'>Action</MenuItem>
-												<MenuItem eventKey='2'>Another action</MenuItem>
-												<MenuItem eventKey='3'>Something else here</MenuItem>
-											</SplitButton></div>
+											<div style={{width: 100}}><RedeployButton disabled={!safetyArmed} onExecute={(deploymentMode) => actions.redeployContainers(dispatch, [container.name], deploymentMode)}/></div>
 										</td>
 										<td><Button bsStyle="success" bsSize="xs" disabled={!safetyArmed}>Start</Button></td>
 										<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}>Stop</Button></td>

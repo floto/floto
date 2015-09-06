@@ -32,6 +32,16 @@ export function loadFile(dispatch, containerName, fileName) {
 	});
 }
 
+export function redeployContainers(dispatch, containerNames, deploymentMode) {
+	console.log(`Redeploy ${containerNames} ${deploymentMode}`);
+	taskService.httpPost(dispatch, "containers/_redeploy", {containers: containerNames, deploymentMode}).then(() => {
+//		refreshManifest(dispatch);
+	}).finally(() => {
+//		dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED})
+	});
+
+}
+
 
 
 export function refreshManifest(dispatch) {

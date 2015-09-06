@@ -48,18 +48,20 @@ websocketService.addMessageHandler("taskComplete", function(message) {
 	var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
 	if (message.status === "success") {
 		notificationService.notify({
-			title: "Success: " + message.taskTitle + linkText,
+			title: "Task success: " + message.taskTitle + linkText,
 			type: 'success'
 		});
 		deferred.resolve(null);
 	} else {
 		notificationService.notify({
-			title: "Error: " + message.taskTitle + linkText,
+			title: "Task error: " + message.taskTitle + linkText,
 			text: message.errorMessage,
 			type: 'error',
 			hide: false
 		});
-		deferred.reject(message.errorMessage);
+		var error = new Error(message.errorMessage);
+		error.suppressLog = true;
+        deferred.reject(error);
 	}
 });
 

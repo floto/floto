@@ -30,7 +30,7 @@ export default connect(state => {
 
 			</div>
 			<div style={{flex: "1 1 auto", display: "flex", flexDirection: "row", minHeight: "0px"}}>
-				<div style={{flex: "0 1 auto", overflow: "scroll", minHeight: "0px", minWidth: "10em"}}>
+				<div style={{flex: "0 0 auto", overflow: "scroll", minHeight: "0px", width: "10em"}}>
 					<ul className="nav nav-pills nav-stacked" role="tablist">
 						<li key="logtail"><a title="Log (tail)" ui-sref="container.log()">Logtail</a></li>
 						{fileTargets.map((fileTarget) => <li key={fileTarget.file}>
