@@ -1,3 +1,5 @@
+import moment from "moment";
+
 import taskService from "./taskService.js";
 
 
@@ -27,8 +29,9 @@ export default React.createClass({
 			if (entry.stackTrace) {
 				stackTracePart = "<pre>" + entry.stackTrace + "</pre>";
 			}
+			let timestamp = moment(entry.timestamp).format('HH:mm:ss.SSS');
 			var row = "<tr" + classPart + ">";
-			row += "<td>" + entry.timestamp.substring(11, 23) + "</td>";
+			row += "<td>" + timestamp + "</td>";
 			row += "<td>" + entry.message + stackTracePart + "</td>";
 			row += "<td>" + entry.level + "</td>";
 			row += "<td>" + entry.logger + "</td>";
