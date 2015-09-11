@@ -23,15 +23,15 @@ export function loadTasks(dispatch) {
 export function loadFile(dispatch, containerName, fileName) {
 	// Fixup template path to handle double slash
 	fileName = fileName.replace("template//", "template/%2F");
-	rest.send({method: "GET", url: `containers/${containerName}/${(fileName)}`, accept: "*"}).then((file) => {
+	rest.send({method: "GET", url: `containers/${containerName}/${(fileName)}`, accept: "*"}).then((content) => {
 		dispatch({
 			type: EventConstants.CONTAINER_FILE_SELECTED,
-			payload: file
+			payload: {fileName: encodeURIComponent(fileName), content}
 		});
 	}).catch((error) => {
 		dispatch({
 			type: EventConstants.CONTAINER_FILE_ERROR,
-			payload: error
+			payload: {fileName: encodeURIComponent(fileName), error}
 		});
 	});
 }
@@ -40,7 +40,6 @@ export function redeployContainers(dispatch, containerNames, deploymentMode) {
 	taskService.httpPost(dispatch, "containers/_redeploy", {containers: containerNames, deploymentMode});
 
 }
-
 
 
 export function refreshManifest(dispatch) {
@@ -75,3 +74,4 @@ export function recompileManifest(dispatch) {
 export function changeSafety(dispatch, safetyArmed) {
 	dispatch({type: EventConstants.SAFETY_CHANGED, payload: safetyArmed});
 }
+

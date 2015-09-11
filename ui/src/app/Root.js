@@ -48,6 +48,10 @@ let routes = () => {
 				<Route path=":containerName" component={Container} onEnter={
 				(nextState, transition)=>{
 					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
+					// workaround for file loading
+					if(nextState.params.splat) {
+						actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat)
+					}
 				}}>
 					<Route path="file/*" component={ContainerFile} onEnter={
 				(nextState, transition)=>{

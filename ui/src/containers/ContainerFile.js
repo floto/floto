@@ -8,17 +8,13 @@ export default connect(state => {
 		var selectedFileError = this.props.selectedFileError;
         if(!selectedFile) {
 			if(selectedFileError) {
-				return <div className="alert alert-danger">{selectedFileError.message || selectedFileError}</div>
+				return <div className="alert alert-danger">{selectedFileError.error.message || selectedFileError}</div>
 			}
 			return null;
 		}
 		return <div style={{minWidth: "100%", minHeight: "100%"}}>
-			<pre style={{display: "inline-block", wordBreak: "normal", wordWrap: "normal", overflow: "visible", minWidth: "100%", minHeight: "100%"}}>{selectedFile}</pre>
+			<pre style={{display: "inline-block", wordBreak: "normal", wordWrap: "normal", overflow: "visible", minWidth: "100%", minHeight: "100%"}}>{selectedFile.content}</pre>
 		</div>;
 	}
 }));
-
-
-
-
 

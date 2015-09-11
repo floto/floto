@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import {Link} from "react-router";
 
 export default connect(state => {
-	return {container: state.selectedContainer, templateMap: state.templateMap}
+	return {container: state.selectedContainer, templateMap: state.templateMap, selectedFile: state.selectedFile, selectedFileError: state.selectedFileError}
 })(React.createClass({
 	render() {
 		let container = this.props.container;
@@ -24,6 +24,8 @@ export default connect(state => {
 			});
 		});
 
+		let selectedFileName = this.props.selectedFile && this.props.selectedFile.fileName || this.props.selectedFileError && this.props.selectedFileError.fileName;
+
 		return <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
 			<div style={{flex: "0 0 auto", paddingRight: "20px"}}>
 				<h3>{container.name}</h3>
@@ -33,11 +35,18 @@ export default connect(state => {
 				<div style={{flex: "0 0 auto", overflow: "scroll", minHeight: "0px", width: "10em"}}>
 					<ul className="nav nav-pills nav-stacked" role="tablist">
 						<li key="logtail"><a title="Log (tail)" ui-sref="container.log()">Logtail</a></li>
-						{fileTargets.map((fileTarget) => <li key={fileTarget.file}>
-							<Link to={`/containers/${container.name}/file/${fileTarget.file}`}
-								  title={fileTarget.destination}
-								>{fileTarget.name}</Link>
-						</li>)}
+						{fileTargets.map((fileTarget) => {
+							let className = null;
+							if (selectedFileName === fileTarget.file) {
+								className = "active";
+							}
+							return <li key={fileTarget.file} className={className}>
+								<Link to={`/containers/${container.name}/file/${fileTarget.file}`}
+									  query={this.props.location.query}
+									  title={fileTarget.destination}
+									>{fileTarget.name}</Link>
+							</li>
+						})}
 					</ul>
 				</div>
 				<div style={{flex: "1 1 auto", minHeight: "0px", overflow: "scroll"}}>
@@ -46,10 +55,6 @@ export default connect(state => {
 			</div>
 
 		</div>;
-
-
-
-
 
 
 	}
