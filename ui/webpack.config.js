@@ -23,7 +23,7 @@ module.exports = {
 	},
 	module: {
 		loaders: [
-			{test: /\.js$/, loaders: ['react-hot', "babel"], include:[path.join(__dirname, 'src'), path.join(__dirname, 'node_modules', 'react-router-bootstrap')]},
+			{test: /\.js$/, loaders: ["babel"], include:[path.join(__dirname, 'src'), path.join(__dirname, 'node_modules', 'react-router-bootstrap')]},
 			{test: /\.css$/, loader: "style!css"},
 			{test: /\.svg$/, loader: "file-loader"},
 			{
