@@ -4,6 +4,7 @@ import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.core.virtualization.virtualbox.util.VBoxManageUtil;
 import io.github.floto.core.virtualization.workstation.ExternalProgram;
+import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.VirtualboxHypervisorDescription;
 
 import java.io.*;
@@ -336,7 +337,7 @@ public class VirtualboxHypervisorService implements HypervisorService {
 	}
 
 	@Override
-	public void exportVm(final String vmname, final String Path) {
+	public void exportVm(final String vmName, final String hostName, final String Path) {
 		throw new UnsupportedOperationException("Not implemented");
 	}
 

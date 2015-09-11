@@ -5,6 +5,7 @@ import com.google.common.base.Throwables;
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
 
+import io.github.floto.dsl.model.Host;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
@@ -103,7 +104,7 @@ public class WorkstationHypervisorService implements HypervisorService {
     }
 
     @Override
-    public void exportVm(String vmName, String path) {
+    public void exportVm(String vmName, String hostName, String path) {
         String vmxFile = getVmxPath(vmName);
         if(path.endsWith(".zip")) {
             try {

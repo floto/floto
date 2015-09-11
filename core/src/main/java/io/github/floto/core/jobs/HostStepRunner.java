@@ -27,12 +27,12 @@ public class HostStepRunner {
     private final HypervisorService hypervisorService;
     private final String vmName;
 
-    public HostStepRunner(Host host, FlotoService flotoService, Manifest manifest, HypervisorService hypervisorService, String vmName) {
+    public HostStepRunner(Host host, FlotoService flotoService, Manifest manifest, HypervisorService hypervisorService) {
         this.host = host;
+        this.vmName = host.vmConfiguration.vmName;
         this.flotoService = flotoService;
         this.manifest = manifest;
         this.hypervisorService = hypervisorService;
-        this.vmName = vmName;
     }
 
 

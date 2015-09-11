@@ -33,7 +33,7 @@ public class RedeployVmJob extends HypervisorJob<Void> {
 
 			VmConfiguration vmConfiguration = host.vmConfiguration;
 			VmDescription vmDescription = new VmDescription();
-			vmDescription.vmName = host.name;
+			vmDescription.vmName = host.vmConfiguration.vmName!=null?host.vmConfiguration.vmName:host.name;
 			vmDescription.numberOfCores = vmConfiguration.numberOfCores;
 			vmDescription.memoryInMB = vmConfiguration.memoryInMB;
 			vmDescription.vmNetworks = new ArrayList<>(vmConfiguration.networks);
@@ -47,20 +47,20 @@ public class RedeployVmJob extends HypervisorJob<Void> {
 			}
 
 			log.info("Removing old VM");
-			hypervisorService.stopVm(host.name);
-			hypervisorService.deleteVm(host.name);
+			hypervisorService.stopVm(vmDescription.vmName);
+			hypervisorService.deleteVm(vmDescription.vmName);
 
-			log.info("Deploying VM {}", host.name);
+			log.info("Deploying VM {}", vmDescription.vmName);
 			URL ovaUrl = this.flotoService.getTemplateUrl(this.host);
 			log.info("Will use template=" + ovaUrl);
 			hypervisorService.deployVm(ovaUrl, vmDescription);
 
-			log.info("Starting VM {}", host.name);
-			hypervisorService.startVm(host.name);
+			log.info("Starting VM {}", vmDescription.vmName);
+			hypervisorService.startVm(vmDescription.vmName);
 
 			runPostDeploy();
 
-			log.info("Post-deploy completed on host {}", host.name);
+			log.info("Post-deploy completed on host {} ({})", vmDescription.vmName, host.name);
 
 		} finally {
 			deployVmList.remove(host.name);
@@ -70,10 +70,10 @@ public class RedeployVmJob extends HypervisorJob<Void> {
     }
 
     private void runPostDeploy() {
-        HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService, host.name);
-        log.info("Running post-deploy on {}", host.name);
+        HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService);
+        log.info("Running post-deploy on {}", host.vmConfiguration.vmName);
         hostStepRunner.run(host.postDeploySteps);
-        log.info("Running reconfigure on {}", host.name);
+        log.info("Running reconfigure on {}", host.vmConfiguration.vmName);
         hostStepRunner.run(host.reconfigureSteps);
     }
 

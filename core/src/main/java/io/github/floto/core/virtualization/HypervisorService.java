@@ -1,8 +1,9 @@
 package io.github.floto.core.virtualization;
 
+import io.github.floto.dsl.model.Host;
+
 import java.io.File;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.List;
 
 public interface HypervisorService {
@@ -10,7 +11,7 @@ public interface HypervisorService {
 	//url to ova
 	public void deployVm(URL vmUrl, VmDescription desc);
 	
-	public void exportVm(String vmname, String Path);
+	public void exportVm(String vmName, String hostName, String Path);
 	
 	//public void exportVm(String vmname, OutputStream out);
 	

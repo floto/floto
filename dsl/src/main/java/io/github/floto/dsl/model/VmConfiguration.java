@@ -5,6 +5,7 @@ import java.util.List;
 
 public class VmConfiguration {
     public String ovaUrl;
+    public String vmName;
     public int numberOfCores = 4;
     public long memoryInMB = 4096;
     public HypervisorDescription hypervisor = new WorkstationHypervisorDescription();
