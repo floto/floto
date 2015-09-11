@@ -21,7 +21,7 @@ public class ExportVmJob extends HypervisorJob<Void> {
 	public Void execute() throws Exception {
 		log.info("Exporting vm {}", host.name);
 
-		String vmName = host.vmConfiguration.vmName != null ? host.vmConfiguration.vmName : host.name;
+		String vmName = host.vmConfiguration.vmName;
 
 		File rootDefinitionFile = new File(flotoService.getManifest().rootFile);
 		log.info("Root definition file: {}", rootDefinitionFile);
