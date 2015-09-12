@@ -13,6 +13,7 @@ export default connect(state => {
 		selectedContainer: state.selectedContainer
 	};
 })(React.createClass({
+	displayName: "ContainerGroup",
 	mixins: [Navigation],
 
 	navigateToContainer(containerName) {

@@ -13,7 +13,7 @@ import * as actions from "../actions/actions.js";
 import RedeployButton from "../components/RedeployButton.js";
 
 let containerGroupings = {
-	none: {title: "None", groupFn: (containers) => [{containers: containers}]},
+	none: {title: "None", groupFn: (containers) => [{containers: containers, id: "all"}]},
 	host: {title: "By host", groupFn: (containers) => {
 		let result = {};
 		containers.forEach(function (container) {
@@ -41,6 +41,7 @@ export default connect(state => {
 		selectedContainer: state.selectedContainer
 	};
 })(React.createClass({
+			displayName: "Containers",
 			mixins: [Navigation],
 
 			onChangeContainerGrouping(event, grouping) {
@@ -89,7 +90,7 @@ export default connect(state => {
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
 								{groups.map((group) =>
-								<ContainerGroup group={group} location={this.props.location}/>)}
+								<ContainerGroup key={group.title || group.id} group={group} location={this.props.location}/>)}
 							</div>
 						</div>
 						<div style={{flex: 1, paddingLeft: 20, height: "100%"}}>
