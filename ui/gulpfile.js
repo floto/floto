@@ -2,6 +2,7 @@
 
 var gulp = require('gulp');
 var gutil = require("gulp-util");
+var eslint = require('gulp-eslint');
 var webpack = require('webpack');
 var WebpackDevServer = require("webpack-dev-server");
 
@@ -86,4 +87,14 @@ gulp.task('build', function (callback) {
 		}));
 		callback();
 	});
+});
+
+gulp.task('lint', function () {
+	return gulp.src(['src/**/*.js'])
+		// eslint() attaches the lint output to the eslint property
+		// of the file object so it can be used by other modules.
+		.pipe(eslint())
+		// eslint.format() outputs the lint results to the console.
+		// Alternatively use eslint.formatEach() (see Docs).
+		.pipe(eslint.format());
 });
