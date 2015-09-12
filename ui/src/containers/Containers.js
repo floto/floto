@@ -67,7 +67,7 @@ export default connect(state => {
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
 							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
-								<h2>Containers</h2>
+								<h2>Containers <span className="text-muted">({containers.length})</span></h2>
 								<ButtonGroup>
 									<Button>Refresh</Button>
 									<RedeployButton disabled={!safetyArmed} size="medium"
@@ -77,7 +77,7 @@ export default connect(state => {
 									<Button bsStyle="danger"
 											disabled={!safetyArmed}>Stop all</Button>
 								</ButtonGroup>
-								<span className="pull-right">Group by:&nbsp;&nbsp;&nbsp;
+								<span className="pull-right">Grouping:&nbsp;&nbsp;&nbsp;
 									<DropdownButton bsStyle="default" title={containerGrouping.title}
 													id="container-grouping"
 													disabled={!safetyArmed} onSelect={this.onChangeContainerGrouping}>

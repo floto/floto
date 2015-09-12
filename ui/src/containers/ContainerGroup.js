@@ -58,7 +58,7 @@ export default connect(state => {
 		let containers = group.containers;
 		let titleComponent = null;
 		if (group.title) {
-			titleComponent = <h4>{group.title}<span className="pull-right"><ButtonGroup bsSize='small'>
+			titleComponent = <h4>{group.title} <span className="text-muted">({containers.length})</span><span className="pull-right"><ButtonGroup bsSize='small'>
 				<Button>Refresh</Button>
 				<RedeployButton disabled={!safetyArmed} size="small"
 								onExecute={(deploymentMode) => actions.redeployContainers(dispatch, group.containerNames, deploymentMode)}/>
