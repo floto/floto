@@ -2,6 +2,9 @@ import { connect } from 'react-redux';
 
 import { Navigation } from 'react-router';
 
+
+import ContainerGroup from "./ContainerGroup.js";
+
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 var Icon = require('react-fa');
 
@@ -10,9 +13,25 @@ import * as actions from "../actions/actions.js";
 import RedeployButton from "../components/RedeployButton.js";
 
 let containerGroupings = {
-	none: "None",
-	host: "By host",
-	image: "By image"
+	none: {title: "None", groupFn: (containers) => [{containers: containers}]},
+	host: {title: "By host", groupFn: (containers) => {
+		let result = {};
+		containers.forEach(function (container) {
+			var hostGroup = result[container.host] || {title: container.host, containers: []};
+			result[container.host] = hostGroup;
+			hostGroup.containers.push(container);
+		});
+		return _.values(result);
+	}},
+	image: {title: "By image", groupFn: (containers) => {
+		let result = {};
+		containers.forEach(function (container) {
+			var imageGroup = result[container.image] || {title: container.image, containers: []};
+			result[container.image] = imageGroup;
+			imageGroup.containers.push(container);
+		});
+		return _.values(result);
+	}}
 };
 
 export default connect(state => {
@@ -32,49 +51,18 @@ export default connect(state => {
 				this.transitionTo(this.props.location.pathname, query);
 			},
 
-			navigateToContainer(containerName) {
-				let newUrl = '/containers/' + containerName;
-				if (this.props.selectedContainer) {
-					let currentUrl = "/containers/" + this.props.selectedContainer.name;
-					newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
-				}
-				this.transitionTo(newUrl, this.props.location.query);
-			},
-
-			renderContainer(container) {
-				let safetyArmed = this.safetyArmed;
-				let className = null;
-				if (this.props.selectedContainer === container) {
-					className = "info";
-				}
-				return <tr key={container.name} className={className}
-						   onClick={this.navigateToContainer.bind(this, container.name)}>
-					<td><Label bsStyle='default'>{container.state || "unknown" }</Label></td>
-					<td>
-						<div style={{width: 100}}><RedeployButton disabled={!safetyArmed}
-																  onExecute={(deploymentMode) => actions.redeployContainers(this.props.dispatch, [container.name], deploymentMode)}/>
-						</div>
-					</td>
-					<td><Button bsStyle="success" bsSize="xs"
-								disabled={!safetyArmed}>Start</Button></td>
-					<td><Button bsStyle="danger" bsSize="xs"
-								disabled={!safetyArmed}>Stop</Button></td>
-					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}>Purge
-						Data</Button></td>
-					<td style={{whiteSpace: "nowrap"}}>{container.config.webUrl ?
-						<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;Web UI</a> : null}</td>
-					<td style={{width: "100%"}}>{container.name}<span
-						className="text-muted pull-right">{container.config.version}</span></td>
-				</tr>;
-			},
-
 			render() {
 				let containers = this.props.containers || [];
 				let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
 				let dispatch = this.props.dispatch;
-				let containerGrouping = (this.props.location.query || {}).grouping || "none";
-				let containerGroupingName = containerGroupings[containerGrouping];
-				let containerNames = [];
+				let containerGroupingKey = (this.props.location.query || {}).grouping || "none";
+				let containerGrouping = containerGroupings[containerGroupingKey] || containerGroupings.none;
+				let allContainerNames = _.pluck(containers, "name");
+				let groups = containerGrouping.groupFn(containers);
+				groups = _.sortBy(groups, "title");
+				_.forEach(groups, group => {
+					group.containerNames = _.pluck(group.containers, "name");
+				});
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
@@ -83,28 +71,25 @@ export default connect(state => {
 								<ButtonGroup>
 									<Button>Refresh</Button>
 									<RedeployButton disabled={!safetyArmed} size="medium"
-													onExecute={(deploymentMode) => actions.redeployContainers(dispatch, containerNames, deploymentMode)}/>
+													onExecute={(deploymentMode) => actions.redeployContainers(dispatch, allContainerNames, deploymentMode)}/>
 									<Button bsStyle="success"
 											disabled={!safetyArmed}>Start all</Button>
 									<Button bsStyle="danger"
 											disabled={!safetyArmed}>Stop all</Button>
 								</ButtonGroup>
 								<span className="pull-right">Group by:&nbsp;&nbsp;&nbsp;
-									<DropdownButton bsStyle="default" title={containerGroupingName}
+									<DropdownButton bsStyle="default" title={containerGrouping.title}
 													id="container-grouping"
 													disabled={!safetyArmed} onSelect={this.onChangeContainerGrouping}>
 										{_.map(containerGroupings, (grouping, key) =>
 											<MenuItem key={key} eventKey={key}><span
-												style={{fontWeight: key === containerGrouping ? "bold": "normal"}}>{grouping}</span></MenuItem>)}
+												style={{fontWeight: key === containerGroupingKey ? "bold": "normal"}}>{grouping.title}</span></MenuItem>)}
 									</DropdownButton>
 								</span>
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
-								<Table bordered striped hover condensed style={{cursor: "pointer"}}>
-									<tbody>
-									{containers.map(this.renderContainer)}
-									</tbody>
-								</Table>
+								{groups.map((group) =>
+								<ContainerGroup group={group}/>)}
 							</div>
 						</div>
 						<div style={{flex: 1, paddingLeft: 20, height: "100%"}}>
