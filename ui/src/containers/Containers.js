@@ -89,7 +89,7 @@ export default connect(state => {
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
 								{groups.map((group) =>
-								<ContainerGroup group={group}/>)}
+								<ContainerGroup group={group} location={this.props.location}/>)}
 							</div>
 						</div>
 						<div style={{flex: 1, paddingLeft: 20, height: "100%"}}>
