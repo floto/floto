@@ -3,8 +3,6 @@ import { Navigation } from 'react-router';
 import { connect } from 'react-redux';
 var Icon = require('react-fa');
 
-import * as actions from "../actions/actions.js";
-
 import RedeployButton from "../components/RedeployButton.js";
 
 export default connect(state => {
@@ -15,6 +13,9 @@ export default connect(state => {
 })(React.createClass({
 	displayName: "ContainerGroup",
 	mixins: [Navigation],
+	contextTypes: {
+		actions: React.PropTypes.object.isRequired
+	},
 
 	navigateToContainer(containerName) {
 		let newUrl = '/containers/' + containerName;
@@ -26,6 +27,7 @@ export default connect(state => {
 	},
 
 	renderContainer(container) {
+		let actions = this.context.actions;
 		let safetyArmed = this.safetyArmed;
 		let className = null;
 		if (this.props.selectedContainer === container) {
@@ -36,7 +38,7 @@ export default connect(state => {
 			<td><Label bsStyle='default'>{container.state || "unknown" }</Label></td>
 			<td>
 				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed}
-														  onExecute={(deploymentMode) => actions.redeployContainers(this.props.dispatch, [container.name], deploymentMode)}/>
+														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>
 			</td>
 			<td><Button bsStyle="success" bsSize="xs"
@@ -53,7 +55,7 @@ export default connect(state => {
 	},
 
 	render() {
-		let dispatch = this.props.dispatch;
+		let actions = this.context.actions;
 		let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
 		var group = this.props.group;
 		let containers = group.containers;
@@ -62,7 +64,7 @@ export default connect(state => {
 			titleComponent = <h4>{group.title} <span className="text-muted">({containers.length})</span><span className="pull-right"><ButtonGroup bsSize='small'>
 				<Button>Refresh</Button>
 				<RedeployButton disabled={!safetyArmed} size="small"
-								onExecute={(deploymentMode) => actions.redeployContainers(dispatch, group.containerNames, deploymentMode)}/>
+								onExecute={(deploymentMode) => actions.redeployContainers(group.containerNames, deploymentMode)}/>
 				<Button bsStyle="success"
 						disabled={!safetyArmed}>Start all</Button>
 				<Button bsStyle="danger"

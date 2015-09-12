@@ -8,8 +8,6 @@ import ContainerGroup from "./ContainerGroup.js";
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 var Icon = require('react-fa');
 
-import * as actions from "../actions/actions.js";
-
 import RedeployButton from "../components/RedeployButton.js";
 
 let containerGroupings = {
@@ -43,6 +41,9 @@ export default connect(state => {
 })(React.createClass({
 			displayName: "Containers",
 			mixins: [Navigation],
+			contextTypes: {
+				actions: React.PropTypes.object.isRequired
+			},
 
 			onChangeContainerGrouping(event, grouping) {
 				let query = {grouping};
@@ -53,9 +54,9 @@ export default connect(state => {
 			},
 
 			render() {
+				let actions = this.context.actions;
 				let containers = this.props.containers || [];
 				let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
-				let dispatch = this.props.dispatch;
 				let containerGroupingKey = (this.props.location.query || {}).grouping || "none";
 				let containerGrouping = containerGroupings[containerGroupingKey] || containerGroupings.none;
 				let allContainerNames = _.pluck(containers, "name");
@@ -72,7 +73,7 @@ export default connect(state => {
 								<ButtonGroup>
 									<Button>Refresh</Button>
 									<RedeployButton disabled={!safetyArmed} size="medium"
-													onExecute={(deploymentMode) => actions.redeployContainers(dispatch, allContainerNames, deploymentMode)}/>
+													onExecute={(deploymentMode) => actions.redeployContainers( allContainerNames, deploymentMode)}/>
 									<Button bsStyle="success"
 											disabled={!safetyArmed}>Start all</Button>
 									<Button bsStyle="danger"

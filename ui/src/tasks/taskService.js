@@ -25,14 +25,14 @@ taskService.getTaskCompletionPromise = function getTaskCompletionPromise(taskId)
 	return deferred.promise;
 };
 
-let globalDispatch;
+let globalStore;
 
-taskService.httpPost = function httpPost(dispatch, url, request) {
-	globalDispatch = dispatch;
+taskService.httpPost = function httpPost(store, url, request) {
+	globalStore = store;
 	return send({url, request, method: "POST"}).then(function (taskInfo) {
 		var taskId = taskInfo.taskId;
 		var linkText = ' <a href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
-		actions.loadTasks(dispatch);
+		actions.loadTasks(store);
 		notificationService.notify({
 			title: "Task started: " + taskInfo.title + linkText,
 			type: 'info'
@@ -42,7 +42,7 @@ taskService.httpPost = function httpPost(dispatch, url, request) {
 };
 
 websocketService.addMessageHandler("taskComplete", function (message) {
-	actions.loadTasks(globalDispatch);
+	actions.loadTasks(globalStore);
 	var taskId = message.taskId;
 	var deferred = taskCompletionPromises[taskId];
 	var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
@@ -51,7 +51,9 @@ websocketService.addMessageHandler("taskComplete", function (message) {
 			title: "Task success: " + message.taskTitle + linkText,
 			type: 'success'
 		});
-		deferred.resolve(null);
+		if(deferred && deferred.resolve) {
+			deferred.resolve(null);
+		}
 	} else {
 		notificationService.notify({
 			title: "Task error: " + message.taskTitle + linkText,
@@ -61,7 +63,9 @@ websocketService.addMessageHandler("taskComplete", function (message) {
 		});
 		var error = new Error(message.errorMessage);
 		error.suppressLog = true;
-		deferred.reject(error);
+		if(deferred && deferred.reject) {
+			deferred.reject(error);
+		}
 	}
 });
 

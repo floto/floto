@@ -54,7 +54,7 @@ export default connect(state => {
 		}
 		return <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
 			<div style={{flex: "0 0 auto", paddingRight: "20px"}}>
-				<h3 style={{maxHeight: 55, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{task.title}<span className="text-muted pull-right">#{task.id}</span></h3>
+				<h3 style={{overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{task.title}<span className="text-muted pull-right">#{task.id}</span></h3>
 
 				<div className="checkbox pull-right">
 					<label>

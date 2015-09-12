@@ -32,6 +32,8 @@ var initialState = {
 };
 const store = createStore(reducers, initialState);
 
+const storeActions = _.mapValues(actions, (action) => action.bind(null, store));
+
 if (module.hot) {
 	// Enable Webpack hot module replacement for reducers
 	module.hot.accept('../reducers/reducers', () => {
@@ -50,12 +52,12 @@ let routes = () => {
 					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
 					// workaround for file loading
 					if(nextState.params.splat) {
-						actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat);
+						actions.loadFile(store, nextState.params.containerName, nextState.params.splat);
 					}
 				}}>
 					<Route path="file/*" component={ContainerFile} onEnter={
 				(nextState, transition)=>{
-					actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat);
+					actions.loadFile(store, nextState.params.containerName, nextState.params.splat);
 				}}/>
 				</Route>
 			</Route>
@@ -71,6 +73,16 @@ let routes = () => {
 	</Router>;
 };
 export default React.createClass({
+
+	childContextTypes: {
+		actions: React.PropTypes.object.isRequired
+	},
+
+	getChildContext: function() {
+		return { actions: storeActions };
+	},
+
+
 	render() {
 		return <div style={{}}>
 			<Provider key="provider" store={store}>
@@ -80,7 +92,7 @@ export default React.createClass({
 	}
 });
 window.addEventListener("load", function () {
-	actions.refreshManifest(store.dispatch);
-	actions.getFlotoInfo(store.dispatch);
+	actions.refreshManifest(store);
+	actions.getFlotoInfo(store);
 });
 

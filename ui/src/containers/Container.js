@@ -54,7 +54,7 @@ export default connect(state => {
 						})}
 					</ul>
 				</div>
-				<div style={{flex: "1 1 auto", minHeight: "0px", overflow: "scroll"}}>
+				<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", overflow: "scroll"}}>
 					{this.props.children}
 				</div>
 			</div>

@@ -7,11 +7,7 @@ Promise.onPossiblyUnhandledRejection(function (error) {
 	if (error && error.suppressLog) {
 		return;
 	}
-	notificationService.notify({
-		title: 'Internal error in callback',
-		text: error.message || error,
-		type: 'error'
-	});
+	throw error;
 });
 
 window.addEventListener("error", (error) => {

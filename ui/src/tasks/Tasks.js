@@ -27,6 +27,9 @@ export default connect(state => {
 	return {tasks: state.tasks, activeTask: state.activeTask};
 })(React.createClass({
 			mixins: [Navigation],
+			contextTypes: {
+				actions: React.PropTypes.object.isRequired
+			},
 
 			componentDidMount() {
 				this.refreshTasks();
@@ -34,7 +37,7 @@ export default connect(state => {
 
 
 			refreshTasks() {
-				actions.loadTasks(this.props.dispatch);
+				this.context.actions.loadTasks();
 			},
 
 

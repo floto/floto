@@ -3,48 +3,48 @@ import EventConstants from "../events/constants.js";
 import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
 
-export function updateManifest(dispatch, manifest) {
-	dispatch({
+export function updateManifest(store, manifest) {
+	store.dispatch({
 		type: EventConstants.MANIFEST_UPDATED,
 		payload: manifest
 	});
 }
 
 
-export function loadTasks(dispatch) {
+export function loadTasks(store) {
 	rest.send({method: "GET", url: "tasks"}).then((tasks) => {
-		dispatch({
+		store.dispatch({
 			type: EventConstants.TASKS_UPDATED,
 			payload: tasks
 		});
 	});
 }
 
-export function loadFile(dispatch, containerName, fileName) {
+export function loadFile(store, containerName, fileName) {
 	// Fixup template path to handle double slash
 	fileName = fileName.replace("template//", "template/%2F");
 	rest.send({method: "GET", url: `containers/${containerName}/${(fileName)}`, accept: "*"}).then((content) => {
-		dispatch({
+		store.dispatch({
 			type: EventConstants.CONTAINER_FILE_SELECTED,
 			payload: {fileName: encodeURIComponent(fileName), content}
 		});
 	}).catch((error) => {
-		dispatch({
+		store.dispatch({
 			type: EventConstants.CONTAINER_FILE_ERROR,
 			payload: {fileName: encodeURIComponent(fileName), error}
 		});
 	});
 }
 
-export function redeployContainers(dispatch, containerNames, deploymentMode) {
-	taskService.httpPost(dispatch, "containers/_redeploy", {containers: containerNames, deploymentMode});
+export function redeployContainers(store, containerNames, deploymentMode) {
+	taskService.httpPost(store, "containers/_redeploy", {containers: containerNames, deploymentMode});
 
 }
 
 
-export function refreshManifest(dispatch) {
+export function refreshManifest(store) {
 	rest.send({method: "GET", url: "manifest"}).then((manifest) => {
-		updateManifest(dispatch, manifest);
+		updateManifest(store, manifest);
 		let title = "floto - " + (manifest.site.projectName || manifest.site.domainName);
 		if (manifest.site.environment) {
 			title += " (" + manifest.site.environment + ")";
@@ -54,24 +54,28 @@ export function refreshManifest(dispatch) {
 	});
 }
 
-export function getFlotoInfo(dispatch) {
+export function getFlotoInfo(store) {
 	rest.send({method: "GET", url: "info"}).then((info) => {
-		dispatch({type: EventConstants.FLOTO_INFO_UPDATED, payload: info});
+		store.dispatch({type: EventConstants.FLOTO_INFO_UPDATED, payload: info});
 
 	});
 }
 
-export function recompileManifest(dispatch) {
-	dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
-	taskService.httpPost(dispatch, "manifest/compile").then(() => {
-		refreshManifest(dispatch);
+export function recompileManifest(store) {
+	store.dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
+	taskService.httpPost(store, "manifest/compile").then(() => {
+		refreshManifest(store);
+		let state = store.getState();
+		if(state.selectedContainer && state.selectedFile) {
+			loadFile(store, state.selectedContainer.name, decodeURIComponent(state.selectedFile.fileName));
+		}
 	}).finally(() => {
-		dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});
+		store.dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});
 	});
 }
 
 
-export function changeSafety(dispatch, safetyArmed) {
-	dispatch({type: EventConstants.SAFETY_CHANGED, payload: safetyArmed});
+export function changeSafety(store, safetyArmed) {
+	store.dispatch({type: EventConstants.SAFETY_CHANGED, payload: safetyArmed});
 }
 

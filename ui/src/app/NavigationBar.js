@@ -4,8 +4,6 @@ import { connect } from 'react-redux';
 
 var Icon = require('react-fa');
 
-import * as actions from "../actions/actions.js";
-
 import Switch from "../components/Switch.js";
 
 
@@ -13,17 +11,16 @@ import Switch from "../components/Switch.js";
 export default connect(state => {
 	return {serverState: state.serverState, clientState: state.clientState, site: state.manifest.site};
 })(React.createClass({
-
-	getInitialState() {
-		return {};
+	contextTypes: {
+		actions: React.PropTypes.object.isRequired
 	},
 
 	recompileManifest() {
-		actions.recompileManifest(this.props.dispatch);
+		this.context.actions.recompileManifest();
 	},
 
 	onChangeSafety(safetyArmed) {
-		actions.changeSafety(this.props.dispatch, safetyArmed);
+		this.context.actions.changeSafety(safetyArmed);
 	},
 
 
