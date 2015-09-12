@@ -1,19 +1,19 @@
-import { createStore, combineReducers, compose, applyMiddleware } from 'redux'
-import { Provider } from 'react-redux'
-import { Redirect, Router, Route } from 'react-router'
+import { createStore, combineReducers, compose, applyMiddleware } from 'redux';
+import { Provider } from 'react-redux';
+import { Redirect, Router, Route } from 'react-router';
 import { history } from 'react-router/lib/HashHistory';
 
-import NavigationBar from "./NavigationBar.js"
-import Application from "./Application"
+import NavigationBar from "./NavigationBar.js";
+import Application from "./Application";
 
-import Containers from "../containers/Containers"
-import Container from "../containers/Container"
-import ContainerFile from "../containers/ContainerFile"
+import Containers from "../containers/Containers";
+import Container from "../containers/Container";
+import ContainerFile from "../containers/ContainerFile";
 
-import Hosts from "../hosts/Hosts"
-import Tasks from "../tasks/Tasks"
-import Task from "../tasks/Task"
-import Manifest from "../manifest/Manifest"
+import Hosts from "../hosts/Hosts";
+import Tasks from "../tasks/Tasks";
+import Task from "../tasks/Task";
+import Manifest from "../manifest/Manifest";
 
 import reducers from '../reducers/reducers';
 
@@ -50,12 +50,12 @@ let routes = () => {
 					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
 					// workaround for file loading
 					if(nextState.params.splat) {
-						actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat)
+						actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat);
 					}
 				}}>
 					<Route path="file/*" component={ContainerFile} onEnter={
 				(nextState, transition)=>{
-					actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat)
+					actions.loadFile(store.dispatch, nextState.params.containerName, nextState.params.splat);
 				}}/>
 				</Route>
 			</Route>
@@ -68,7 +68,7 @@ let routes = () => {
 			</Route>
 			<Route path="/manifest" component={Manifest}/>
 		</Route>
-	</Router>
+	</Router>;
 };
 export default React.createClass({
 	render() {

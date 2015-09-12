@@ -41,7 +41,7 @@ taskService.httpPost = function httpPost(dispatch, url, request) {
 	});
 };
 
-websocketService.addMessageHandler("taskComplete", function(message) {
+websocketService.addMessageHandler("taskComplete", function (message) {
 	actions.loadTasks(globalDispatch);
 	var taskId = message.taskId;
 	var deferred = taskCompletionPromises[taskId];
@@ -61,7 +61,7 @@ websocketService.addMessageHandler("taskComplete", function(message) {
 		});
 		var error = new Error(message.errorMessage);
 		error.suppressLog = true;
-        deferred.reject(error);
+		deferred.reject(error);
 	}
 });
 
@@ -70,7 +70,7 @@ var logSubscriptions = {};
 function sendMessage(message) {
 	websocketService.sendMessage(message);
 }
-websocketService.addMessageHandler("taskLogEntry", function(message) {
+websocketService.addMessageHandler("taskLogEntry", function (message) {
 	var streamId = message.streamId;
 	logSubscriptions[streamId](message.entry);
 });
@@ -84,7 +84,7 @@ function getNextStreamId() {
 }
 taskService.subscribeToLog = function subscribeToLog(taskId, callback) {
 	var streamId = getNextStreamId();
-	logSubscriptions[ streamId] = callback;
+	logSubscriptions[streamId] = callback;
 	var message = {
 		type: "subscribeToTaskLog",
 		taskId: taskId,

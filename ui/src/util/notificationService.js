@@ -1,4 +1,3 @@
-
 require('expose?jQuery!expose?$!jquery');
 require("script!../../lib/pnotify/pnotify.custom.min.js");
 

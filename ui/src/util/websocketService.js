@@ -22,7 +22,7 @@ if (loc.protocol === "https:") {
 } else {
 	websocketUri = "ws:";
 }
-if(loc.host === "localhost:8081") {
+if (loc.host === "localhost:8081") {
 	// Development mode
 	websocketUri += "//localhost:40004";
 } else {
@@ -36,7 +36,9 @@ function connectWebSocket(timeout) {
 			var ws = new WebSocket(websocketUri);
 
 			ws.onopen = function () {
+				/*eslint-disable no-console */
 				console.log("Websocket connected");
+				/*eslint-enable no-console */
 				resolve(ws);
 			};
 			ws.onmessage = function (evt) {
@@ -45,20 +47,24 @@ function connectWebSocket(timeout) {
 				if (messageHandlerFn) {
 					messageHandlerFn(message);
 				} else {
+					/*eslint-disable no-console */
 					console.log("ERROR: unknown websocket message " + message.type);
 					console.log(message);
+					/*eslint-enable no-console */
 				}
 			};
 			ws.onclose = function () {
 				// websocket is closed.
+				/*eslint-disable no-console */
 				console.log("Connection is closed...");
+				/*eslint-enable no-console */
 				connectWebSocket(1000);
 			};
 		}, timeout);
 	});
 }
 
-websocketService.start = function() {
+websocketService.start = function () {
 	connectWebSocket(0);
 };
 

@@ -2,7 +2,12 @@ import { connect } from 'react-redux';
 import {Link} from "react-router";
 
 export default connect(state => {
-	return {container: state.selectedContainer, templateMap: state.templateMap, selectedFile: state.selectedFile, selectedFileError: state.selectedFileError}
+	return {
+		container: state.selectedContainer,
+		templateMap: state.templateMap,
+		selectedFile: state.selectedFile,
+		selectedFileError: state.selectedFileError
+	};
 })(React.createClass({
 	render() {
 		let container = this.props.container;
@@ -45,7 +50,7 @@ export default connect(state => {
 									  query={this.props.location.query}
 									  title={fileTarget.destination}
 									>{fileTarget.name}</Link>
-							</li>
+							</li>;
 						})}
 					</ul>
 				</div>

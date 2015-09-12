@@ -76,7 +76,7 @@ addReducers({
 
 	TASKS_UPDATED(state, tasks) {
 		var activeTask = _.findWhere(tasks, {id: state.activeTaskId});
-		return {tasks, activeTask}
+		return {tasks, activeTask};
 	},
 
 	TASK_ACTIVATED(state, taskId) {
@@ -100,9 +100,11 @@ export default (state, event) => {
 	if (reducer) {
 		result = _.extend({}, state, reducer(state, event.payload));
 	} else {
+		/*eslint-disable no-console */
 		console.warn(`Warning: No reducer registered for event type ${event.type}}`);
 		console.trace("Stack trace");
+		/*eslint-enable no-console */
 	}
 	return result;
-}
+};
 

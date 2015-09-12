@@ -20,7 +20,7 @@ export default connect(state => {
 		clientState: state.clientState,
 		containers: state.manifest.containers,
 		selectedContainer: state.selectedContainer
-	}
+	};
 })(React.createClass({
 			mixins: [Navigation],
 
@@ -29,7 +29,7 @@ export default connect(state => {
 				if (grouping === "none") {
 					query = null;
 				}
-				this.transitionTo(this.props.location.pathname, query)
+				this.transitionTo(this.props.location.pathname, query);
 			},
 
 			navigateToContainer(containerName) {
@@ -44,15 +44,15 @@ export default connect(state => {
 			renderContainer(container) {
 				let safetyArmed = this.safetyArmed;
 				let className = null;
-				if(this.props.selectedContainer === container) {
+				if (this.props.selectedContainer === container) {
 					className = "info";
 				}
 				return <tr key={container.name} className={className}
-					onClick={this.navigateToContainer.bind(this, container.name)}>
+						   onClick={this.navigateToContainer.bind(this, container.name)}>
 					<td><Label bsStyle='default'>{container.state || "unknown" }</Label></td>
 					<td>
 						<div style={{width: 100}}><RedeployButton disabled={!safetyArmed}
-																  onExecute={(deploymentMode) => actions.redeployContainers(dispatch, [container.name], deploymentMode)}/>
+																  onExecute={(deploymentMode) => actions.redeployContainers(this.props.dispatch, [container.name], deploymentMode)}/>
 						</div>
 					</td>
 					<td><Button bsStyle="success" bsSize="xs"
@@ -65,7 +65,7 @@ export default connect(state => {
 						<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;Web UI</a> : null}</td>
 					<td style={{width: "100%"}}>{container.name}<span
 						className="text-muted pull-right">{container.config.version}</span></td>
-				</tr>
+				</tr>;
 			},
 
 			render() {
@@ -74,6 +74,7 @@ export default connect(state => {
 				let dispatch = this.props.dispatch;
 				let containerGrouping = (this.props.location.query || {}).grouping || "none";
 				let containerGroupingName = containerGroupings[containerGrouping];
+				let containerNames = [];
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
@@ -82,7 +83,7 @@ export default connect(state => {
 								<ButtonGroup>
 									<Button>Refresh</Button>
 									<RedeployButton disabled={!safetyArmed} size="medium"
-													onExecute={(deploymentMode) => actions.redeployContainers(dispatch, [container.name], deploymentMode)}/>
+													onExecute={(deploymentMode) => actions.redeployContainers(dispatch, containerNames, deploymentMode)}/>
 									<Button bsStyle="success"
 											disabled={!safetyArmed}>Start all</Button>
 									<Button bsStyle="danger"

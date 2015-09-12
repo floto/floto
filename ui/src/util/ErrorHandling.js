@@ -3,8 +3,8 @@ import notificationService from "../util/notificationService.js";
 import Promise from "bluebird";
 Promise.longStackTraces();
 
-Promise.onPossiblyUnhandledRejection(function(error){
-	if(error && error.suppressLog) {
+Promise.onPossiblyUnhandledRejection(function (error) {
+	if (error && error.suppressLog) {
 		return;
 	}
 	notificationService.notify({
@@ -14,7 +14,7 @@ Promise.onPossiblyUnhandledRejection(function(error){
 	});
 });
 
-window.addEventListener("error",(error) => {
+window.addEventListener("error", (error) => {
 	notificationService.notify({
 		title: 'Internal error',
 		text: error.message || error,

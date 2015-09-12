@@ -46,7 +46,7 @@ export function refreshManifest(dispatch) {
 	rest.send({method: "GET", url: "manifest"}).then((manifest) => {
 		updateManifest(dispatch, manifest);
 		let title = "floto - " + (manifest.site.projectName || manifest.site.domainName);
-		if(manifest.site.environment) {
+		if (manifest.site.environment) {
 			title += " (" + manifest.site.environment + ")";
 		}
 		document.title = title;
@@ -66,7 +66,7 @@ export function recompileManifest(dispatch) {
 	taskService.httpPost(dispatch, "manifest/compile").then(() => {
 		refreshManifest(dispatch);
 	}).finally(() => {
-		dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED})
+		dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});
 	});
 }
 

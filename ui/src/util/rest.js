@@ -18,7 +18,7 @@ export function send(request) {
 				try {
 					let responseJson = JSON.parse(xhr.responseText);
 					reject(responseJson);
-				} catch(ignored) {
+				} catch (ignored) {
 					reject(xhr.responseText);
 				}
 

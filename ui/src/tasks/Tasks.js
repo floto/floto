@@ -24,7 +24,7 @@ const classMap = {
 	ERROR: "danger"
 };
 export default connect(state => {
-	return {tasks: state.tasks, activeTask: state.activeTask}
+	return {tasks: state.tasks, activeTask: state.activeTask};
 })(React.createClass({
 			mixins: [Navigation],
 
@@ -43,7 +43,7 @@ export default connect(state => {
 				let spin = task.status === "RUNNING";
 				let className = classMap[task.status];
 				let style = null;
-				if(task === this.props.activeTask) {
+				if (task === this.props.activeTask) {
 					className = "info";
 				}
 				return <tr key={task.id} className={className}

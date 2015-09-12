@@ -1,8 +1,6 @@
-
 require('expose?jQuery!expose?$!jquery');
 require("script!bootstrap-switch");
 require("bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css");
-
 
 
 export default React.createClass({
@@ -30,7 +28,7 @@ export default React.createClass({
 	},
 
 	render() {
-		return <input type="checkbox" name="my-checkbox" checked onChange={this.onChange} />;
+		return <input type="checkbox" name="my-checkbox" checked onChange={this.onChange}/>;
 	}
 });
 

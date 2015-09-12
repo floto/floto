@@ -15,7 +15,7 @@ export default React.createClass({
 		var table = $(React.findDOMNode(this.refs.table));
 
 		taskService.subscribeToLog(this.props.taskId, (entry) => {
-			if(!this.isMounted()) {
+			if (!this.isMounted()) {
 				// Not mounted anymore, bail early
 				// TODO: unsubscribe on unmount
 				return;
@@ -23,7 +23,7 @@ export default React.createClass({
 			var cls = classMap[entry.level];
 			var classPart = "";
 			if (cls) {
-				classPart = ' class="' + cls + '" '
+				classPart = ' class="' + cls + '" ';
 			}
 			var stackTracePart = "";
 			if (entry.stackTrace) {

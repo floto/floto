@@ -3,27 +3,27 @@ import { connect } from 'react-redux';
 import Tasklog from "./Tasklog.js";
 
 export default connect(state => {
-	return {task: state.activeTask}
+	return {task: state.activeTask};
 })(React.createClass({
 	getInitialState() {
 		this.scrollDown = _.debounce(this.scrollDown, 10, {maxWait: 10, leading: true});
 		this.autoScrollTop = 0;
 		return {
 			autoScroll: true
-		}
+		};
 	},
 
 	componentWillUpdate(nextProps) {
-		if(!this.props.task) {
+		if (!this.props.task) {
 			return;
 		}
-		if(nextProps.task.id !== this.props.task.id) {
+		if (nextProps.task.id !== this.props.task.id) {
 			this.autoScrollTop = 0;
 		}
 	},
 
 	scrollDown(override) {
-		if (this.state.autoScroll  || override) {
+		if (this.state.autoScroll || override) {
 			let scrollElement = React.findDOMNode(this.refs.scrollContainer);
 			scrollElement.scrollTop = scrollElement.scrollHeight;
 			this.autoScrollTop = scrollElement.scrollTop;
