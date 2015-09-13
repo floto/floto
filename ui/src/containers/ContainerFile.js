@@ -20,7 +20,7 @@ export default connect(state => {
 		if(!domNode) {
 			return;
 		}
-		domNode.parentElement.scrollTop = domNode.parentElement.scrollHeight;
+		domNode.scrollTop = domNode.scrollHeight;
 		this.scrolledDown = true;
 	},
 
@@ -37,7 +37,7 @@ export default connect(state => {
 		if(selectedFile.fileName === "buildlog" || selectedFile.fileName === "log") {
 			this.needsScroll = true;
 		}
-		return <div ref="div" style={{minWidth: "100%", minHeight: "100%"}}>
+		return <div style={{minWidth: "100%", height: "100%", overflow: "scroll"}}>
 			<pre
 				style={{display: "inline-block", wordBreak: "normal", wordWrap: "normal", overflow: "visible", minWidth: "100%", minHeight: "100%"}}>{selectedFile.content}</pre>
 		</div>;

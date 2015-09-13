@@ -65,6 +65,7 @@ export default connect(state => {
 				let unmanagedContainers = this.props.unmanagedContainers;
 				groups = _.sortBy(groups, "title");
 				let unmanagedContainersComponent = null;
+				let selectedContainer = this.props.selectedContainer || {};
 				if(containerGroupingKey === "none" && unmanagedContainers && unmanagedContainers.length > 1) {
 					groups[0].title = "Managed containers";
 					unmanagedContainersComponent = <div>
@@ -113,7 +114,7 @@ export default connect(state => {
 								<ContainerGroup key={group.title || group.id} group={group} location={this.props.location}/>)}
 							</div>
 						</div>
-						<div style={{flex: 1, paddingLeft: 20, height: "100%"}}>
+						<div key={selectedContainer.name} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
 							{this.props.children}
 						</div>
 					</div>
@@ -123,9 +124,6 @@ export default connect(state => {
 		}
 	)
 );
-
-
-
 
 
 

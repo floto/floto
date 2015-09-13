@@ -9,6 +9,7 @@ import Application from "./Application";
 import Containers from "../containers/Containers";
 import Container from "../containers/Container";
 import ContainerFile from "../containers/ContainerFile";
+import ContainerLogtail from "../containers/ContainerLogtail.js";
 
 import Hosts from "../hosts/Hosts";
 import Tasks from "../tasks/Tasks";
@@ -64,6 +65,7 @@ let routes = () => {
 						actions.loadFile(store, nextState.params.containerName, nextState.params.splat);
 					}
 				}}>
+					<Route path="log" component={ContainerLogtail} />
 					<Route path="file/*" component={ContainerFile} onEnter={
 				(nextState, transition)=>{
 					actions.loadFile(store, nextState.params.containerName, nextState.params.splat);

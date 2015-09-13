@@ -24,13 +24,23 @@ export default connect(state => {
 		_.forEach(templates, (template) => {
 			fileTargets.push({
 				name: template.name,
-				file: encodeURIComponent(encodeURIComponent(encodeURIComponent("template/" + template.destination))),
+				file: encodeURIComponent("template/" + template.destination),
 				destination: template.destination
 			});
 		});
 
 		let selectedFileName = this.props.selectedFile && this.props.selectedFile.fileName || this.props.selectedFileError && this.props.selectedFileError.fileName;
-
+		if(selectedFileName) {
+			// normalize filename
+			selectedFileName = encodeURIComponent(decodeURIComponent(decodeURIComponent(selectedFileName)));
+		}
+		let logtailClassname = null;
+		let branch = this.props.branch;
+		let lastRoute = branch[branch.length - 1];
+		if(lastRoute.path === "log") {
+			logtailClassname = "active";
+			selectedFileName = null;
+		}
 		return <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
 			<div style={{flex: "0 0 auto", paddingRight: "20px"}}>
 				<h3>{container.name}</h3>
@@ -39,7 +49,9 @@ export default connect(state => {
 			<div style={{flex: "1 1 auto", display: "flex", flexDirection: "row", minHeight: "0px"}}>
 				<div style={{flex: "0 0 auto", overflow: "scroll", minHeight: "0px", width: "10em"}}>
 					<ul className="nav nav-pills nav-stacked" role="tablist">
-						<li key="logtail"><a title="Log (tail)" ui-sref="container.log()">Logtail</a></li>
+						<li key="logtail" className={logtailClassname}><Link to={`/containers/${container.name}/log`}
+												query={this.props.location.query}
+												title="Logtail">Logtail</Link></li>
 						{fileTargets.map((fileTarget) => {
 							let className = null;
 							if (selectedFileName === fileTarget.file) {
@@ -54,13 +66,12 @@ export default connect(state => {
 						})}
 					</ul>
 				</div>
-				<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", overflow: "scroll"}}>
+				<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", height: "calc(100vh - 116px)", overflow: "hidden"}}>
 					{this.props.children}
 				</div>
 			</div>
 
 		</div>;
-
 
 	}
 }));

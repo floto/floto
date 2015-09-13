@@ -31,3 +31,25 @@ pre {
 .table {
 	margin-bottom: auto;
 }
+
+
+.log-output {
+	font-family: monospace, monospace;
+	font-size: 11px;
+	line-height: 140%;
+	text-wrap: none;
+	white-space: pre;
+}
+
+.log-stdout {
+	height: 12px;
+}
+
+.log-stderr {
+	height: 12px;
+	color: #c00;
+}
+
+.log-hide-timestamps .log-timestamp {
+	display: none;
+}
