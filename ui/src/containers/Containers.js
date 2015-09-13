@@ -68,7 +68,7 @@ export default connect(state => {
 				if(containerGroupingKey === "none" && unmanagedContainers && unmanagedContainers.length > 1) {
 					groups[0].title = "Managed containers";
 					unmanagedContainersComponent = <div>
-						<h4>UnmanagedContainers</h4>
+						<h4>Unmanaged Containers<span className="text-muted"> ({unmanagedContainers.length})</span></h4>
 						<Table bordered striped hover condensed style={{cursor: "pointer"}}>
 							<tbody>
 							{unmanagedContainers.map((container) => <tr key={container.name} className="warning">
@@ -92,9 +92,9 @@ export default connect(state => {
 									<Button onClick={actions.loadContainerStates}>Refresh</Button>
 									<RedeployButton disabled={!safetyArmed} size="medium"
 													onExecute={(deploymentMode) => actions.redeployContainers( allContainerNames, deploymentMode)}/>
-									<Button bsStyle="success"
+									<Button bsStyle="success" onClick={() => actions.startContainers(allContainerNames)}
 											disabled={!safetyArmed}>Start all</Button>
-									<Button bsStyle="danger"
+									<Button bsStyle="danger" onClick={() => actions.stopContainers(allContainerNames)}
 											disabled={!safetyArmed}>Stop all</Button>
 								</ButtonGroup>
 								<span className="pull-right">Grouping:&nbsp;&nbsp;&nbsp;

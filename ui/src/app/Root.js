@@ -17,8 +17,7 @@ import Manifest from "../manifest/Manifest";
 
 import reducers from '../reducers/reducers';
 
-import * as actions from "../actions/actions";
-
+import taskService from "../tasks/taskService.js";
 import EventConstants from "../events/constants.js";
 
 var initialState = {
@@ -32,13 +31,19 @@ var initialState = {
 };
 const store = createStore(reducers, initialState);
 
-const storeActions = _.mapValues(actions, (action) => action.bind(null, store));
+let actions = require('../actions/actions.js');
+const storeActions = _.mapValues(actions, (action, key) => (...args) => {actions[key](store, ...args)});
+
+taskService.setActions(storeActions);
 
 if (module.hot) {
 	// Enable Webpack hot module replacement for reducers
 	module.hot.accept('../reducers/reducers', () => {
 		const nextRootReducer = require('../reducers/reducers');
 		store.replaceReducer(nextRootReducer);
+	});
+	module.hot.accept('../actions/actions.js', () => {
+		actions = require('../actions/actions.js');
 	});
 }
 
@@ -48,9 +53,7 @@ let routes = () => {
 		<Route component={Application}>
 			<Route path="/containers" component={Containers} onEnter={
 					(nextState, transition)=>{
-					console.log("TRANSIO");
 						actions.loadContainerStates(store);
-
 					}
 				}>
 				<Route path=":containerName" component={Container} onEnter={

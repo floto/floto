@@ -9,8 +9,6 @@ import TimeAgo from "react-timeago";
 
 import moment from "moment";
 
-import * as actions from "../actions/actions.js";
-
 const iconMap = {
 	ERROR: "exclamation-circle",
 	SUCCESS: "check",

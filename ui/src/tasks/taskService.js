@@ -3,12 +3,17 @@ import Promise from "bluebird";
 import websocketService from "../util/websocketService.js";
 import notificationService from "../util/notificationService.js";
 import {send} from "../util/rest.js";
-import * as actions from "../actions/actions.js";
 
 
 var taskService = {};
 
 var taskCompletionPromises = {};
+
+let globalActions = null;
+
+taskService.setActions = function (actions) {
+	globalActions = this.actions = actions;
+};
 
 function makeDeferred() {
 	let result = {};
@@ -29,10 +34,10 @@ let globalStore;
 
 taskService.httpPost = function httpPost(store, url, request) {
 	globalStore = store;
-	return send({url, request, method: "POST"}).then(function (taskInfo) {
+	return send({url, request, method: "POST"}).then((taskInfo) => {
 		var taskId = taskInfo.taskId;
 		var linkText = ' <a href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
-		actions.loadTasks(store);
+		this.actions.loadTasks(store);
 		notificationService.notify({
 			title: "Task started: " + taskInfo.title + linkText,
 			type: 'info'
@@ -42,7 +47,7 @@ taskService.httpPost = function httpPost(store, url, request) {
 };
 
 websocketService.addMessageHandler("taskComplete", function (message) {
-	actions.loadTasks(globalStore);
+	globalActions.loadTasks(globalStore);
 	var taskId = message.taskId;
 	var deferred = taskCompletionPromises[taskId];
 	var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';

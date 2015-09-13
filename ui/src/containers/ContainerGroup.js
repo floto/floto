@@ -80,9 +80,9 @@ export default connect(state => {
 			titleComponent = <h4>{group.title} <span className="text-muted">({containers.length})</span><span className="pull-right"><ButtonGroup bsSize='small'>
 				<RedeployButton disabled={!safetyArmed} size="small"
 								onExecute={(deploymentMode) => actions.redeployContainers(group.containerNames, deploymentMode)}/>
-				<Button bsStyle="success"
+				<Button bsStyle="success" onClick={() => actions.startContainers(group.containerNames)}
 						disabled={!safetyArmed}>Start all</Button>
-				<Button bsStyle="danger"
+				<Button bsStyle="danger" onClick={() => actions.stopContainers(group.containerNames)}
 						disabled={!safetyArmed}>Stop all</Button>
 			</ButtonGroup>
 			</span>
