@@ -46,7 +46,13 @@ let routes = () => {
 	return <Router history={history}>
 		<Redirect from="/" to="/containers"/>
 		<Route component={Application}>
-			<Route path="/containers" component={Containers}>
+			<Route path="/containers" component={Containers} onEnter={
+					(nextState, transition)=>{
+					console.log("TRANSIO");
+						actions.loadContainerStates(store);
+
+					}
+				}>
 				<Route path=":containerName" component={Container} onEnter={
 				(nextState, transition)=>{
 					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
@@ -78,8 +84,8 @@ export default React.createClass({
 		actions: React.PropTypes.object.isRequired
 	},
 
-	getChildContext: function() {
-		return { actions: storeActions };
+	getChildContext: function () {
+		return {actions: storeActions};
 	},
 
 

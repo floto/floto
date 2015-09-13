@@ -46,7 +46,7 @@ addReducers({
 			});
 
 		});
-		return {selectedContainer, manifest, templateMap};
+		return _.extend({selectedContainer, manifest, templateMap}, mergeContainerStates(state.containerStates, manifest));
 	},
 
 	FLOTO_INFO_UPDATED(state, flotoInfo) {
@@ -64,6 +64,10 @@ addReducers({
 	CONTAINER_SELECTED(state, containerName) {
 		var selectedContainer = _.findWhere(state.manifest.containers, {name: containerName});
 		return {selectedContainer, selectedContainerName: containerName};
+	},
+
+	CONTAINER_STATES_UPDATED(state, containerStates) {
+		return _.extend({containerStates}, mergeContainerStates(containerStates, state.manifest));
 	},
 
 	CONTAINER_FILE_SELECTED(state, selectedFile) {
@@ -89,6 +93,36 @@ addReducers({
 	}
 
 });
+
+function mergeContainerStates(containerStates = {}, manifest = {}) {
+	let unmanagedContainers = [];
+	var containerHash = {};
+	let containers = manifest.containers || [];
+	containers.forEach(function (container) {
+		container.state = {status: "unknown"};
+		if (!containerStates[container.name]) {
+			container.state = {
+				status: "unknown"
+			};
+			return;
+		}
+		container.state = containerStates[container.name];
+		containerHash[container.name] = container.name;
+	});
+
+	Object.keys(containerStates).forEach(function(name) {
+		if(!containerHash[name]) {
+			unmanagedContainers.push({
+				name: name,
+				state: containerStates[name],
+				unmanaged: true,
+				host: "?",
+				image: "?"
+			});
+		}
+	});
+	return {unmanagedContainers, containers};
+}
 
 export const eventConstants = _.indexBy(_.keys(reducerMap));
 

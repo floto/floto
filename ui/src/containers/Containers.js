@@ -35,7 +35,8 @@ let containerGroupings = {
 export default connect(state => {
 	return {
 		clientState: state.clientState,
-		containers: state.manifest.containers,
+		containers: state.containers,
+		unmanagedContainers: state.unmanagedContainers,
 		selectedContainer: state.selectedContainer
 	};
 })(React.createClass({
@@ -61,7 +62,24 @@ export default connect(state => {
 				let containerGrouping = containerGroupings[containerGroupingKey] || containerGroupings.none;
 				let allContainerNames = _.pluck(containers, "name");
 				let groups = containerGrouping.groupFn(containers);
+				let unmanagedContainers = this.props.unmanagedContainers;
 				groups = _.sortBy(groups, "title");
+				let unmanagedContainersComponent = null;
+				if(containerGroupingKey === "none" && unmanagedContainers && unmanagedContainers.length > 1) {
+					groups[0].title = "Managed containers";
+					unmanagedContainersComponent = <div>
+						<h4>UnmanagedContainers</h4>
+						<Table bordered striped hover condensed style={{cursor: "pointer"}}>
+							<tbody>
+							{unmanagedContainers.map((container) => <tr key={container.name} className="warning">
+								<td><Label bsStyle="warning">{container.state.status || "unknown" }</Label></td>
+								<td><Button bsStyle="danger" bsSize="xs" onClick={actions.destroyContainers.bind(null, container.name, container.state.hostName)}>Destroy</Button></td>
+								<td style={{width: "100%"}}>{container.name}@{container.state.hostName}</td>
+							</tr>)}
+							</tbody>
+						</Table>
+					</div>;
+				}
 				_.forEach(groups, group => {
 					group.containerNames = _.pluck(group.containers, "name");
 				});
@@ -71,7 +89,7 @@ export default connect(state => {
 							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
 								<h2>Containers <span className="text-muted">({containers.length})</span></h2>
 								<ButtonGroup>
-									<Button>Refresh</Button>
+									<Button onClick={actions.loadContainerStates}>Refresh</Button>
 									<RedeployButton disabled={!safetyArmed} size="medium"
 													onExecute={(deploymentMode) => actions.redeployContainers( allContainerNames, deploymentMode)}/>
 									<Button bsStyle="success"
@@ -90,6 +108,7 @@ export default connect(state => {
 								</span>
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
+								{unmanagedContainersComponent}
 								{groups.map((group) =>
 								<ContainerGroup key={group.title || group.id} group={group} location={this.props.location}/>)}
 							</div>
