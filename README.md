@@ -1,4 +1,6 @@
-# floto [![Build Status](https://travis-ci.org/floto/floto.svg?branch=master)](https://travis-ci.org/floto/floto)
+# floto
+
+[![Build Status](https://travis-ci.org/floto/floto.svg?branch=master)](https://travis-ci.org/floto/floto) [![Maven Central](https://img.shields.io/maven-central/v/io.github.floto/floto.svg)]() [![GitHub license](https://img.shields.io/github/license/floto/floto.svg)]()
 
 floto is a tool for deploying and orchestrating services using docker containers.
 
