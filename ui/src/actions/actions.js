@@ -4,7 +4,6 @@ import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
 
 
-
 export function loadContainerStates(store) {
 	rest.send({method: "GET", url: "containers/_state"}).then((result) => {
 		store.dispatch({
@@ -40,17 +39,26 @@ export function loadFile(store, containerName, fileName) {
 }
 
 export function redeployContainers(store, containerNames, deploymentMode) {
-	taskService.httpPost(store, "containers/_redeploy", {containers: containerNames, deploymentMode});
+	taskService.httpPost(store, "containers/_redeploy", {containers: containerNames, deploymentMode})
+		.finally(() => {
+			loadContainerStates(store);
+		});
 
 }
 
 
 export function startContainers(store, containerNames) {
-	taskService.httpPost(store, "containers/_start", {containers: containerNames});
+	taskService.httpPost(store, "containers/_start", {containers: containerNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
 }
 
 export function stopContainers(store, containerNames) {
-	taskService.httpPost(store, "containers/_stop", {containers: containerNames});
+	taskService.httpPost(store, "containers/_stop", {containers: containerNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
 }
 
 export function purgeContainerData(store, containerNames) {
@@ -59,7 +67,10 @@ export function purgeContainerData(store, containerNames) {
 
 
 export function destroyContainers(store, containerName, hostName) {
-	taskService.httpPost(store, "containers/_destroyUnmanaged", {containerName, hostName});
+	taskService.httpPost(store, "containers/_destroyUnmanaged", {containerName, hostName})
+		.finally(() => {
+			loadContainerStates(store);
+		});
 }
 
 export function getFlotoInfo(store) {
@@ -74,7 +85,7 @@ export function recompileManifest(store) {
 	taskService.httpPost(store, "manifest/compile").then(() => {
 		refreshManifest(store);
 		let state = store.getState();
-		if(state.selectedContainer && state.selectedFile) {
+		if (state.selectedContainer && state.selectedFile) {
 			loadFile(store, state.selectedContainer.name, decodeURIComponent(state.selectedFile.fileName));
 		}
 	}).finally(() => {
@@ -106,4 +117,6 @@ export function updateManifest(store, manifest) {
 export function changeSafety(store, safetyArmed) {
 	store.dispatch({type: EventConstants.SAFETY_CHANGED, payload: safetyArmed});
 }
+
+
 

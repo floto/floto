@@ -25,9 +25,9 @@ function makeDeferred() {
 }
 
 
-taskService.getTaskCompletionPromise = function getTaskCompletionPromise(taskId) {
+taskService.getTaskCompletionDeferred = function getTaskCompletionPromise(taskId) {
 	var deferred = taskCompletionPromises[taskId] = taskCompletionPromises[taskId] || makeDeferred();
-	return deferred.promise;
+	return deferred;
 };
 
 let globalStore;
@@ -36,20 +36,21 @@ taskService.httpPost = function httpPost(store, url, request) {
 	globalStore = store;
 	return send({url, request, method: "POST"}).then((taskInfo) => {
 		var taskId = taskInfo.taskId;
+		var deferred = taskService.getTaskCompletionDeferred(taskId);
 		var linkText = ' <a href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
-		this.actions.loadTasks(store);
 		notificationService.notify({
 			title: "Task started: " + taskInfo.title + linkText,
 			type: 'info'
 		});
-		return taskService.getTaskCompletionPromise(taskId);
+		this.actions.loadTasks(store);
+        return deferred.promise;
 	});
 };
 
 websocketService.addMessageHandler("taskComplete", function (message) {
 	globalActions.loadTasks(globalStore);
 	var taskId = message.taskId;
-	var deferred = taskCompletionPromises[taskId];
+	var deferred = taskService.getTaskCompletionDeferred(taskId);
 	var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
 	if (message.status === "success") {
 		notificationService.notify({
