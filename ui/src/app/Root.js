@@ -105,5 +105,19 @@ export default React.createClass({
 window.addEventListener("load", function () {
 	actions.refreshManifest(store);
 	actions.getFlotoInfo(store);
+
+	let config = {};
+
+	window.floto.configureFns.forEach((fn) => fn(config));
+
+	store.dispatch({type: "CONFIG_UPDATED", payload: config});
 });
 
+
+window.floto = {
+	configure(fn) {
+		this.configureFns.push(fn);
+	},
+
+	configureFns: []
+};

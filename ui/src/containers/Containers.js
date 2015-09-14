@@ -91,7 +91,7 @@ export default connect(state => {
 								<h2>Containers <span className="text-muted">({containers.length})</span></h2>
 								<ButtonGroup>
 									<Button onClick={actions.loadContainerStates}>Refresh</Button>
-									<RedeployButton disabled={!safetyArmed} size="medium"
+									<RedeployButton disabled={!safetyArmed} size="medium" title="Redeploy all"
 													onExecute={(deploymentMode) => actions.redeployContainers( allContainerNames, deploymentMode)}/>
 									<Button bsStyle="success" onClick={() => actions.startContainers(allContainerNames)}
 											disabled={!safetyArmed}>Start all</Button>
