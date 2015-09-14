@@ -1,5 +1,5 @@
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
-import { Navigation } from 'react-router';
+import { History } from 'react-router';
 import { connect } from 'react-redux';
 var Icon = require('react-fa');
 
@@ -18,7 +18,7 @@ export default connect(state => {
 	};
 })(React.createClass({
 	displayName: "ContainerGroup",
-	mixins: [Navigation],
+	mixins: [History],
 	contextTypes: {
 		actions: React.PropTypes.object.isRequired
 	},
@@ -29,7 +29,7 @@ export default connect(state => {
 			let currentUrl = "/containers/" + this.props.selectedContainer.name;
 			newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
 		}
-		this.transitionTo(newUrl, this.props.location.query);
+		this.history.pushState(null, newUrl, this.props.location.query);
 	},
 
 	renderContainer(container) {

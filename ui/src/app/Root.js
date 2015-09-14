@@ -1,7 +1,7 @@
 import { createStore, combineReducers, compose, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { Redirect, Router, Route } from 'react-router';
-import { history } from 'react-router/lib/HashHistory';
+import createHistory from 'history/lib/createHashHistory';
 
 import NavigationBar from "./NavigationBar.js";
 import Application from "./Application";
@@ -47,6 +47,10 @@ if (module.hot) {
 		actions = require('../actions/actions.js');
 	});
 }
+
+let history = createHistory({
+	queryKey: false
+});
 
 let routes = () => {
 	return <Router history={history}>

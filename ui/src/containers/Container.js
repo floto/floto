@@ -35,8 +35,8 @@ export default connect(state => {
 			selectedFileName = encodeURIComponent(decodeURIComponent(decodeURIComponent(selectedFileName)));
 		}
 		let logtailClassname = null;
-		let branch = this.props.branch;
-		let lastRoute = branch[branch.length - 1];
+		let routes = this.props.routes;
+		let lastRoute = routes[routes.length - 1];
 		if(lastRoute.path === "log") {
 			logtailClassname = "active";
 			selectedFileName = null;
@@ -75,8 +75,3 @@ export default connect(state => {
 
 	}
 }));
-
-
-
-
-
