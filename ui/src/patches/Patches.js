@@ -9,7 +9,7 @@ export default connect(state => {
 	return {
 		clientState: state.clientState,
 		patches: state.patches,
-		selectedHost: state.selectedHost
+		selectedPatchId: state.selectedPatchId
 	};
 })(React.createClass({
 			displayName: "Patches",
@@ -20,21 +20,17 @@ export default connect(state => {
 
 
 			navigateToPatch(patchId) {
-				let newUrl = '/hosts/' + hostName;
-				if (this.props.selectedHost) {
-					let currentUrl = "/hosts/" + this.props.selectedHost.name;
-					newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
-				}
+				let newUrl = '/patches/' + patchId;
 				this.history.pushState(null, newUrl, this.props.location.query);
 			},
 
 			renderPatch(patch) {
 				let actions = this.context.actions;
 				let rowClassName = null;
-				/*				if(patch === this.selectedHost) {
-				 rowClassName = "info";
-				 }*/
-				return <tr key={patch.name} onClick={this.navigateToPatch.bind(this, patch.name)}
+				if (patch.id === this.selectedPatchId) {
+					rowClassName = "info";
+				}
+				return <tr key={patch.id} onClick={this.navigateToPatch.bind(this, patch.id)}
 						   className={rowClassName}>
 					<td>{patch.creationDate}</td>
 					<td>{patch.revision}</td>
@@ -43,10 +39,9 @@ export default connect(state => {
 			},
 
 			render() {
-				console.log(this.props);
 				let actions = this.context.actions;
 				let patches = this.props.patches || [];
-				let selectedPatch = this.selectedPatch = this.props.selectedPatch || {};
+				let selectedPatchId = this.selectedPatchId = this.props.selectedPatchId;
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
@@ -74,7 +69,7 @@ export default connect(state => {
 								</Table>
 							</div>
 						</div>
-						<div key={selectedPatch.name} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
+						<div key={selectedPatchId} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
 							{this.props.children}
 						</div>
 					</div>

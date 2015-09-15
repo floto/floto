@@ -178,6 +178,14 @@ export function loadPatches(store) {
 	});
 }
 
+export function loadPatchInfo(store, patchId) {
+	store.dispatch({type: "PATCH_SELECTED", payload: patchId});
+	rest.send({method: "GET", url: `patches/${patchId}/patchInfo`}).then((result) => {
+		store.dispatch({type: "PATCH_INFO_LOADED", payload: result});
+	});
+}
+
+
 
 
 

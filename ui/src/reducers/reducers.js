@@ -109,6 +109,15 @@ addReducers({
 
 	PATCHES_LOADED(state, patches) {
 		return {patches};
+	},
+
+
+	PATCH_SELECTED(state, selectedPatchId) {
+		return {selectedPatchId};
+	},
+
+	PATCH_INFO_LOADED(state, selectedPatch) {
+		return {selectedPatch};
 	}
 
 });

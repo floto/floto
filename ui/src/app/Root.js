@@ -16,7 +16,8 @@ import Tasks from "../tasks/Tasks";
 import Task from "../tasks/Task";
 import Manifest from "../manifest/Manifest";
 
-import Patches from "../patches/Patches"
+import Patches from "../patches/Patches";
+import PatchInfo from "../patches/PatchInfo";
 
 import FileViewer from "../components/FileViewer.js";
 
@@ -100,20 +101,10 @@ let routes = () => {
 				(nextState, transition)=>{
 					actions.loadPatches(store);
 				}}>
-				{/*<Route path=":hostName" component={Host} onEnter={
+				<Route path=":patchId" component={PatchInfo} onEnter={
 				(nextState, transition)=>{
-					store.dispatch({type: EventConstants.HOST_SELECTED, payload: nextState.params.hostName});
-					// workaround for file loading
-					if(nextState.params.splat) {
-						actions.loadHostFile(store, nextState.params.hostName, nextState.params.splat);
-					}
-				}}>
-					<Route path="log" component={ContainerLogtail} />
-					<Route path="file/*" component={FileViewer} onEnter={
-				(nextState, transition)=>{
-					actions.loadHostFile(store, nextState.params.hostName, nextState.params.splat);
-				}}/>
-				</Route>*/}
+					actions.loadPatchInfo(store, nextState.params.patchId);
+				}} />
 			</Route>
 			<Route path="tasks" component={Tasks}>
 				<Route path=":taskId" component={Task} onEnter={
