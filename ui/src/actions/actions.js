@@ -172,4 +172,13 @@ export function changeSafety(store, safetyArmed) {
 }
 
 
+export function loadPatches(store) {
+	rest.send({method: "GET", url: "patches"}).then((result) => {
+		store.dispatch({type: "PATCHES_LOADED", payload: result.patches});
+	});
+}
+
+
+
+
 

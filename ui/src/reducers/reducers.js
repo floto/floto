@@ -105,6 +105,10 @@ addReducers({
 
 	CONFIG_UPDATED(state, config) {
 		return {config, clientState: _.extend({}, state.clientState, {safetyArmed: config.armed})};
+	},
+
+	PATCHES_LOADED(state, patches) {
+		return {patches};
 	}
 
 });
