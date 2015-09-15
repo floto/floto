@@ -1,4 +1,4 @@
-import {Navbar, Nav, NavItem, NavDropdown, MenuItem, Button} from "react-bootstrap";
+import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
 import {NavItemLink} from 'react-router-bootstrap';
 import {Link, History} from 'react-router';
 import { connect } from 'react-redux';
@@ -37,10 +37,10 @@ export default connect(state => {
 		let isCompiling = this.props.serverState.isCompiling;
 		let site = this.props.site || {projectName: "?", projectRevision: "?"};
 		let siteName = site.projectName || site.domainName;
-		return <Navbar fixedTop fluid
+		return <Navbar fixedTop fluid  toggleNavKey={0} defaultNavExpanded={false}
 					   brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
-			<Link to="/containers" activeClassName="active">About</Link>
-			<Nav>
+			<CollapsibleNav eventKey={0}>
+			<Nav navbar>
 				<NavItem active={isActive("/containers")} href="#/containers"><Icon name="cubes"/>&nbsp;&nbsp;Containers</NavItem>
 				<NavItem active={isActive("/hosts")} href="#/hosts"><Icon name="server"/>&nbsp;&nbsp;Hosts</NavItem>
 				<NavItem active={isActive("/tasks")} href="#/tasks"><Icon name="list"/>&nbsp;&nbsp;Tasks</NavItem>
@@ -76,7 +76,7 @@ export default connect(state => {
 				<span className="navbar-brand pull-right" href="#">
 				</span>
 			</Nav>
-
+				{/*
 			<div className="nav navbar-nav navbar-right"
 				 style={{textAlign: "center", paddingTop: "10px", paddingRight: "20px", height: "20px"}}>
 				<span style={{color: site.siteColor}}>{siteName}{site.environment ?
@@ -84,6 +84,8 @@ export default connect(state => {
 				<span style={{fontSize: "80%", position: "relative", top: "-4px"}}
 					  className="text-muted">{site.projectRevision}</span>
 			</div>
+				 */}
+			</CollapsibleNav>
 		</Navbar>;
 	}
 }));
