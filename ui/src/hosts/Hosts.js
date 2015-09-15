@@ -38,16 +38,16 @@ export default connect(state => {
 				return <tr key={host.name} onClick={this.navigateToHost.bind(this, host.name)} className={rowClassName}>
 					<td><Label bsStyle="default">{host.status || "unknown" }</Label></td>
 					<td><Button bsStyle="primary" bsSize="xs" disabled={!safetyArmed}
-								onClick={actions.destroyContainers.bind(null, host.name)}>Redeploy</Button>
+								onClick={actions.redeployHosts.bind(null, [host.name])}>Redeploy</Button>
 					</td>
 					<td><Button bsStyle="success" bsSize="xs" disabled={!safetyArmed}
-								onClick={actions.destroyContainers.bind(null, host.name)}>Start</Button>
+								onClick={actions.startHosts.bind(null, [host.name])}>Start</Button>
 					</td>
 					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}
-								onClick={actions.destroyContainers.bind(null, host.name)}>Stop</Button>
+								onClick={actions.stopHosts.bind(null, [host.name])}>Stop</Button>
 					</td>
 					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}
-								onClick={actions.destroyContainers.bind(null, host.name)}>Destroy</Button>
+								onClick={actions.destroyHosts.bind(null, [host.name])}>Destroy</Button>
 					</td>
 					<td style={{width: "100%"}}>{host.name}
 						{host.vmConfiguration.hypervisor.esxHost ? <span
@@ -60,6 +60,7 @@ export default connect(state => {
 				let hosts = this.props.hosts || [];
 				let selectedHost = this.selectedHost = this.props.selectedHost || {};
 				let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
+				let allHostNames = _.pluck(hosts, "name");
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
@@ -67,7 +68,7 @@ export default connect(state => {
 								<h2>Hosts <span className="text-muted">({hosts.length})</span></h2>
 								<ButtonGroup>
 									<Button onClick={actions.loadContainerStates}>Refresh</Button>
-									<Button bsStyle="primary" onClick={() => actions.startContainers(allContainerNames)}
+									<Button bsStyle="primary" onClick={() => actions.redeployHosts(allHostNames)}
 											disabled={!safetyArmed}>Redeploy all</Button>
 								</ButtonGroup>
 							</div>

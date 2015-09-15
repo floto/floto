@@ -13,6 +13,16 @@ export function loadContainerStates(store) {
 	});
 }
 
+export function loadHostStates(store) {
+	rest.send({method: "GET", url: "hosts/_state"}).then((result) => {
+		/* TODO
+		store.dispatch({
+			type: EventConstants.CONTAINER_STATES_UPDATED,
+			payload: result.states
+		});
+		*/
+	});
+}
 export function loadTasks(store) {
 	rest.send({method: "GET", url: "tasks"}).then((tasks) => {
 		store.dispatch({
@@ -82,6 +92,36 @@ export function destroyContainers(store, containerName, hostName) {
 			loadContainerStates(store);
 		});
 }
+
+export function redeployHosts(store, hostNames) {
+	taskService.httpPost(store, "hosts/_redeploy", {hosts: hostNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
+}
+
+export function startHosts(store, hostNames) {
+	taskService.httpPost(store, "hosts/_start", {hosts: hostNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
+}
+
+export function stopHosts(store, hostNames) {
+	taskService.httpPost(store, "hosts/_stop", {hosts: hostNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
+}
+
+export function destroyHosts(store, hostNames) {
+	taskService.httpPost(store, "hosts/_delete", {hosts: hostNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
+}
+
+
 
 export function getFlotoInfo(store) {
 	rest.send({method: "GET", url: "info"}).then((info) => {
