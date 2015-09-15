@@ -1,0 +1,55 @@
+@font-face {
+	font-family: 'SourceSansPro';
+	src: url('fonts/SourceSansPro-Regular.ttf');
+}
+
+@font-face {
+	font-family: 'SourceCodePro';
+	src: url('fonts/SourceCodePro-Regular.ttf');
+}
+
+body {
+	font-family: 'SourceSansPro', sans-serif;
+	font-size: 15px;
+}
+
+pre {
+	font-family: 'SourceCodePro', sans-serif;
+	font-size: 12px;
+}
+
+.json-inspector__search {
+	border: 2px solid #eee;
+	border-radius: 3px;
+}
+
+.json-inspector__search:focus {
+	border: 2px solid #ccc;
+	outline: none;
+}
+
+.table {
+	margin-bottom: auto;
+}
+
+
+.log-output {
+	font-family: monospace, monospace;
+	font-size: 11px;
+	line-height: 140%;
+	text-wrap: none;
+	white-space: pre;
+}
+
+.log-stdout {
+	height: 12px;
+}
+
+.log-stderr {
+	height: 12px;
+	color: #c00;
+}
+
+.log-hide-timestamps .log-timestamp {
+	display: none;
+}

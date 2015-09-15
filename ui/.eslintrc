@@ -1,0 +1,29 @@
+{
+	"env": {
+		"browser": true,
+		"es6": true,
+		"commonjs": true
+	},
+	"ecmaFeatures": {
+		"jsx": true,
+		"modules": true
+	},
+	"plugins": [
+		"react"
+	],
+	"extends": "eslint:recommended",
+	"rules": {
+		"curly": 2,
+		"semi": 2,
+		"eqeqeq": 2,
+		"no-alert": 2,
+		"no-unused-vars": 0,
+		"no-mixed-spaces-and-tabs": [2, "smart-tabs"]
+	},
+	"globals": {
+		"React": true,
+		"_": true,
+		"$": true,
+		"PNotify": true
+	}
+}
