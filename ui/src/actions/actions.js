@@ -22,20 +22,30 @@ export function loadTasks(store) {
 	});
 }
 
-export function loadFile(store, containerName, fileName) {
-	// Fixup template path to handle double slash
-	fileName = fileName.replace("template//", "template/%2F");
-	rest.send({method: "GET", url: `containers/${containerName}/${(fileName)}`, accept: "*"}).then((content) => {
+export function loadFile(store, url, fileName) {
+	rest.send({method: "GET", url, accept: "*"}).then((content) => {
 		store.dispatch({
-			type: EventConstants.CONTAINER_FILE_SELECTED,
+			type: EventConstants.FILE_SELECTED,
 			payload: {fileName: encodeURIComponent(fileName), content}
 		});
 	}).catch((error) => {
 		store.dispatch({
-			type: EventConstants.CONTAINER_FILE_ERROR,
+			type: EventConstants.FILE_ERROR,
 			payload: {fileName: encodeURIComponent(fileName), error}
 		});
 	});
+}
+
+export function loadContainerFile(store, containerName, fileName) {
+	// Fixup template path to handle double slash
+	fileName = fileName.replace("template//", "template/%2F");
+	loadFile(store, `containers/${containerName}/${(fileName)}`, fileName);
+}
+
+export function loadHostFile(store, hostName, fileName) {
+	// Fixup template path to handle double slash
+	fileName = fileName.replace("template//", "template/%2F");
+	loadFile(store, `hosts/${hostName}/${(fileName)}`, fileName);
 }
 
 export function redeployContainers(store, containerNames, deploymentMode) {
@@ -85,8 +95,11 @@ export function recompileManifest(store) {
 	taskService.httpPost(store, "manifest/compile").then(() => {
 		refreshManifest(store);
 		let state = store.getState();
-		if (state.selectedContainer && state.selectedFile) {
-			loadFile(store, state.selectedContainer.name, decodeURIComponent(state.selectedFile.fileName));
+		if (state.selectedContainerName && state.selectedFile) {
+			loadContainerFile(store, state.selectedContainerName, decodeURIComponent(state.selectedFile.fileName));
+		}
+		if (state.selectedHostName && state.selectedFile) {
+			loadHostFile(store, state.selectedHostName, decodeURIComponent(state.selectedFile.fileName));
 		}
 	}).finally(() => {
 		store.dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});

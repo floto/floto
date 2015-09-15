@@ -16,11 +16,10 @@ addReducers({
 
 	MANIFEST_UPDATED(state, manifest) {
 		var selectedContainer = _.findWhere(manifest.containers, {name: state.selectedContainerName});
+		var selectedHost = _.findWhere(manifest.hosts, {name: state.selectedHostName});
 		var templateMap = {};
-		_.forEach(manifest.images, (image) => {
-			let templates = [];
-			templateMap[`image:${image.name}`] = templates;
-			var steps = image.buildSteps;
+
+		let collectTemplates = (steps, templates) => {
 			steps.forEach(function (buildStep) {
 				if (buildStep.type === "ADD_TEMPLATE") {
 					templates.push({
@@ -29,24 +28,31 @@ addReducers({
 					});
 				}
 			});
+
+		};
+		_.forEach(manifest.images, (image) => {
+			let templates = [];
+			templateMap[`image:${image.name}`] = templates;
+			collectTemplates(image.buildSteps, templates);
 
 		});
 		_.forEach(manifest.containers, (container) => {
 			let imageTemplates = templateMap[`image:${container.image}`];
 			let templates = [].concat(imageTemplates);
 			templateMap[`container:${container.name}`] = templates;
-			var steps = container.configureSteps;
-			steps.forEach(function (buildStep) {
-				if (buildStep.type === "ADD_TEMPLATE") {
-					templates.push({
-						name: getShortFileName(buildStep.destination),
-						destination: buildStep.destination
-					});
-				}
-			});
-
+			collectTemplates(container.configureSteps, templates);
 		});
-		return _.extend({selectedContainer, manifest, templateMap}, mergeContainerStates(state.containerStates, manifest));
+		_.forEach(manifest.hosts, (host) => {
+			let templates = [];
+			templateMap[`host:${host.name}`] = templates;
+			collectTemplates(host.postDeploySteps, templates);
+		});
+		return _.extend({
+			selectedContainer,
+			selectedHost,
+			manifest,
+			templateMap
+		}, mergeContainerStates(state.containerStates, manifest));
 	},
 
 	FLOTO_INFO_UPDATED(state, flotoInfo) {
@@ -66,15 +72,20 @@ addReducers({
 		return {selectedContainer, selectedContainerName: containerName};
 	},
 
+	HOST_SELECTED(state, hostName) {
+		var selectedHost = _.findWhere(state.manifest.hosts, {name: hostName});
+		return {selectedHost, selectedHostName: hostName};
+	},
+
 	CONTAINER_STATES_UPDATED(state, containerStates) {
 		return _.extend({containerStates}, mergeContainerStates(containerStates, state.manifest));
 	},
 
-	CONTAINER_FILE_SELECTED(state, selectedFile) {
+	FILE_SELECTED(state, selectedFile) {
 		return {selectedFile, selectedFileError: null};
 	},
 
-	CONTAINER_FILE_ERROR(state, error) {
+	FILE_ERROR(state, error) {
 		return {selectedFileError: error, selectedFile: null};
 	},
 
@@ -114,8 +125,8 @@ function mergeContainerStates(containerStates = {}, manifest = {}) {
 		containerHash[container.name] = container.name;
 	});
 
-	Object.keys(containerStates).forEach(function(name) {
-		if(!containerHash[name]) {
+	Object.keys(containerStates).forEach(function (name) {
+		if (!containerHash[name]) {
 			unmanagedContainers.push({
 				name: name,
 				state: containerStates[name],

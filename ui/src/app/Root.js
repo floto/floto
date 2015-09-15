@@ -12,9 +12,12 @@ import ContainerFile from "../containers/ContainerFile";
 import ContainerLogtail from "../containers/ContainerLogtail.js";
 
 import Hosts from "../hosts/Hosts";
+import Host from "../hosts/Host";
 import Tasks from "../tasks/Tasks";
 import Task from "../tasks/Task";
 import Manifest from "../manifest/Manifest";
+
+import FileViewer from "../components/FileViewer.js";
 
 import reducers from '../reducers/reducers';
 
@@ -66,17 +69,32 @@ let routes = () => {
 					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
 					// workaround for file loading
 					if(nextState.params.splat) {
-						actions.loadFile(store, nextState.params.containerName, nextState.params.splat);
+						actions.loadContainerFile(store, nextState.params.containerName, nextState.params.splat);
 					}
 				}}>
 					<Route path="log" component={ContainerLogtail} />
-					<Route path="file/*" component={ContainerFile} onEnter={
+					<Route path="file/*" component={FileViewer} onEnter={
 				(nextState, transition)=>{
-					actions.loadFile(store, nextState.params.containerName, nextState.params.splat);
+					actions.loadContainerFile(store, nextState.params.containerName, nextState.params.splat);
 				}}/>
 				</Route>
 			</Route>
-			<Route path="/hosts" component={Hosts}/>
+			<Route path="/hosts" component={Hosts}>
+				<Route path=":hostName" component={Host} onEnter={
+				(nextState, transition)=>{
+					store.dispatch({type: EventConstants.HOST_SELECTED, payload: nextState.params.hostName});
+					// workaround for file loading
+					if(nextState.params.splat) {
+						actions.loadHostFile(store, nextState.params.hostName, nextState.params.splat);
+					}
+				}}>
+					<Route path="log" component={ContainerLogtail} />
+					<Route path="file/*" component={FileViewer} onEnter={
+				(nextState, transition)=>{
+					actions.loadHostFile(store, nextState.params.hostName, nextState.params.splat);
+				}}/>
+					</Route>
+			</Route>
 			<Route path="tasks" component={Tasks}>
 				<Route path=":taskId" component={Task} onEnter={
 				(nextState, transition)=>{
