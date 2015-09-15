@@ -8,7 +8,6 @@ import Application from "./Application";
 
 import Containers from "../containers/Containers";
 import Container from "../containers/Container";
-import ContainerFile from "../containers/ContainerFile";
 import ContainerLogtail from "../containers/ContainerLogtail.js";
 
 import Hosts from "../hosts/Hosts";
