@@ -1,5 +1,4 @@
 import * as rest from "../util/rest.js";
-import EventConstants from "../events/constants.js";
 import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
 
@@ -7,7 +6,7 @@ import taskService from "../tasks/taskService.js";
 export function loadContainerStates(store) {
 	rest.send({method: "GET", url: "containers/_state"}).then((result) => {
 		store.dispatch({
-			type: EventConstants.CONTAINER_STATES_UPDATED,
+			type: "CONTAINER_STATES_UPDATED",
 			payload: result.states
 		});
 	});
@@ -17,7 +16,7 @@ export function loadHostStates(store) {
 	rest.send({method: "GET", url: "hosts/_state"}).then((result) => {
 		/* TODO
 		store.dispatch({
-			type: EventConstants.CONTAINER_STATES_UPDATED,
+			type: "CONTAINER_STATES_UPDATED",
 			payload: result.states
 		});
 		*/
@@ -26,7 +25,7 @@ export function loadHostStates(store) {
 export function loadTasks(store) {
 	rest.send({method: "GET", url: "tasks"}).then((tasks) => {
 		store.dispatch({
-			type: EventConstants.TASKS_UPDATED,
+			type: "TASKS_UPDATED",
 			payload: tasks
 		});
 	});
@@ -35,12 +34,12 @@ export function loadTasks(store) {
 export function loadFile(store, url, fileName) {
 	rest.send({method: "GET", url, accept: "*"}).then((content) => {
 		store.dispatch({
-			type: EventConstants.FILE_SELECTED,
+			type: "FILE_SELECTED",
 			payload: {fileName: encodeURIComponent(fileName), content}
 		});
 	}).catch((error) => {
 		store.dispatch({
-			type: EventConstants.FILE_ERROR,
+			type: "FILE_ERROR",
 			payload: {fileName: encodeURIComponent(fileName), error}
 		});
 	});
@@ -125,16 +124,16 @@ export function destroyHosts(store, hostNames) {
 
 export function getFlotoInfo(store) {
 	rest.send({method: "GET", url: "info"}).then((info) => {
-		store.dispatch({type: EventConstants.FLOTO_INFO_UPDATED, payload: info});
+		store.dispatch({type: "FLOTO_INFO_UPDATED", payload: info});
 
 	});
 }
 
 export function recompileManifest(store) {
-	store.dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
+	store.dispatch({type: "MANIFEST_COMPILATION_STARTED"});
 	taskService.httpPost(store, "manifest/compile").then(() => {
 	}).finally(() => {
-		store.dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});
+		store.dispatch({type: "MANIFEST_COMPILATION_FINISHED"});
 		refreshManifest(store);
 		let state = store.getState();
 		if (state.selectedContainerName && state.selectedFile) {
@@ -167,13 +166,13 @@ export function refreshManifest(store) {
 
 export function updateManifest(store, manifest) {
 	store.dispatch({
-		type: EventConstants.MANIFEST_UPDATED,
+		type: "MANIFEST_UPDATED",
 		payload: manifest
 	});
 }
 
 export function changeSafety(store, safetyArmed) {
-	store.dispatch({type: EventConstants.SAFETY_CHANGED, payload: safetyArmed});
+	store.dispatch({type: "SAFETY_CHANGED", payload: safetyArmed});
 }
 
 

@@ -24,7 +24,6 @@ import FileViewer from "../components/FileViewer.js";
 import reducers from '../reducers/reducers';
 
 import taskService from "../tasks/taskService.js";
-import EventConstants from "../events/constants.js";
 
 var initialState = {
 	manifest: {},
@@ -68,7 +67,7 @@ let routes = () => {
 				}>
 				<Route path=":containerName" component={Container} onEnter={
 				(nextState, transition)=>{
-					store.dispatch({type: EventConstants.CONTAINER_SELECTED, payload: nextState.params.containerName});
+					store.dispatch({type: "CONTAINER_SELECTED", payload: nextState.params.containerName});
 					// workaround for file loading
 					if(nextState.params.splat) {
 						actions.loadContainerFile(store, nextState.params.containerName, nextState.params.splat);
@@ -84,7 +83,7 @@ let routes = () => {
 			<Route path="/hosts" component={Hosts}>
 				<Route path=":hostName" component={Host} onEnter={
 				(nextState, transition)=>{
-					store.dispatch({type: EventConstants.HOST_SELECTED, payload: nextState.params.hostName});
+					store.dispatch({type: "HOST_SELECTED", payload: nextState.params.hostName});
 					// workaround for file loading
 					if(nextState.params.splat) {
 						actions.loadHostFile(store, nextState.params.hostName, nextState.params.splat);
@@ -109,7 +108,7 @@ let routes = () => {
 			<Route path="tasks" component={Tasks}>
 				<Route path=":taskId" component={Task} onEnter={
 				(nextState, transition)=>{
-					store.dispatch({type: EventConstants.TASK_ACTIVATED, payload: nextState.params.taskId});
+					store.dispatch({type: "TASK_ACTIVATED", payload: nextState.params.taskId});
 				}}/>
 			</Route>
 			<Route path="/manifest" component={Manifest}/>
