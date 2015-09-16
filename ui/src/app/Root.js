@@ -37,7 +37,7 @@ var initialState = {
 const store = createStore(reducers, initialState);
 
 let actions = require('../actions/actions.js');
-const storeActions = _.mapValues(actions, (action, key) => (...args) => {actions[key](store, ...args)});
+const storeActions = _.mapValues(actions, (action, key) => (...args) => {actions[key](store, ...args);});
 
 taskService.setActions(storeActions);
 
