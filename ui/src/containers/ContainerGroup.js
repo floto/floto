@@ -63,8 +63,9 @@ export default connect(state => {
 						disabled={!safetyArmed}>Purge
 				Data</Button></td>
 			<td style={{whiteSpace: "nowrap"}}>{config.webUrl ?
-				<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;Web UI</a> : null}</td>
-			<td style={{width: "100%"}}>{container.name}<span
+				<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;{config.webTitle || "Web UI"}</a> : null}</td>
+			<td style={{width: "100%"}}>{config.icon ?
+				<Icon name={config.icon} style={{paddingRight: 5}}/> : null}{container.name}<span
 				className="text-muted">@{container.host}</span><span
 				className="text-muted pull-right">{config.version}</span></td>
 		</tr>;
