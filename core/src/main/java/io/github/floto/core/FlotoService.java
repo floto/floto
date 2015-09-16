@@ -75,6 +75,7 @@ public class FlotoService implements Closeable {
     private String environment;
     private String manifestString;
     private Manifest manifest = new Manifest();
+    private Throwable manifestCompilationError;
     private SshService sshService = new SshService();
     private int proxyPort = 40005;
     private File flotoHome = new File(System.getProperty("user.home") + "/.floto");
@@ -119,11 +120,6 @@ public class FlotoService implements Closeable {
         this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
         this.environment = commonParameters.environment;
         this.useProxy = !commonParameters.noProxy;
-        try {
-            this.manifestString = new ObjectMapper().writer().writeValueAsString(manifest);
-        } catch (JsonProcessingException e) {
-            throw Throwables.propagate(e);
-        }
         if (this.useProxy) {
             proxy = new HttpProxy(proxyPort);
             proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
@@ -184,17 +180,22 @@ public class FlotoService implements Closeable {
 
     public TaskInfo<Void> compileManifest() {
         return taskService.startTask("Compile manifest", () -> {
-            log.info("Compiling manifest");
-            String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
-            manifest = flotoDsl.toManifest(manifestString);
-            String projectRevision = manifest.site.get("projectRevision").asText();
-            manifest.projectRevision = projectRevision;
-            manifest.containers.forEach(container -> container.projectRevision = projectRevision);
+            try {
+                log.info("Compiling manifest");
+                String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
+                manifest = flotoDsl.toManifest(manifestString);
+                String projectRevision = manifest.site.get("projectRevision").asText();
+                manifest.projectRevision = projectRevision;
+                manifest.containers.forEach(container -> container.projectRevision = projectRevision);
 
-            generateContainerHashes(manifest);
-            this.manifestString = manifestString;
-            log.info("Compiled manifest");
-            validateTemplates();
+                generateContainerHashes(manifest);
+                this.manifestString = manifestString;
+                log.info("Compiled manifest");
+                validateTemplates();
+            } catch(Throwable compilationError) {
+                this.manifestCompilationError = compilationError;
+                throw compilationError;
+            }
             return null;
         });
     }
@@ -1284,6 +1285,10 @@ public class FlotoService implements Closeable {
 
     public File getFlotoHome() {
         return flotoHome;
+    }
+
+    public Throwable getManifestCompilationError() {
+        return manifestCompilationError;
     }
 
 

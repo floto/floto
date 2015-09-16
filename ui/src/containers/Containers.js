@@ -5,7 +5,7 @@ import { Navigation } from 'react-router';
 
 import ContainerGroup from "./ContainerGroup.js";
 
-import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
+import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup, Panel} from "react-bootstrap";
 var Icon = require('react-fa');
 
 import RedeployButton from "../components/RedeployButton.js";
@@ -34,6 +34,7 @@ let containerGroupings = {
 
 export default connect(state => {
 	return {
+		manifestError: state.manifestError,
 		clientState: state.clientState,
 		containers: state.containers,
 		unmanagedContainers: state.unmanagedContainers,
@@ -84,6 +85,13 @@ export default connect(state => {
 				_.forEach(groups, group => {
 					group.containerNames = _.pluck(group.containers, "name");
 				});
+				if(this.props.manifestError) {
+					return <div style={{height: "100%", marginTop: 20, marginRight: 20}}>
+						<Panel header="Manifest compilation error" bsStyle="danger">
+							{this.props.manifestError.message}
+						</Panel>
+					</div>;
+				}
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>

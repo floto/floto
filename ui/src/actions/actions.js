@@ -133,6 +133,8 @@ export function getFlotoInfo(store) {
 export function recompileManifest(store) {
 	store.dispatch({type: EventConstants.MANIFEST_COMPILATION_STARTED});
 	taskService.httpPost(store, "manifest/compile").then(() => {
+	}).finally(() => {
+		store.dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});
 		refreshManifest(store);
 		let state = store.getState();
 		if (state.selectedContainerName && state.selectedFile) {
@@ -141,8 +143,6 @@ export function recompileManifest(store) {
 		if (state.selectedHostName && state.selectedFile) {
 			loadHostFile(store, state.selectedHostName, decodeURIComponent(state.selectedFile.fileName));
 		}
-	}).finally(() => {
-		store.dispatch({type: EventConstants.MANIFEST_COMPILATION_FINISHED});
 	});
 }
 
@@ -156,6 +156,11 @@ export function refreshManifest(store) {
 		}
 		document.title = title;
 
+	}).catch((error) => {
+		store.dispatch({
+			type: "MANIFEST_ERROR_UPDATED",
+			payload: error
+		});
 	});
 }
 

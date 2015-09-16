@@ -47,12 +47,18 @@ addReducers({
 			templateMap[`host:${host.name}`] = templates;
 			collectTemplates(host.postDeploySteps, templates);
 		});
-		return _.extend({
+		var newState = _.extend({
+			manifestError: null,
 			selectedContainer,
 			selectedHost,
 			manifest,
 			templateMap
 		}, mergeContainerStates(state.containerStates, manifest));
+        return newState;
+	},
+
+	MANIFEST_ERROR_UPDATED(state, manifestError) {
+		return {manifestError};
 	},
 
 	FLOTO_INFO_UPDATED(state, flotoInfo) {
