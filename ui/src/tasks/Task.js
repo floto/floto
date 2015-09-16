@@ -17,7 +17,7 @@ export default connect(state => {
 		if (!this.props.task) {
 			return;
 		}
-		if (nextProps.task.id !== this.props.task.id) {
+		if (nextProps.task && nextProps.task.id !== this.props.task.id) {
 			this.autoScrollTop = 0;
 		}
 	},

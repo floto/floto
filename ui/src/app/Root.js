@@ -72,6 +72,8 @@ let routes = () => {
 					if(nextState.params.splat) {
 						actions.loadContainerFile(store, nextState.params.containerName, nextState.params.splat);
 					}
+				}} onLeave={() => {
+					store.dispatch({type: "CONTAINER_SELECTED", payload: null});
 				}}>
 					<Route path="log" component={ContainerLogtail} />
 					<Route path="file/*" component={FileViewer} onEnter={
@@ -88,6 +90,8 @@ let routes = () => {
 					if(nextState.params.splat) {
 						actions.loadHostFile(store, nextState.params.hostName, nextState.params.splat);
 					}
+				}} onLeave={() => {
+					store.dispatch({type: "HOST_SELECTED", payload: null});
 				}}>
 					<Route path="log" component={ContainerLogtail} />
 					<Route path="file/*" component={FileViewer} onEnter={
@@ -103,12 +107,16 @@ let routes = () => {
 				<Route path=":patchId" component={PatchInfo} onEnter={
 				(nextState, transition)=>{
 					actions.loadPatchInfo(store, nextState.params.patchId);
+				}} onLeave={() => {
+					store.dispatch({type: "PATCH_SELECTED", payload: null});
 				}} />
 			</Route>
 			<Route path="tasks" component={Tasks}>
 				<Route path=":taskId" component={Task} onEnter={
 				(nextState, transition)=>{
-					store.dispatch({type: "TASK_ACTIVATED", payload: nextState.params.taskId});
+					store.dispatch({type: "TASK_SELECTED", payload: nextState.params.taskId});
+				}} onLeave={() => {
+					store.dispatch({type: "TASK_SELECTED", payload: null});
 				}}/>
 			</Route>
 			<Route path="/manifest" component={Manifest}/>

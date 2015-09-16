@@ -100,7 +100,7 @@ addReducers({
 		return {tasks, activeTask};
 	},
 
-	TASK_ACTIVATED(state, taskId) {
+	TASK_SELECTED(state, taskId) {
 		var activeTask = _.findWhere(state.tasks, {id: taskId});
 		return {activeTask, activeTaskId: taskId};
 	},
