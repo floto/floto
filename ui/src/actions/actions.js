@@ -194,8 +194,8 @@ export function createFullPatch(store) {
 	taskService.httpPost(store, "patches/create-full");
 }
 
-export function createIncrementalPatch(store) {
-	taskService.httpPost(store, "patches/create-incremental-from/");
+export function createIncrementalPatch(store, parentPatchId) {
+	taskService.httpPost(store, "patches/create-incremental-from/"+parentPatchId);
 }
 
 

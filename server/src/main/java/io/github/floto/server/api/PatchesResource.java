@@ -40,4 +40,9 @@ public class PatchesResource {
 		return patchService.createFullPatch();
 	}
 
+	@POST
+	@Path("create-incremental-from/{parentPatchId}")
+	public TaskInfo<Void> createIncrementalPatch(@PathParam("parentPatchId") String parentPatchId) {
+		return patchService.createIncrementalPatch(parentPatchId);
+	}
 }

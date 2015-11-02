@@ -33,7 +33,7 @@ export default connect(state => {
 					<br/>
 					<span className="pull-right">
 						<Button bsStyle="primary"
-								onClick={() => actions.redeployHosts()}>Create incremental patch</Button>
+								onClick={() => actions.createIncrementalPatch(patch.id)}>Create incremental patch</Button>
 					</span>
 					<br/>
 					<br/>

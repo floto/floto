@@ -193,6 +193,13 @@ public class PatchService {
         });
     }
 
+    public TaskInfo<Void> createIncrementalPatch(String parentPatchId) {
+        return taskService.startTask("Create incremental patch from "+ parentPatchId, () -> {
+
+            return null;
+        });
+    }
+
     private void addEntryToZipFile(ZipOutputStream zipOutputStream, String filename, Consumer_WithExceptions<OutputStream> writer) throws Exception {
         zipOutputStream.putNextEntry(new ZipEntry(filename));
         writer.accept(new CloseShieldOutputStream(zipOutputStream));
