@@ -11,7 +11,8 @@ export default connect(state => {
 	},
 
 	render() {
-		let defaultDeploymentMode = this.props.config.deploymentMode || "fromBaseImage";
+		console.log(this.props.config);
+		let defaultDeploymentMode = this.props.config.defaultDeploymentMode || "fromBaseImage";
 
 		let defaultFromBase = defaultDeploymentMode === "fromBaseImage";
 
