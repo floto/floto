@@ -6,9 +6,6 @@ import io.github.floto.util.task.TaskInfo;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,9 +35,9 @@ public class PatchesResource {
 
 
 	@POST
-	@Path("create-initial")
-	public TaskInfo<Void> createInitialPatch() {
-		return patchService.createInitialPatch();
+	@Path("create-full")
+	public TaskInfo<Void> createFullPatch() {
+		return patchService.createFullPatch();
 	}
 
 }

@@ -50,7 +50,7 @@ export default connect(state => {
 								<Button onClick={actions.loadPatches}>Refresh</Button>
 								<span className="pull-right">
 									<Button bsStyle="primary"
-											onClick={() => actions.redeployHosts()}>Create
+											onClick={() => actions.createFullPatch()}>Create
 										full patch</Button>
 								</span>
 							</div>

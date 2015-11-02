@@ -190,6 +190,16 @@ export function loadPatchInfo(store, patchId) {
 }
 
 
+export function createFullPatch(store) {
+	taskService.httpPost(store, "patches/create-full");
+}
+
+export function createIncrementalPatch(store) {
+	taskService.httpPost(store, "patches/create-incremental-from/");
+}
+
+
+
 
 
 

@@ -68,7 +68,7 @@ public class PatchService {
         return new File(patchesDirectory, safeFilename(siteName));
     }
 
-    public TaskInfo<Void> createInitialPatch() {
+    public TaskInfo<Void> createFullPatch() {
         return taskService.startTask("Create full patch", () -> {
 
 
@@ -85,8 +85,8 @@ public class PatchService {
             LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
 
             // TODO: remove
-            //imageNames.clear();
-            //imageNames.add("dns");
+            imageNames.clear();
+            imageNames.add("dns");
 
             List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
             // Map image descriptions to image names
