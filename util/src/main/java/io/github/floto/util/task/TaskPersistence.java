@@ -47,6 +47,8 @@ public class TaskPersistence {
             tasksDirectory = new File(System.getProperty("user.home") + "/.floto/tasks");
             FileUtils.forceMkdir(tasksDirectory);
             long numberOfTasks = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter()).length;
+            // TODO: use actual maximum task id
+
             nextTaskId = new AtomicLong(numberOfTasks + 1);
             objectMapper = new ObjectMapper();
             objectMapper.enable(SerializationFeature.INDENT_OUTPUT);

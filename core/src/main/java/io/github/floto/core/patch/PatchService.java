@@ -68,134 +68,149 @@ public class PatchService {
         return new File(patchesDirectory, safeFilename(siteName));
     }
 
+    public void createPatch(String parentPatchId, Set<String> existingImageIds) throws Exception {
+        // TODO: tempdir
+        Instant creationDate = Instant.now();
+        Manifest manifest = flotoService.getManifest();
+        File sitePatchesDirectory = getSitePatchesDirectory(manifest);
+        File tempDir = new File(sitePatchesDirectory, ".tmp-" + UUID.randomUUID());
+        FileUtils.forceMkdir(tempDir);
+
+        Host host = manifest.hosts.get(0);
+        WebTarget dockerTarget = flotoService.createDockerTarget(host);
+
+        LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
+
+        // TODO: remove
+        imageNames.clear();
+        imageNames.add("dns");
+
+        List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
+        // Map image descriptions to image names
+        Map<String, DockerImageDescription> imageDescriptionMap = new HashMap<>();
+        Map<String, DockerImageDescription> imageDescriptionIdMap = new HashMap<>();
+        for (DockerImageDescription imageDescription : imageDescriptions) {
+            imageDescriptionIdMap.put(imageDescription.Id, imageDescription);
+            for (String tag : imageDescription.RepoTags) {
+                imageDescriptionMap.put(tag, imageDescription);
+            }
+        }
+
+        List<String> imageNamesToDownload = new ArrayList<>();
+        List<String> imageNamesToSkip = new ArrayList<>();
+        Set<String> allRequiredImageIds = new HashSet<>();
+        Map<String, String> imageMap = new HashMap<String, String>();
+        log.info("images: {}", imageMap);
+
+        for (String imageName : imageNames) {
+            boolean haveAllImages = true;
+            // TODO: check build hash match
+            DockerImageDescription imageDescription = imageDescriptionMap.get(imageName + "-image:latest");
+            if (imageDescription == null) {
+                throw new IllegalStateException("No docker image found for " + imageName);
+            }
+            String imageId = imageDescription.Id;
+            imageMap.put(imageName, imageId);
+            while (imageId != null) {
+                if (!imageRegistry.hasImage(imageId)) {
+                    haveAllImages = false;
+                }
+                allRequiredImageIds.add(imageId);
+                imageDescription = imageDescriptionIdMap.get(imageId);
+                if (imageDescription == null || imageDescription.ParentId.isEmpty()) {
+                    break;
+                } else {
+                    imageId = imageDescription.ParentId;
+                }
+            }
+            if (haveAllImages) {
+                imageNamesToSkip.add(imageName);
+            } else {
+                imageNamesToDownload.add(imageName);
+            }
+        }
+        log.info("Required image ids {}", allRequiredImageIds);
+        log.info("Skipping images (already in local image registry): {}", imageNamesToSkip);
+        WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", Lists.transform(imageNamesToDownload, name -> name + "-image:latest").toArray());
+        log.info("Retrieving images: {}", imageNamesToDownload);
+        Response response = webTarget.request().buildGet().invoke();
+        try (InputStream imageTarballInputStream = response.readEntity(InputStream.class)) {
+            imageRegistry.storeImages(imageTarballInputStream);
+        }
+        ;
+
+        // Genesis patch: all images
+
+        // Other patches: delta to existing images
+
+        String siteName = manifest.site.get("projectName").asText();
+        String revision = manifest.site.get("projectRevision").asText();
+        String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
+        String patchId = patchDirName + "." + safeFilename(manifest.getSiteName());
+
+
+
+        PatchDescription patchDescription = new PatchDescription();
+        patchDescription.id = patchId;
+        patchDescription.creationDate = creationDate;
+        patchDescription.siteName = siteName;
+        patchDescription.revision = revision;
+        patchDescription.requiredImageIds.addAll(allRequiredImageIds);
+
+        patchDescription.containedImageIds.addAll(allRequiredImageIds);
+
+        if(parentPatchId != null) {
+            PatchInfo parentPatchInfo = getPatchInfo(parentPatchId);
+            patchDescription.parentId = parentPatchId;
+            patchDescription.parentRevision = parentPatchInfo.revision;
+            // remove image ids already present
+            patchDescription.containedImageIds.removeAll(parentPatchInfo.requiredImageIds);
+        }
+        List<String> containedImageIds = new ArrayList<String>(patchDescription.containedImageIds);
+
+
+        patchDescription.imageMap = imageMap;
+
+        File patchDescriptionFile = getPatchDescriptionFile(tempDir);
+        objectMapper.writeValue(patchDescriptionFile, patchDescription);
+
+        File patchFile = new File(tempDir, patchId + ".floto-patch.zip");
+        try (ZipOutputStream patchOutputStream = new ZipOutputStream(new FileOutputStream(patchFile))) {
+            // Version
+            addEntryToZipFile(patchOutputStream, "VERSION.txt", (outputStream -> IOUtils.write("floto patch v1", outputStream)));
+
+            // Description
+            addEntryToZipFile(patchOutputStream, "patch-description.json", new FileInputStream(patchDescriptionFile));
+
+            // Images
+            for (String imageId : containedImageIds) {
+                File imageDirectory = imageRegistry.getImageDirectory(imageId);
+                Path imagePath = imageDirectory.toPath();
+                for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
+                    Path filePath = file.toPath();
+                    Path relativePath = imagePath.relativize(filePath);
+                    addEntryToZipFile(patchOutputStream, "images/" + imageId + "/" + relativePath.toString(), new FileInputStream(file));
+                }
+            }
+
+            // conf
+        }
+        File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
+        FileUtils.moveDirectory(tempDir, sitePatchDirectory);
+
+    }
+
     public TaskInfo<Void> createFullPatch() {
         return taskService.startTask("Create full patch", () -> {
-
-
-            // TODO: tempdir
-            Instant creationDate = Instant.now();
-            Manifest manifest = flotoService.getManifest();
-            File sitePatchesDirectory = getSitePatchesDirectory(manifest);
-            File tempDir = new File(sitePatchesDirectory, ".tmp-" + UUID.randomUUID());
-            FileUtils.forceMkdir(tempDir);
-
-            Host host = manifest.hosts.get(0);
-            WebTarget dockerTarget = flotoService.createDockerTarget(host);
-
-            LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
-
-            // TODO: remove
-            imageNames.clear();
-            imageNames.add("dns");
-
-            List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
-            // Map image descriptions to image names
-            Map<String, DockerImageDescription> imageDescriptionMap = new HashMap<>();
-            Map<String, DockerImageDescription> imageDescriptionIdMap = new HashMap<>();
-            for (DockerImageDescription imageDescription : imageDescriptions) {
-                imageDescriptionIdMap.put(imageDescription.Id, imageDescription);
-                for (String tag : imageDescription.RepoTags) {
-                    imageDescriptionMap.put(tag, imageDescription);
-                }
-            }
-
-            List<String> imageNamesToDownload = new ArrayList<>();
-            List<String> imageNamesToSkip = new ArrayList<>();
-            Set<String> allRequiredImageIds = new HashSet<>();
-            Map<String, String> imageMap = new HashMap<String, String>();
-
-            for (String imageName : imageNames) {
-                boolean haveAllImages = true;
-                DockerImageDescription imageDescription = imageDescriptionMap.get(imageName + "-image:latest");
-                if(imageDescription == null) {
-                    throw new IllegalStateException("No docker image found for "+ imageName);
-                }
-                String imageId = imageDescription.Id;
-                imageMap.put(imageName, imageId);
-                while (imageId != null) {
-                    if (!imageRegistry.hasImage(imageId)) {
-                        haveAllImages = false;
-                    }
-                    allRequiredImageIds.add(imageId);
-                    imageDescription = imageDescriptionIdMap.get(imageId);
-                    if (imageDescription == null || imageDescription.ParentId.isEmpty()) {
-                        break;
-                    } else {
-                        imageId = imageDescription.ParentId;
-                    }
-                }
-                if (haveAllImages) {
-                    imageNamesToSkip.add(imageName);
-                } else {
-                    imageNamesToDownload.add(imageName);
-                }
-            }
-
-            log.trace("Required image ids {}", allRequiredImageIds);
-            log.info("Skipping images (already in local image registry): {}", imageNamesToSkip);
-            WebTarget webTarget = dockerTarget.path("/images/get").queryParam("names", Lists.transform(imageNamesToDownload, name -> name + "-image:latest").toArray());
-            log.info("Retrieving images: {}", imageNamesToDownload);
-            Response response = webTarget.request().buildGet().invoke();
-            try(InputStream imageTarballInputStream = response.readEntity(InputStream.class)) {
-                    imageRegistry.storeImages(imageTarballInputStream);
-            };
-
-            // Genesis patch: all images
-
-            // Other patches: delta to existing images
-
-            String siteName = manifest.site.get("projectName").asText();
-            String revision = manifest.site.get("projectRevision").asText();
-            String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
-            String patchId = patchDirName + "." + safeFilename(manifest.getSiteName());
-
-            PatchDescription patchDescription = new PatchDescription();
-            patchDescription.id = patchId;
-            patchDescription.creationDate = creationDate;
-            patchDescription.siteName = siteName;
-            patchDescription.revision = revision;
-            patchDescription.requiredImageIds.addAll(allRequiredImageIds);
-
-            List<String> containedImageIds = new ArrayList<String>(allRequiredImageIds);
-
-            // TODO: remove image ids already present
-            patchDescription.containedImageIds.addAll(allRequiredImageIds);
-            patchDescription.imageMap = imageMap;
-
-            File patchDescriptionFile = getPatchDescriptionFile(tempDir);
-            objectMapper.writeValue(patchDescriptionFile, patchDescription);
-
-            File patchFile = new File(tempDir, patchId + ".floto-patch.zip");
-            try (ZipOutputStream patchOutputStream = new ZipOutputStream(new FileOutputStream(patchFile))) {
-                // Version
-                addEntryToZipFile(patchOutputStream, "VERSION.txt", (outputStream -> IOUtils.write("floto patch v1", outputStream)));
-
-                // Description
-                addEntryToZipFile(patchOutputStream, "patch-description.json", new FileInputStream(patchDescriptionFile));
-
-                // Images
-                for (String imageId : containedImageIds) {
-                    File imageDirectory = imageRegistry.getImageDirectory(imageId);
-                    Path imagePath = imageDirectory.toPath();
-                    for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
-                        Path filePath = file.toPath();
-                        Path relativePath = imagePath.relativize(filePath);
-                        addEntryToZipFile(patchOutputStream, "images/" + imageId + "/" + relativePath.toString(), new FileInputStream(file));
-                    }
-                }
-
-                // conf
-            }
-            File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
-            FileUtils.moveDirectory(tempDir, sitePatchDirectory);
-
+            createPatch(null, Collections.emptySet());
             return null;
         });
     }
 
     public TaskInfo<Void> createIncrementalPatch(String parentPatchId) {
-        return taskService.startTask("Create incremental patch from "+ parentPatchId, () -> {
+        return taskService.startTask("Create incremental patch from " + parentPatchId, () -> {
 
+            createPatch(parentPatchId, Collections.emptySet());
             return null;
         });
     }
@@ -227,7 +242,7 @@ public class PatchService {
             patchInfo.patchSize = new File(patchDirectory, patchId + ".floto-patch.zip").length();
             return patchInfo;
         } catch (Throwable throwable) {
-            throw new RuntimeException("Error getting patch info for patch id "+patchId, throwable);
+            throw new RuntimeException("Error getting patch info for patch id " + patchId, throwable);
         }
     }
 
