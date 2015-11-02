@@ -35,7 +35,9 @@ gulp.task('dev', function () {
 		noInfo: false,
 		lazy: false,
 		filename: "bundle.js",
-		watchDelay: 300,
+		watchOptions: {
+			aggregateTimeout: 300
+		},
 		publicPath: "/",
 		stats: {
 			colors: true,

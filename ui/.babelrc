@@ -5,15 +5,16 @@
   ],
   "extra": {
     // must be defined and be an array
-    "react-transform": [{
-      "target": "react-transform-webpack-hmr",
+    "react-transform":  {
+                             "transforms": [{
+      "transform": "react-transform-hmr",
       // if you use React Native, pass "react-native" instead:
       "imports": ["react"],
       // this is important for Webpack HMR:
       "locals": ["module"]
     },
     {
-          "target": "react-transform-catch-errors",
+          "transform": "react-transform-catch-errors",
           // now go the imports!
           // the first import is your React distribution
           // (if you use React Native, pass "react-native" instead)
@@ -24,4 +25,5 @@
     // note: you can put more transforms into array
     // this is just one of them!
   }
+}
 }
