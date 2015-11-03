@@ -14,6 +14,9 @@ public class PatchDescription {
     // The site name (site.projectName)
     public String siteName;
 
+    // The root definition file
+    public String rootDefinitionFile;
+
     // The site-unique patch id
     public String id;
 

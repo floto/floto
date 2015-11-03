@@ -205,6 +205,7 @@ export function createIncrementalPatch(store, parentPatchId) {
 export function activatePatch(store, patchId) {
 	taskService.httpPost(store, `patches/${patchId}/activate`).then(() => {
 		loadPatches(store);
+		refreshManifest(store);
 	});
 }
 

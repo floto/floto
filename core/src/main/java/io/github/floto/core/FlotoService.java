@@ -1291,5 +1291,12 @@ public class FlotoService implements Closeable {
         return manifestCompilationError;
     }
 
+    public File getRootDefinitionFile() {
+        return rootDefinitionFile;
+    }
+
+    public void setRootDefinitionFile(File rootDefinitionFile) {
+        this.rootDefinitionFile = rootDefinitionFile;
+    }
 
 }

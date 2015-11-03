@@ -16,8 +16,16 @@ import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.WorkingTreeIterator;
 import org.slf4j.Logger;
 
 import javax.ws.rs.client.WebTarget;
@@ -25,6 +33,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -155,6 +164,18 @@ public class PatchService {
         patchDescription.id = patchId;
         patchDescription.creationDate = creationDate;
         patchDescription.siteName = siteName;
+
+        Path pathAbsolute = Paths.get("/var/data/stuff/xyz.dat");
+        Path pathBase = Paths.get("/var/data");
+        Path pathRelative = pathBase.relativize(pathAbsolute);
+
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        Repository repository = builder.readEnvironment().findGitDir(flotoService.getRootDefinitionFile()).readEnvironment().build();
+
+        Path confDirectory = repository.getWorkTree().toPath();
+        Path rootDefinitionPath = flotoService.getRootDefinitionFile().toPath();
+
+        patchDescription.rootDefinitionFile = confDirectory.relativize(rootDefinitionPath).toString();
         patchDescription.revision = revision;
         patchDescription.requiredImageIds.addAll(allRequiredImageIds);
 
@@ -195,6 +216,34 @@ public class PatchService {
             }
 
             // conf
+            FileTreeIterator fileTreeIterator = new FileTreeIterator(repository);
+            TreeWalk treeWalk = new TreeWalk(repository);
+            treeWalk.addTree(fileTreeIterator);
+            treeWalk.setRecursive(true);
+            while(treeWalk.next()) {
+                WorkingTreeIterator f = treeWalk.getTree(0, WorkingTreeIterator.class);
+                if(!f.isEntryIgnored()) {
+                    System.err.println(treeWalk.getPathString());
+                    addEntryToZipFile(patchOutputStream, "conf/"+treeWalk.getPathString(), f.openEntryStream());
+                    FileUtils.copyFile(new File(repository.getWorkTree(), treeWalk.getPathString()), new File(tempDir, "conf/"+treeWalk.getPathString()));
+
+                }
+            }
+            // copy .git directory
+            FileUtils.copyDirectory(repository.getDirectory(), new File(tempDir, "conf/.git"));
+
+            Collection<File> files = FileUtils.listFiles(
+                    repository.getDirectory(),
+                    FileFilterUtils.fileFileFilter(),
+                    DirectoryFileFilter.DIRECTORY
+            );
+            Path gitPath = repository.getDirectory().toPath();
+
+            for(File file: files) {
+                Path relativePath = gitPath.relativize(file.toPath());
+                addEntryToZipFile(patchOutputStream, "conf/.git/"+relativePath.toString(), new FileInputStream(file));
+            }
+
         }
         File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
         FileUtils.moveDirectory(tempDir, sitePatchDirectory);
@@ -286,6 +335,9 @@ public class PatchService {
 
     public TaskInfo<Void> activatePatch(String patchId) {
         activePatch = getPatchInfo(patchId);
+        File patchDirectory = getPatchDirectory(activePatch.id);
+        flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/"+activePatch.rootDefinitionFile));
+        // TODO: make persistent
         return flotoService.compileManifest();
     }
 
