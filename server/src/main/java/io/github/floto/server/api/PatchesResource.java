@@ -2,12 +2,11 @@ package io.github.floto.server.api;
 
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.patch.PatchService;
+import io.github.floto.core.patch.PatchesInfo;
 import io.github.floto.util.task.TaskInfo;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.HashMap;
-import java.util.Map;
 
 @Path("patches")
 public class PatchesResource {
@@ -21,10 +20,8 @@ public class PatchesResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String, Object> getPatches() {
-		HashMap<String, Object> result = new HashMap<>();
-		result.put("patches", patchService.getPatches());
-		return result;
+	public PatchesInfo getPatches() {
+		return patchService.getPatches();
 	}
 
 	@Path("{patchId}")

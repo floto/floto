@@ -178,7 +178,7 @@ export function changeSafety(store, safetyArmed) {
 
 export function loadPatches(store) {
 	rest.send({method: "GET", url: "patches"}).then((result) => {
-		store.dispatch({type: "PATCHES_LOADED", payload: result.patches});
+		store.dispatch({type: "PATCHES_LOADED", payload: result});
 	});
 }
 
@@ -202,7 +202,11 @@ export function createIncrementalPatch(store, parentPatchId) {
 	});
 }
 
-
+export function activatePatch(store, patchId) {
+	taskService.httpPost(store, `patches/${patchId}/activate`).then(() => {
+		loadPatches(store);
+	});
+}
 
 
 

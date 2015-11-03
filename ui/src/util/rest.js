@@ -9,7 +9,10 @@ export function send(request) {
 		xhr.addEventListener("load", (result) => {
 			if (xhr.status >= 200 && xhr.status < 300) {
 				if (!request.accept) {
-					let responseJson = JSON.parse(xhr.responseText);
+					let responseJson = null;
+					if(xhr.status !== 204) {
+						responseJson = JSON.parse(xhr.responseText);
+					}
 					resolve(responseJson);
 				} else {
 					resolve(xhr.responseText);

@@ -41,6 +41,7 @@ public class PatchService {
     private FlotoService flotoService;
     private TaskService taskService;
     private ImageRegistry imageRegistry;
+    private PatchInfo activePatch = null;
 
 
     public PatchService(File patchesDirectory, FlotoService flotoService, TaskService taskService, ImageRegistry imageRegistry) {
@@ -257,9 +258,10 @@ public class PatchService {
         return sanitarizationPattern.matcher(unsafeFilename).replaceAll("-");
     }
 
-    public List<PatchDescription> getPatches() {
+    public PatchesInfo getPatches() {
+        PatchesInfo patchesInfo = new PatchesInfo();
         Manifest manifest = flotoService.getManifest();
-        ArrayList<PatchDescription> patchDescriptions = new ArrayList<>();
+
         File[] directories = getSitePatchesDirectory(manifest).listFiles(File::isDirectory);
         for (File directory : directories) {
             if (directory.getName().startsWith(".")) {
@@ -269,16 +271,25 @@ public class PatchService {
             try {
                 File patchDescriptionFile = getPatchDescriptionFile(directory);
                 PatchDescription patchDescription = objectMapper.readValue(patchDescriptionFile, PatchDescription.class);
-                patchDescriptions.add(patchDescription);
+                patchesInfo.patches.add(patchDescription);
             } catch (Throwable throwable) {
                 log.warn("Error reading patch in directory " + directory, throwable);
             }
         }
-        patchDescriptions.sort((PatchDescription a, PatchDescription b) -> -a.creationDate.compareTo(b.creationDate));
-
-        return patchDescriptions;
+        patchesInfo.patches.sort((PatchDescription a, PatchDescription b) -> -a.creationDate.compareTo(b.creationDate));
+        if(activePatch != null) {
+            patchesInfo.activePatchId = activePatch.id;
+        }
+        return patchesInfo;
 
     }
+
+    public TaskInfo<Void> activatePatch(String patchId) {
+        activePatch = getPatchInfo(patchId);
+        return flotoService.compileManifest();
+    }
+
+
 
     @FunctionalInterface
     public interface Consumer_WithExceptions<T> {

@@ -113,8 +113,8 @@ addReducers({
 		return {config, clientState: _.extend({}, state.clientState, {safetyArmed: config.armed})};
 	},
 
-	PATCHES_LOADED(state, patches) {
-		return {patches};
+	PATCHES_LOADED(state, patchesInfo) {
+		return {patches: patchesInfo.patches, activePatchId: patchesInfo.activePatchId};
 	},
 
 

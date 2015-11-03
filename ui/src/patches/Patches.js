@@ -9,7 +9,8 @@ export default connect(state => {
 	return {
 		clientState: state.clientState,
 		patches: state.patches,
-		selectedPatchId: state.selectedPatchId
+		selectedPatchId: state.selectedPatchId,
+		activePatchId: state.activePatchId
 	};
 })(React.createClass({
 			displayName: "Patches",
@@ -17,7 +18,6 @@ export default connect(state => {
 			contextTypes: {
 				actions: React.PropTypes.object.isRequired
 			},
-
 
 			navigateToPatch(patchId) {
 				let newUrl = '/patches/' + patchId;
@@ -27,11 +27,16 @@ export default connect(state => {
 			renderPatch(patch) {
 				let actions = this.context.actions;
 				let rowClassName = null;
+				let style = null;
+				if (patch.id === this.activePatchId) {
+					rowClassName = "warning";
+					style = {fontWeight: "bold"};
+				}
 				if (patch.id === this.selectedPatchId) {
 					rowClassName = "info";
 				}
 				return <tr key={patch.id} onClick={this.navigateToPatch.bind(this, patch.id)}
-						   className={rowClassName}>
+						   className={rowClassName} style={style}>
 					<td>{patch.creationDate}</td>
 					<td>{patch.revision}</td>
 					<td>{patch.parentRevision || "-"}</td>
@@ -42,6 +47,7 @@ export default connect(state => {
 				let actions = this.context.actions;
 				let patches = this.props.patches || [];
 				let selectedPatchId = this.selectedPatchId = this.props.selectedPatchId;
+				this.activePatchId = this.props.activePatchId;
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>

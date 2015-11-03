@@ -31,6 +31,8 @@ export default connect(state => {
 					<h2>{patch.revision}</h2>
 					<span className="text-muted">{patch.id}</span>
 					<br/>
+					<Button bsStyle="warning"
+							onClick={() => actions.activatePatch(patch.id)}>Activate patch</Button>
 					<span className="pull-right">
 						<Button bsStyle="primary"
 								onClick={() => actions.createIncrementalPatch(patch.id)}>Create incremental patch</Button>
