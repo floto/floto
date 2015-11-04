@@ -210,6 +210,13 @@ export function activatePatch(store, patchId) {
 }
 
 
+export function uploadPatch(store, patchFile) {
+	taskService.httpPost(store, "patches/upload/"+patchFile.name, {blob: patchFile})
+		.finally(() => {
+			loadPatches(store);
+		});
+}
+
 
 
 

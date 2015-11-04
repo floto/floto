@@ -20,4 +20,8 @@ public class FlotoCommonParameters {
 
     @Parameter(names = "--floto-home", description = "Home directory of floto to store temporary files, patches, etc.")
     public String flotoHome;
+
+    @Parameter(names = "--patch-mode", description = "The patch mode of this instance (\"create\" to create patches (default), \"apply\" to apply those")
+    public String patchMode = "create";
+
 }

@@ -10,7 +10,8 @@ import {formatBytes} from "../util/formatting.js";
 
 export default connect(state => {
 	return {
-		selectedPatch: state.selectedPatch
+		selectedPatch: state.selectedPatch,
+		config: state.config
 	};
 })(React.createClass({
 			displayName: "Patches",
@@ -22,7 +23,7 @@ export default connect(state => {
 
 			render() {
 				let actions = this.context.actions;
-				let patches = this.props.patches || [];
+				let config = this.props.config;
 				let patch = this.props.selectedPatch;
 				if (!patch) {
 					return null;
@@ -31,12 +32,14 @@ export default connect(state => {
 					<h2>{patch.revision}</h2>
 					<span className="text-muted">{patch.id}</span>
 					<br/>
+					{config.patchMode === "apply" ?
 					<Button bsStyle="warning"
-							onClick={() => actions.activatePatch(patch.id)}>Activate patch</Button>
+							onClick={() => actions.activatePatch(patch.id)}>Activate patch</Button>:null}
+					{config.patchMode === "create" ?
 					<span className="pull-right">
 						<Button bsStyle="primary"
 								onClick={() => actions.createIncrementalPatch(patch.id)}>Create incremental patch</Button>
-					</span>
+					</span>:null}
 					<br/>
 					<br/>
 					<Table striped condensed style={{tableLayout: "fixed"}}>

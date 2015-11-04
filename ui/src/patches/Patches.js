@@ -5,12 +5,16 @@ import { History } from 'react-router';
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 var Icon = require('react-fa');
 
+import FileUploadComponent from "../components/FileUploadComponent.js";
+
+
 export default connect(state => {
 	return {
 		clientState: state.clientState,
 		patches: state.patches,
 		selectedPatchId: state.selectedPatchId,
-		activePatchId: state.activePatchId
+		activePatchId: state.activePatchId,
+		config: state.config
 	};
 })(React.createClass({
 			displayName: "Patches",
@@ -45,6 +49,7 @@ export default connect(state => {
 
 			render() {
 				let actions = this.context.actions;
+				let config = this.props.config;
 				let patches = this.props.patches || [];
 				let selectedPatchId = this.selectedPatchId = this.props.selectedPatchId;
 				this.activePatchId = this.props.activePatchId;
@@ -54,11 +59,18 @@ export default connect(state => {
 							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
 								<h2>Patches <span className="text-muted">({patches.length})</span></h2>
 								<Button onClick={actions.loadPatches}>Refresh</Button>
-								<span className="pull-right">
+								{config.patchMode === "create" ?
+									<span className="pull-right">
 									<Button bsStyle="primary"
 											onClick={() => actions.createFullPatch()}>Create
 										full patch</Button>
-								</span>
+								</span> : null}
+								{config.patchMode === "apply" ?
+									<span className="pull-right">
+										<FileUploadComponent title="Upload patch" extension=".floto-patch.zip"
+															 onFileSelected={(patchFile) => actions.uploadPatch(patchFile)}/>
+								</span> : null}
+
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
 								<Table bordered striped hover condensed style={{cursor: "pointer"}}>

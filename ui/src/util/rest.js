@@ -31,7 +31,11 @@ export function send(request) {
 		xhr.setRequestHeader("Accept", request.accept || "application/json");
 		xhr.setRequestHeader("Content-Type", "application/json");
 		if (request.request) {
-			xhr.send(JSON.stringify(request.request));
+			if(request.request.blob) {
+				xhr.send(request.request.blob);
+			} else {
+				xhr.send(JSON.stringify(request.request));
+			}
 		} else {
 			xhr.send();
 		}

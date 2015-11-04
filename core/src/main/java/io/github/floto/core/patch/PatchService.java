@@ -20,6 +20,7 @@ import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -38,6 +39,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -159,7 +161,6 @@ public class PatchService {
         String patchId = patchDirName + "." + safeFilename(manifest.getSiteName());
 
 
-
         PatchDescription patchDescription = new PatchDescription();
         patchDescription.id = patchId;
         patchDescription.creationDate = creationDate;
@@ -181,7 +182,7 @@ public class PatchService {
 
         patchDescription.containedImageIds.addAll(allRequiredImageIds);
 
-        if(parentPatchId != null) {
+        if (parentPatchId != null) {
             PatchInfo parentPatchInfo = getPatchInfo(parentPatchId);
             patchDescription.parentId = parentPatchId;
             patchDescription.parentRevision = parentPatchInfo.revision;
@@ -220,11 +221,11 @@ public class PatchService {
             TreeWalk treeWalk = new TreeWalk(repository);
             treeWalk.addTree(fileTreeIterator);
             treeWalk.setRecursive(true);
-            while(treeWalk.next()) {
+            while (treeWalk.next()) {
                 WorkingTreeIterator f = treeWalk.getTree(0, WorkingTreeIterator.class);
-                if(!f.isEntryIgnored()) {
-                    addEntryToZipFile(patchOutputStream, "conf/"+treeWalk.getPathString(), f.openEntryStream());
-                    FileUtils.copyFile(new File(repository.getWorkTree(), treeWalk.getPathString()), new File(tempDir, "conf/"+treeWalk.getPathString()));
+                if (!f.isEntryIgnored()) {
+                    addEntryToZipFile(patchOutputStream, "conf/" + treeWalk.getPathString(), f.openEntryStream());
+                    FileUtils.copyFile(new File(repository.getWorkTree(), treeWalk.getPathString()), new File(tempDir, "conf/" + treeWalk.getPathString()));
 
                 }
             }
@@ -238,9 +239,9 @@ public class PatchService {
             );
             Path gitPath = repository.getDirectory().toPath();
 
-            for(File file: files) {
+            for (File file : files) {
                 Path relativePath = gitPath.relativize(file.toPath());
-                addEntryToZipFile(patchOutputStream, "conf/.git/"+relativePath.toString(), new FileInputStream(file));
+                addEntryToZipFile(patchOutputStream, "conf/.git/" + relativePath.toString(), new FileInputStream(file));
             }
 
         }
@@ -311,21 +312,23 @@ public class PatchService {
         Manifest manifest = flotoService.getManifest();
 
         File[] directories = getSitePatchesDirectory(manifest).listFiles(File::isDirectory);
-        for (File directory : directories) {
-            if (directory.getName().startsWith(".")) {
-                // skip "hidden" directories
-                continue;
-            }
-            try {
-                File patchDescriptionFile = getPatchDescriptionFile(directory);
-                PatchDescription patchDescription = objectMapper.readValue(patchDescriptionFile, PatchDescription.class);
-                patchesInfo.patches.add(patchDescription);
-            } catch (Throwable throwable) {
-                log.warn("Error reading patch in directory " + directory, throwable);
+        if (directories != null) {
+            for (File directory : directories) {
+                if (directory.getName().startsWith(".")) {
+                    // skip "hidden" directories
+                    continue;
+                }
+                try {
+                    File patchDescriptionFile = getPatchDescriptionFile(directory);
+                    PatchDescription patchDescription = objectMapper.readValue(patchDescriptionFile, PatchDescription.class);
+                    patchesInfo.patches.add(patchDescription);
+                } catch (Throwable throwable) {
+                    log.warn("Error reading patch in directory " + directory, throwable);
+                }
             }
         }
         patchesInfo.patches.sort((PatchDescription a, PatchDescription b) -> -a.creationDate.compareTo(b.creationDate));
-        if(activePatch != null) {
+        if (activePatch != null) {
             patchesInfo.activePatchId = activePatch.id;
         }
         return patchesInfo;
@@ -335,12 +338,61 @@ public class PatchService {
     public TaskInfo<Void> activatePatch(String patchId) {
         activePatch = getPatchInfo(patchId);
         File patchDirectory = getPatchDirectory(activePatch.id);
-        flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/"+activePatch.rootDefinitionFile));
+        flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/" + activePatch.rootDefinitionFile));
         flotoService.setActivePatch(activePatch);
         // TODO: make persistent
         return flotoService.compileManifest();
     }
 
+    public TaskInfo<Void> uploadPatch(String filename, InputStream inputStream) {
+        File tempDir = new File(patchesDirectory, ".tmp-patch-" + UUID.randomUUID());
+        File patchFile = new File(tempDir, "patch.zip");
+        try {
+            FileUtils.forceMkdir(tempDir);
+            FileUtils.copyInputStreamToFile(inputStream, patchFile);
+        } catch (Throwable throwable) {
+            Throwables.propagate(throwable);
+        }
+        return taskService.startTask("Upload patch " + filename, () -> {
+            try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(patchFile))) {
+                ZipEntry nextEntry;
+                while ((nextEntry = zipInputStream.getNextEntry()) != null) {
+                    log.trace("File: " + nextEntry.getName());
+
+                    FileUtils.copyInputStreamToFile(new CloseShieldInputStream(zipInputStream), new File(tempDir, nextEntry.getName()));
+                }
+            }
+            File patchDescriptionFile = new File(tempDir, "patch-description.json");
+            PatchInfo patchInfo = objectMapper.readValue(patchDescriptionFile, PatchInfo.class);
+            log.info("Uploaded patch revision: " + patchInfo.revision);
+            log.info("Uploaded patch site: " + patchInfo.siteName);
+
+            File layersDirectory = new File(tempDir, "images");
+            if(layersDirectory.exists()) {
+                File[] layerDirectories = layersDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+                for(File layerDirectory: layerDirectories) {
+                    File destinationDirectory = imageRegistry.getImageDirectory(layerDirectory.getName());
+                    if(destinationDirectory.exists()) {
+                        FileUtils.deleteDirectory(destinationDirectory);
+                    }
+                    FileUtils.moveDirectory(layerDirectory, destinationDirectory);
+                }
+            }
+
+            // Rename patch file
+            File newPatchFile = new File(tempDir, patchInfo.id + ".floto-patch.zip");
+            FileUtils.moveFile(patchFile, newPatchFile);
+
+            // Move to patch directory
+            File patchDirectory = new File(new File(patchesDirectory, safeFilename(patchInfo.siteName)), patchInfo.id);
+            FileUtils.forceMkdir(patchDirectory.getParentFile());
+            if(patchDirectory.exists()) {
+                FileUtils.deleteDirectory(patchDirectory);
+            }
+            FileUtils.moveDirectory(tempDir, patchDirectory);
+            return null;
+        });
+    }
 
 
     @FunctionalInterface
