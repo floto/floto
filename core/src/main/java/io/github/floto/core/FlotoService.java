@@ -12,6 +12,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
+import io.github.floto.core.patch.PatchInfo;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.core.ssh.SshService;
@@ -85,6 +86,7 @@ public class FlotoService implements Closeable {
 
     private Map<String, String> externalHostIpMap = new HashMap<>();
     Set<String> DEPLOYMENT_CONTAINER_NAMES = Sets.newHashSet("floto");
+    private PatchInfo activePatch;
 
     public enum DeploymentMode {
         fromRootImage, fromBaseImage, containerRebuild
@@ -246,7 +248,7 @@ public class FlotoService implements Closeable {
             taskName = "Redeploy " + requestedContainers.size() + " containers in mode '" + deploymentMode + "'";
         }
         return taskService.startTask(taskName, () -> {
-            log.info("Redeploying containers " + Joiner.on(", "));
+            log.info("Redeploying containers " + Joiner.on(", ").join(requestedContainers));
             boolean excludeDeploymentContainers = false;
             // TODO: when to exclude?
 
@@ -335,69 +337,71 @@ public class FlotoService implements Closeable {
 
     private void redeployFromBaseImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream) throws Exception {
         // verify that the correct base image is on the host
-
-        // TODO: get correct base image id
-        String baseImageId = "356e37784c30a9f6481959890d5b0c0fded2c8ba78f87417aab119d7b84f1ae2";
-        WebTarget dockerTarget = createDockerTarget(host).path("/images/" + baseImageId + "/json");
-        Response response = dockerTarget.request().property("passThrough404", true).get(Response.class);
-        int statusCode = response.getStatusInfo().getStatusCode();
-        response.close();
-        if(statusCode == 404) {
-            log.info("Base Image <{}> not found, uploading to host", baseImageName);
-            List<String> imageIds = new ArrayList<>();
-            String currentImageId = baseImageId;
-            // find all parents
-            while(currentImageId != null && !currentImageId.isEmpty()) {
-                // TODO: skip present images
-                imageIds.add(currentImageId);
-                currentImageId = imageRegistry.getImageDescription(currentImageId).parent;
-            }
-            // add images in reverse order
-            Lists.reverse(imageIds);
-            log.info("Uploading image layers: {}", imageIds);
-
-            final String finalImageId = baseImageId;
-            Response createResponse = createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
-                @Override
-                public void write(OutputStream output) throws IOException, WebApplicationException {
-                    try(TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
-                        for(String imageId: imageIds) {
-                            File imageDirectory = imageRegistry.getImageDirectory(imageId);
-                            Path imagePath = imageDirectory.toPath();
-                            for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
-                                Path filePath = file.toPath();
-                                Path relativePath = imagePath.relativize(filePath);
-                                String tarFilename = imageId + "/" + relativePath.toString();
-                                tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
-                                try (FileInputStream fileInputStream = new FileInputStream(file)) {
-                                    IOUtils.copy(fileInputStream, tarBallOutputStream);
-                                }
-                                tarBallOutputStream.closeEntry();
-                            }
-                        }
-                        // TODO: generate repository file?
-                        Map<String, Object> repository = new HashMap<String, Object>();
-                        HashMap<String, String> tags = new HashMap<String, String>();
-                        tags.put("latest", finalImageId);
-                        repository.put(baseImageName, tags);
-                        ObjectMapper mapper = new ObjectMapper();
-                        byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
-
-                        TarEntry repositoriesTarEntry = new TarEntry("repositories");
-                        repositoriesTarEntry.setSize(repositoryBytes.length);
-                        tarBallOutputStream.putNextEntry(repositoriesTarEntry);
-                        IOUtils.write(repositoryBytes, tarBallOutputStream);
-                        tarBallOutputStream.closeEntry();
-
-                    }
+        if(activePatch != null) {
+            log.info("Deploying from patch: {}", activePatch.revision);
+            String strippedBaseImageName = baseImageName.replaceFirst("-image$", "");
+            String baseImageId = activePatch.imageMap.get(strippedBaseImageName);
+            log.info("Deploying image <{}> from layer {}", strippedBaseImageName, baseImageId);
+            WebTarget dockerTarget = createDockerTarget(host).path("/images/" + baseImageId + "/json");
+            Response response = dockerTarget.request().property("passThrough404", true).get(Response.class);
+            int statusCode = response.getStatusInfo().getStatusCode();
+            response.close();
+            if(statusCode == 404) {
+                log.info("Base Image <{}> not found, uploading to host", baseImageName);
+                List<String> imageIds = new ArrayList<>();
+                String currentImageId = baseImageId;
+                // find all parents
+                while(currentImageId != null && !currentImageId.isEmpty()) {
+                    // TODO: skip present images
+                    imageIds.add(currentImageId);
+                    currentImageId = imageRegistry.getImageDescription(currentImageId).parent;
                 }
-            }, "application/octet-stream")).invoke();
-            log.info("Base Image <{}> uploaded", baseImageName);
-        } else {
-            log.info("Base Image <{}> already on host", baseImageName);
+                // add images in reverse order
+                Lists.reverse(imageIds);
+                log.info("Uploading image layers: {}", imageIds);
+
+                final String finalImageId = baseImageId;
+                Response createResponse = createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
+                    @Override
+                    public void write(OutputStream output) throws IOException, WebApplicationException {
+                        try(TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
+                            for(String imageId: imageIds) {
+                                File imageDirectory = imageRegistry.getImageDirectory(imageId);
+                                Path imagePath = imageDirectory.toPath();
+                                for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
+                                    Path filePath = file.toPath();
+                                    Path relativePath = imagePath.relativize(filePath);
+                                    String tarFilename = imageId + "/" + relativePath.toString();
+                                    tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
+                                    try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                                        IOUtils.copy(fileInputStream, tarBallOutputStream);
+                                    }
+                                    tarBallOutputStream.closeEntry();
+                                }
+                            }
+                            // TODO: generate repository file?
+                            Map<String, Object> repository = new HashMap<String, Object>();
+                            HashMap<String, String> tags = new HashMap<String, String>();
+                            tags.put("latest", finalImageId);
+                            repository.put(baseImageName, tags);
+                            ObjectMapper mapper = new ObjectMapper();
+                            byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
+
+                            TarEntry repositoriesTarEntry = new TarEntry("repositories");
+                            repositoriesTarEntry.setSize(repositoryBytes.length);
+                            tarBallOutputStream.putNextEntry(repositoriesTarEntry);
+                            IOUtils.write(repositoryBytes, tarBallOutputStream);
+                            tarBallOutputStream.closeEntry();
+
+                        }
+                    }
+                }, "application/octet-stream")).invoke();
+                log.info("Base Image <{}> uploaded", baseImageName);
+            } else {
+                log.info("Base Image <{}> already on host", baseImageName);
+            }
+
         }
-
-
 
         this.createFinalImage(host, container, baseImageName, buildLogStream);
         this.rebuildContainer(container, true);
@@ -1298,5 +1302,10 @@ public class FlotoService implements Closeable {
     public void setRootDefinitionFile(File rootDefinitionFile) {
         this.rootDefinitionFile = rootDefinitionFile;
     }
+
+    public void setActivePatch(PatchInfo activePatch) {
+        this.activePatch = activePatch;
+    }
+
 
 }

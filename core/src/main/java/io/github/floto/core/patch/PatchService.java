@@ -223,7 +223,6 @@ public class PatchService {
             while(treeWalk.next()) {
                 WorkingTreeIterator f = treeWalk.getTree(0, WorkingTreeIterator.class);
                 if(!f.isEntryIgnored()) {
-                    System.err.println(treeWalk.getPathString());
                     addEntryToZipFile(patchOutputStream, "conf/"+treeWalk.getPathString(), f.openEntryStream());
                     FileUtils.copyFile(new File(repository.getWorkTree(), treeWalk.getPathString()), new File(tempDir, "conf/"+treeWalk.getPathString()));
 
@@ -337,6 +336,7 @@ public class PatchService {
         activePatch = getPatchInfo(patchId);
         File patchDirectory = getPatchDirectory(activePatch.id);
         flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/"+activePatch.rootDefinitionFile));
+        flotoService.setActivePatch(activePatch);
         // TODO: make persistent
         return flotoService.compileManifest();
     }
