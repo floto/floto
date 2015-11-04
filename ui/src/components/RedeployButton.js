@@ -11,7 +11,8 @@ export default connect(state => {
 	},
 
 	render() {
-		let defaultDeploymentMode = this.props.config.defaultDeploymentMode || "fromBaseImage";
+		let config = this.props.config;
+		let defaultDeploymentMode = config.defaultDeploymentMode || "fromBaseImage";
 
 		let defaultFromBase = defaultDeploymentMode === "fromBaseImage";
 
@@ -21,8 +22,8 @@ export default connect(state => {
 		return <SplitButton bsStyle="primary" bsSize={this.props.size || "xs"}
 							onClick={this.onExecute.bind(this, defaultDeploymentMode)}
 							title={this.props.title || "Redeploy"} id="redeploy" disabled={this.props.disabled}>
-			<MenuItem onSelect={this.onExecute.bind(this, "fromRootImage")}><span
-				style={rootStyle}>From Root Image</span></MenuItem>
+			{config.canDeployFromRootImage?<MenuItem onSelect={this.onExecute.bind(this, "fromRootImage")}><span
+				style={rootStyle}>From Root Image</span></MenuItem>:null}
 			<MenuItem onSelect={this.onExecute.bind(this, "fromBaseImage")}><span
 				style={baseStyle}>From Base Image</span></MenuItem>
 			<MenuItem onSelect={this.onExecute.bind(this, "containerRebuild")}>Recreate Container</MenuItem>
