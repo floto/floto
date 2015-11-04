@@ -18,4 +18,6 @@ public class FlotoCommonParameters {
     @Parameter(names = "--proxy-prefix", description = "When several IP addresses are available for proxying, choose the one with the given prefix")
     public String proxyPrefix;
 
+    @Parameter(names = "--floto-home", description = "Home directory of floto to store temporary files, patches, etc.")
+    public String flotoHome;
 }

@@ -79,7 +79,7 @@ public class FlotoService implements Closeable {
     private Throwable manifestCompilationError;
     private SshService sshService = new SshService();
     private int proxyPort = 40005;
-    private File flotoHome = new File(System.getProperty("user.home") + "/.floto");
+    private File flotoHome;
     private boolean useProxy;
     private String httpProxyUrl;
     private HttpProxy proxy;
@@ -118,6 +118,24 @@ public class FlotoService implements Closeable {
     }
 
     public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
+        // default
+        this.flotoHome = new File(System.getProperty("user.home") + "/.floto");
+        // override through environment variable
+        String envFlotoHome = System.getenv("FLOTO_HOME");
+        if(envFlotoHome != null) {
+            this.flotoHome = new File(envFlotoHome);
+        }
+        // override through command line
+        if(commonParameters.flotoHome != null) {
+            this.flotoHome = new File(commonParameters.flotoHome);
+        }
+        log.info("Using floto home: {}", this.flotoHome);
+        try {
+            FileUtils.forceMkdir(this.flotoHome);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not create floto home "+ this.flotoHome, e);
+        }
+
         this.taskService = taskService;
         this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
         this.environment = commonParameters.environment;
