@@ -297,8 +297,18 @@ public class PatchService {
     }
 
     private File getPatchDirectory(String patchId) {
-        Manifest manifest = flotoService.getManifest();
-        return new File(getSitePatchesDirectory(manifest), patchId);
+        File[] siteDirectories = patchesDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+        if(siteDirectories == null) {
+            throw new IllegalStateException("No site directories found");
+        }
+        for(File siteDirectory: siteDirectories) {
+            File patchDirectory = new File(siteDirectory, patchId);
+            if(patchDirectory.exists()) {
+                return patchDirectory;
+            }
+        }
+
+        throw new IllegalStateException("Patch directory not found: "+patchId);
     }
 
     private static Pattern sanitarizationPattern = Pattern.compile("[^a-zA-Z0-9\\-_.]");
@@ -340,7 +350,6 @@ public class PatchService {
         File patchDirectory = getPatchDirectory(activePatch.id);
         flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/" + activePatch.rootDefinitionFile));
         flotoService.setActivePatch(activePatch);
-        // TODO: make persistent
         return flotoService.compileManifest();
     }
 

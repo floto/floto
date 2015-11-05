@@ -15,6 +15,7 @@ import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.FlotoSettings;
 import io.github.floto.core.HostService;
 import io.github.floto.core.patch.PatchService;
 import io.github.floto.server.api.*;
@@ -129,8 +130,16 @@ public class FlotoServer {
         FlotoService flotoService = new FlotoService(parameters, taskService);
         HostService hostService = new HostService(flotoService);
         PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry());
+        FlotoSettings flotoSettings = flotoService.getSettings();
         try {
-            flotoService.compileManifest().getCompletionStage().thenAccept((x)->{
+            TaskInfo<Void> compileTask;
+            if(flotoSettings.activePatchId != null) {
+                compileTask = patchService.activatePatch(flotoSettings.activePatchId);
+            } else {
+                compileTask = flotoService.compileManifest();
+            }
+
+            compileTask.getCompletionStage().thenAccept((x)->{
                 hostService.reconfigureVms();
             });
         } catch(Throwable throwable) {
