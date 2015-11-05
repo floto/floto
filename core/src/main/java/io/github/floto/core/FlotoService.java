@@ -25,6 +25,7 @@ import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.VersionUtil;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -193,6 +194,7 @@ public class FlotoService implements Closeable {
                 log.info("Using proxy address: {}", ownAddress);
                 httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";
                 flotoDsl.setGlobal("httpProxy", httpProxyUrl);
+                flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
             } catch (Exception e) {
                 throw Throwables.propagate(e);
             }
