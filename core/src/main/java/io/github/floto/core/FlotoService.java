@@ -38,10 +38,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
+import org.eclipse.jetty.util.UrlEncoded;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
@@ -588,7 +590,19 @@ public class FlotoService implements Closeable {
 
         WebTarget dockerTarget = createDockerTarget(host);
         WebTarget buildTarget = dockerTarget.path("build");
-        Response response = buildTarget.queryParam("t", imageName).queryParam("forcerm", "true").request().post(Entity.entity(new StreamingOutput() {
+        Map<String, String> buildArgs = new HashMap<>();
+        if(useProxy) {
+            buildArgs.put("http_proxy", httpProxyUrl);
+            buildArgs.put("https_proxy", httpProxyUrl);
+        }
+        String buildArgsString = null;
+        try {
+            buildArgsString = URLEncoder.encode(new ObjectMapper().writeValueAsString(buildArgs));
+        } catch (JsonProcessingException e) {
+            Throwables.propagate(e);
+        }
+        WebTarget webTarget = buildTarget.queryParam("t", imageName).queryParam("forcerm", "true").queryParam("buildargs", buildArgsString);
+        Response response = webTarget.request().post(Entity.entity(new StreamingOutput() {
             @Override
             public void write(OutputStream outputStream) throws IOException, WebApplicationException {
                 try (TarOutputStream out = new TarOutputStream(outputStream)) {
@@ -764,9 +778,6 @@ public class FlotoService implements Closeable {
 
     private String createDockerFile(List<JsonNode> buildSteps) {
         DockerfileHelper dockerfileHelper = new DockerfileHelper();
-        if (useProxy) {
-            dockerfileHelper.setHttpProxy(httpProxyUrl);
-        }
         return dockerfileHelper.createDockerfile(buildSteps);
     }
 
