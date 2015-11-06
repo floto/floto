@@ -363,11 +363,14 @@ public class PatchService {
     }
 
     public TaskInfo<Void> activatePatch(String patchId) {
-        activePatch = getPatchInfo(patchId);
-        File patchDirectory = getPatchDirectory(activePatch.id);
-        flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/" + activePatch.rootDefinitionFile));
-        flotoService.setActivePatch(activePatch);
-        return flotoService.compileManifest();
+        return taskService.startTask("Activate patch " + patchId, () -> {
+            activePatch = getPatchInfo(patchId);
+            File patchDirectory = getPatchDirectory(activePatch.id);
+            flotoService.setRootDefinitionFile(new File(patchDirectory, "conf/" + activePatch.rootDefinitionFile));
+            flotoService.setActivePatch(activePatch);
+            flotoService.compileManifest().getResultFuture().get();
+            return null;
+        });
     }
 
     public TaskInfo<Void> uploadPatch(String filename, InputStream inputStream) {

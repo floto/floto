@@ -137,6 +137,8 @@ public class FlotoServer {
                 compileTask = patchService.activatePatch(flotoSettings.activePatchId);
             } else if(flotoService.getRootDefinitionFile() != null){
                 compileTask = flotoService.compileManifest();
+            } else {
+                flotoService.setManifestCompilationError(new Throwable("No patch activated. Please upload and activate a patch first."));
             }
             if(compileTask != null) {
                 compileTask.getCompletionStage().thenAccept((x) -> {

@@ -79,7 +79,7 @@ public class FlotoService implements Closeable {
     private String environment;
     private String manifestString;
     private Manifest manifest = new Manifest();
-    private Throwable manifestCompilationError;
+    private Throwable manifestCompilationError = new Throwable("Manifest is being compiled");
     private SshService sshService = new SshService();
     private int proxyPort = 40005;
     private File flotoHome;
@@ -1365,5 +1365,7 @@ public class FlotoService implements Closeable {
         return settings;
     }
 
-
+    public void setManifestCompilationError(Throwable manifestCompilationError) {
+        this.manifestCompilationError = manifestCompilationError;
+    }
 }
