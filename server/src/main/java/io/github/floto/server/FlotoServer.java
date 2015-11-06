@@ -132,16 +132,17 @@ public class FlotoServer {
         PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry());
         FlotoSettings flotoSettings = flotoService.getSettings();
         try {
-            TaskInfo<Void> compileTask;
+            TaskInfo<Void> compileTask = null;
             if(flotoSettings.activePatchId != null) {
                 compileTask = patchService.activatePatch(flotoSettings.activePatchId);
-            } else {
+            } else if(flotoService.getRootDefinitionFile() != null){
                 compileTask = flotoService.compileManifest();
             }
-
-            compileTask.getCompletionStage().thenAccept((x)->{
-                hostService.reconfigureVms();
-            });
+            if(compileTask != null) {
+                compileTask.getCompletionStage().thenAccept((x) -> {
+                    hostService.reconfigureVms();
+                });
+            }
         } catch(Throwable throwable) {
             // Error compiling manifest, continue anyway
             log.error("Error compiling manifest", throwable);

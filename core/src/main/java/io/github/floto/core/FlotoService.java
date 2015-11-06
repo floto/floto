@@ -142,8 +142,10 @@ public class FlotoService implements Closeable {
         loadSettings();
 
         this.taskService = taskService;
-        this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
         this.environment = commonParameters.environment;
+        if(commonParameters.rootDefinitionFile != null) {
+            this.rootDefinitionFile = new File(commonParameters.rootDefinitionFile).getAbsoluteFile();
+        }
         this.useProxy = !commonParameters.noProxy;
         if (this.useProxy) {
             proxy = new HttpProxy(proxyPort);

@@ -298,17 +298,17 @@ public class PatchService {
 
     private File getPatchDirectory(String patchId) {
         File[] siteDirectories = patchesDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
-        if(siteDirectories == null) {
+        if (siteDirectories == null) {
             throw new IllegalStateException("No site directories found");
         }
-        for(File siteDirectory: siteDirectories) {
+        for (File siteDirectory : siteDirectories) {
             File patchDirectory = new File(siteDirectory, patchId);
-            if(patchDirectory.exists()) {
+            if (patchDirectory.exists()) {
                 return patchDirectory;
             }
         }
 
-        throw new IllegalStateException("Patch directory not found: "+patchId);
+        throw new IllegalStateException("Patch directory not found: " + patchId);
     }
 
     private static Pattern sanitarizationPattern = Pattern.compile("[^a-zA-Z0-9\\-_.]");
@@ -319,22 +319,39 @@ public class PatchService {
 
     public PatchesInfo getPatches() {
         PatchesInfo patchesInfo = new PatchesInfo();
-        Manifest manifest = flotoService.getManifest();
+        List<File> siteDirectories = new ArrayList<>();
+        List<File> patchDirectories = new ArrayList<>();
+        if (flotoService.getRootDefinitionFile() != null) {
+            // only add single site patches
+            Manifest manifest = flotoService.getManifest();
+            siteDirectories.add(getSitePatchesDirectory(manifest));
+        } else {
+            // should only have a single site
+            File[] allSiteDirectories = patchesDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+            if (allSiteDirectories != null) {
+                siteDirectories.addAll(Arrays.asList(allSiteDirectories));
+            }
 
-        File[] directories = getSitePatchesDirectory(manifest).listFiles(File::isDirectory);
-        if (directories != null) {
-            for (File directory : directories) {
-                if (directory.getName().startsWith(".")) {
-                    // skip "hidden" directories
-                    continue;
-                }
-                try {
-                    File patchDescriptionFile = getPatchDescriptionFile(directory);
-                    PatchDescription patchDescription = objectMapper.readValue(patchDescriptionFile, PatchDescription.class);
-                    patchesInfo.patches.add(patchDescription);
-                } catch (Throwable throwable) {
-                    log.warn("Error reading patch in directory " + directory, throwable);
-                }
+        }
+        for (File siteDirectory : siteDirectories) {
+            File[] directories = siteDirectory.listFiles(File::isDirectory);
+            if (directories != null) {
+                patchDirectories.addAll(Arrays.asList(directories));
+            }
+        }
+
+
+        for (File directory : patchDirectories) {
+            if (directory.getName().startsWith(".")) {
+                // skip "hidden" directories
+                continue;
+            }
+            try {
+                File patchDescriptionFile = getPatchDescriptionFile(directory);
+                PatchDescription patchDescription = objectMapper.readValue(patchDescriptionFile, PatchDescription.class);
+                patchesInfo.patches.add(patchDescription);
+            } catch (Throwable throwable) {
+                log.warn("Error reading patch in directory " + directory, throwable);
             }
         }
         patchesInfo.patches.sort((PatchDescription a, PatchDescription b) -> -a.creationDate.compareTo(b.creationDate));
@@ -377,11 +394,11 @@ public class PatchService {
             log.info("Uploaded patch site: " + patchInfo.siteName);
 
             File layersDirectory = new File(tempDir, "images");
-            if(layersDirectory.exists()) {
+            if (layersDirectory.exists()) {
                 File[] layerDirectories = layersDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
-                for(File layerDirectory: layerDirectories) {
+                for (File layerDirectory : layerDirectories) {
                     File destinationDirectory = imageRegistry.getImageDirectory(layerDirectory.getName());
-                    if(destinationDirectory.exists()) {
+                    if (destinationDirectory.exists()) {
                         FileUtils.deleteDirectory(destinationDirectory);
                     }
                     FileUtils.moveDirectory(layerDirectory, destinationDirectory);
@@ -395,7 +412,7 @@ public class PatchService {
             // Move to patch directory
             File patchDirectory = new File(new File(patchesDirectory, safeFilename(patchInfo.siteName)), patchInfo.id);
             FileUtils.forceMkdir(patchDirectory.getParentFile());
-            if(patchDirectory.exists()) {
+            if (patchDirectory.exists()) {
                 FileUtils.deleteDirectory(patchDirectory);
             }
             FileUtils.moveDirectory(tempDir, patchDirectory);

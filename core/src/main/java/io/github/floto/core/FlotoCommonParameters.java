@@ -3,7 +3,7 @@ package io.github.floto.core;
 import com.beust.jcommander.Parameter;
 
 public class FlotoCommonParameters {
-    @Parameter(names = "--root", description = "Root definition file (site JS)", required = true)
+    @Parameter(names = "--root", description = "Root definition file (site JS)")
     public String rootDefinitionFile;
 
     @Parameter(names = "--environment", description = "The target environment (production, development, testing)")
