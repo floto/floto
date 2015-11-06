@@ -560,8 +560,17 @@ public class FlotoService implements Closeable {
     private void destroyContainer(String containerName, Host host) {
         WebTarget dockerTarget = createDockerTarget(host);
         try {
+            try {
             Response killResponse = dockerTarget.path("/containers/" + containerName + "/kill").request().post(Entity.text(""));
             killResponse.close();
+            }catch (Throwable t) {
+                if(t.getMessage().contains("notrunning")) {
+                    // already stopped
+                } else {
+                    throw new RuntimeException(t);
+                }
+
+            }
             Response removeResponse = dockerTarget.path("/containers/" + containerName).request().delete();
             removeResponse.close();
         } catch (Throwable t) {
