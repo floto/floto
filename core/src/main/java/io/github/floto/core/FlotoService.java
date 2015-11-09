@@ -21,10 +21,7 @@ import io.github.floto.core.util.ErrorClientResponseFilter;
 import io.github.floto.core.util.MavenHelper;
 import io.github.floto.core.util.TemplateUtil;
 import io.github.floto.dsl.FlotoDsl;
-import io.github.floto.dsl.model.Container;
-import io.github.floto.dsl.model.Host;
-import io.github.floto.dsl.model.Image;
-import io.github.floto.dsl.model.Manifest;
+import io.github.floto.dsl.model.*;
 import io.github.floto.util.VersionUtil;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
@@ -76,6 +73,7 @@ public class FlotoService implements Closeable {
     private Logger log = LoggerFactory.getLogger(FlotoService.class);
 
     private FlotoDsl flotoDsl = new FlotoDsl();
+    private final boolean patchMakerMode;
     private ImageRegistry imageRegistry;
     private File rootDefinitionFile;
     private String environment;
@@ -121,9 +119,17 @@ public class FlotoService implements Closeable {
 
     // for unit-tests only
     FlotoService() {
+        this.patchMakerMode = false;
     }
 
     public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
+
+        this.patchMakerMode = commonParameters.patchMaker;
+        if(commonParameters.patchMaker) {
+            commonParameters.patchMode  = "create";
+        }
+
+
         // default
         this.flotoHome = new File(System.getProperty("user.home") + "/.floto");
         // override through environment variable
@@ -199,6 +205,7 @@ public class FlotoService implements Closeable {
                 httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";
                 flotoDsl.setGlobal("httpProxy", httpProxyUrl);
                 flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
+                flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
             } catch (Exception e) {
                 throw Throwables.propagate(e);
             }
@@ -214,6 +221,7 @@ public class FlotoService implements Closeable {
                 log.info("Compiling manifest");
                 String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
                 manifest = flotoDsl.toManifest(manifestString);
+
                 String projectRevision = manifest.site.get("projectRevision").asText();
                 manifest.projectRevision = projectRevision;
                 manifest.containers.forEach(container -> container.projectRevision = projectRevision);
@@ -444,11 +452,14 @@ public class FlotoService implements Closeable {
         }
     }
 
-    private String createBaseImage(Host host, Container container, FileOutputStream buildLogStream) {
+    public String createBaseImage(Host host, Container container, FileOutputStream buildLogStream) {
         Image image = findImage(container.image, this.manifest);
+        return createImage(host, image, buildLogStream);
+    }
+
+    public String createImage(Host host, Image image, OutputStream buildLogStream) {
         log.info("Will use root-image={}", this.getRootImage(image));
         String baseImageName = this.createBaseImageName(image);
-        List<JsonNode> imageSteps = new ArrayList<>(image.buildSteps);
         this.buildImage(baseImageName, image.buildSteps, host, this.manifest, Collections.emptyMap(), buildLogStream);
         return baseImageName;
     }

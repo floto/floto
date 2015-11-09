@@ -104,7 +104,7 @@ public class FlotoDsl {
 		}
 	}
 
-    public void setGlobal(String key, String value) {
+    public void setGlobal(String key, Object value) {
         globals.put(key, value);
     }
 }

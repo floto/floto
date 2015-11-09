@@ -10,6 +10,7 @@ import io.github.floto.core.FlotoService;
 import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.dsl.model.Host;
+import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
@@ -82,8 +83,12 @@ public class PatchService {
 
     public void createPatch(String parentPatchId, Set<String> existingImageIds) throws Exception {
         // TODO: tempdir
-        Instant creationDate = Instant.now();
+        // TODO: upload parent patch
+
+        // TODO build images
         Manifest manifest = flotoService.getManifest();
+
+        Instant creationDate = Instant.now();
         File sitePatchesDirectory = getSitePatchesDirectory(manifest);
         File tempDir = new File(sitePatchesDirectory, ".tmp-" + UUID.randomUUID());
         FileUtils.forceMkdir(tempDir);
@@ -96,6 +101,13 @@ public class PatchService {
         // TODO: remove
         imageNames.clear();
         imageNames.add("dns");
+        Host patchMakerHost = manifest.findHost("patch-maker");
+
+        for(String imageName: imageNames) {
+            log.info("Building image {}", imageName);
+            Image image = manifest.findImage(imageName);
+            flotoService.createImage(patchMakerHost, image, System.out);
+        }
 
         List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
         // Map image descriptions to image names

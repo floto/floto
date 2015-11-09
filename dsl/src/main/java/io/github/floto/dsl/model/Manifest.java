@@ -27,6 +27,16 @@ public class Manifest {
     	return containers.stream().filter(c -> c.name.equals(containerName)).findFirst().orElse(null);
     }
 
+    public Image findImage(String imageName) {
+        for (Image candidate : images) {
+            if (imageName.equals(candidate.name)) {
+                return candidate;
+            }
+        }
+        throw new IllegalArgumentException("Unknown image: " + imageName);
+    }
+
+
     @JsonIgnore
     public String getSiteName() {
         return site.get("projectName").asText();

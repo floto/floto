@@ -24,4 +24,6 @@ public class FlotoCommonParameters {
     @Parameter(names = "--patch-mode", description = "The patch mode of this instance (\"create\" to create patches (default), \"apply\" to apply those")
     public String patchMode = "create";
 
+    @Parameter(names = {"--patch-maker"}, description = "Patch-maker mode to create patches")
+    public boolean patchMaker = false;
 }
