@@ -636,6 +636,7 @@ public class FlotoService implements Closeable {
                             TarEntry templateTarEntry = new TarEntry(source);
                             byte[] templateBytes = templated.getBytes(Charsets.UTF_8);
                             templateTarEntry.setSize(templateBytes.length);
+                            templateTarEntry.setModTime(0);
                             out.putNextEntry(templateTarEntry);
                             IOUtils.write(templateBytes, out);
                             out.closeEntry();
