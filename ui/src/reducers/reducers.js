@@ -124,6 +124,14 @@ addReducers({
 
 	PATCH_INFO_LOADED(state, selectedPatch) {
 		return {selectedPatch};
+	},
+
+	PATCH_UPLOAD_PROGRESSED(state, uploadProgress) {
+		return {uploadProgress};
+	},
+
+	PATCH_UPLOAD_COMPLETED(state, progress) {
+		return {uploadProgress: null};
 	}
 
 });

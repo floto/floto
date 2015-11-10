@@ -32,9 +32,9 @@ taskService.getTaskCompletionDeferred = function getTaskCompletionPromise(taskId
 
 let globalStore;
 
-taskService.httpPost = function httpPost(store, url, request) {
+taskService.httpPost = function httpPost(store, url, request, options = {}) {
 	globalStore = store;
-	return send({url, request, method: "POST"}).then((taskInfo) => {
+	return send({url, request, method: "POST", options}).then((taskInfo) => {
 		var taskId = taskInfo.taskId;
 		var deferred = taskService.getTaskCompletionDeferred(taskId);
 		var linkText = ' <a href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';

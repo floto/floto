@@ -14,6 +14,7 @@ export default connect(state => {
 		patches: state.patches,
 		selectedPatchId: state.selectedPatchId,
 		activePatchId: state.activePatchId,
+		uploadProgress: state.uploadProgress,
 		config: state.config
 	};
 })(React.createClass({
@@ -59,16 +60,17 @@ export default connect(state => {
 							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
 								<h2>Patches <span className="text-muted">({patches.length})</span></h2>
 								<Button onClick={actions.loadPatches}>Refresh</Button>
+									<span className="pull-right">
+										{this.props.uploadProgress?<span>Uploading...{this.props.uploadProgress.percentComplete}%</span>:
+										<FileUploadComponent title="Upload patch" extension=".floto-patch.zip"
+															 onFileSelected={(patchFile) => actions.uploadPatch(patchFile)}/>}
+								</span>
 								{config.patchMode === "create" ?
 									<span className="pull-right">
 									<Button bsStyle="primary"
 											onClick={() => actions.createFullPatch()}>Create
 										full patch</Button>
 								</span> : null}
-									<span className="pull-right">
-										<FileUploadComponent title="Upload patch" extension=".floto-patch.zip"
-															 onFileSelected={(patchFile) => actions.uploadPatch(patchFile)}/>
-								</span>
 
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
