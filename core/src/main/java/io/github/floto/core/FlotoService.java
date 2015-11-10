@@ -458,9 +458,25 @@ public class FlotoService implements Closeable {
     }
 
     public String createImage(Host host, Image image, OutputStream buildLogStream) {
-        log.info("Will use root-image={}", this.getRootImage(image));
+        String rootImage = this.getRootImage(image);
+        log.info("Will use root-image={}", rootImage);
+        List<JsonNode> buildSteps = new ArrayList<>(image.buildSteps);
+        if(rootImage.startsWith("http://")) {
+
+            log.info("Importing root-image via HTTP");
+            String repoName = image.name + "-root:latest";
+            WebTarget dockerTarget = createDockerTarget(host).path("/images/create").queryParam("fromSrc", rootImage).queryParam("repo", repoName);
+            dockerTarget.request().post(null).close();
+            // TODO: check existing in cache?
+
+            ObjectNode fromStep = new ObjectNode(new JsonNodeFactory(true));
+            fromStep.put("type", "FROM");
+            fromStep.put("line", repoName);
+            buildSteps.set(0, fromStep);
+
+        }
         String baseImageName = this.createBaseImageName(image);
-        this.buildImage(baseImageName, image.buildSteps, host, this.manifest, Collections.emptyMap(), buildLogStream);
+        this.buildImage(baseImageName, buildSteps, host, this.manifest, Collections.emptyMap(), buildLogStream);
         return baseImageName;
     }
 
