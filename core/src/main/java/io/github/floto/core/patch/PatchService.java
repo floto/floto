@@ -15,6 +15,7 @@ import io.github.floto.dsl.model.Manifest;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
+import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
@@ -99,13 +100,22 @@ public class PatchService {
         LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
 
         // TODO: remove
-        imageNames.clear();
-        imageNames.add("dns");
+//        imageNames.clear();
+//        imageNames.add("dns");
         Host patchMakerHost = manifest.findHost("patch-maker");
 
+        int imageNumber = 1;
+
         for(String imageName: imageNames) {
-            log.info("Building image {}", imageName);
+            log.info("Building image {} ({}/{})", imageName, imageNumber, imageNames.size());
+            imageNumber++;
             Image image = manifest.findImage(imageName);
+            LogOutputStream logStream = new LogOutputStream() {
+                @Override
+                protected void processLine(String s, int i) {
+                    log.info(">> " + s);
+                }
+            };
             flotoService.createImage(patchMakerHost, image, System.out);
         }
 
@@ -161,11 +171,6 @@ public class PatchService {
         try (InputStream imageTarballInputStream = response.readEntity(InputStream.class)) {
             imageRegistry.storeImages(imageTarballInputStream);
         }
-        ;
-
-        // Genesis patch: all images
-
-        // Other patches: delta to existing images
 
         String siteName = manifest.site.get("projectName").asText();
         String revision = manifest.site.get("projectRevision").asText();

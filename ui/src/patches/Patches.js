@@ -65,11 +65,10 @@ export default connect(state => {
 											onClick={() => actions.createFullPatch()}>Create
 										full patch</Button>
 								</span> : null}
-								{config.patchMode === "apply" ?
 									<span className="pull-right">
 										<FileUploadComponent title="Upload patch" extension=".floto-patch.zip"
 															 onFileSelected={(patchFile) => actions.uploadPatch(patchFile)}/>
-								</span> : null}
+								</span>
 
 							</div>
 							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
