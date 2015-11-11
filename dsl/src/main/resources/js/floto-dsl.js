@@ -190,6 +190,9 @@
 
 	global.host = function host(name, definition) {
 		definition.name = name;
+		if (definition.vmConfiguration && !definition.vmConfiguration.vmName) {
+			definition.vmConfiguration.vmName = definition.name;
+		}
 		manifest.hosts.push(definition);
 	};
 

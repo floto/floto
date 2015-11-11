@@ -18,7 +18,6 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class VirtualMachineManager {
@@ -28,11 +27,11 @@ public class VirtualMachineManager {
     private Logger log = LoggerFactory.getLogger(VirtualMachineManager.class);
     private EsxHypervisorDescription esxDesc;
 
-    String domainName;
+    String vmFolder;
 
-    public VirtualMachineManager(EsxHypervisorDescription description, String domainName) {
+    public VirtualMachineManager(EsxHypervisorDescription description, String vmFolder) {
     	this.esxDesc = description;
-    	this.domainName = domainName;
+    	this.vmFolder = vmFolder;
 
         try {
 			ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
@@ -40,22 +39,51 @@ public class VirtualMachineManager {
 			Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
 
 			rootFolder = dc.getVmFolder();
-			ManagedEntity me = new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
-			if (me == null) {
-				rootFolder.createFolder(domainName);
-			}
+//			ManagedEntity me = new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+//			if (me == null) {
+//				rootFolder.createFolder(domainName);
+//			}
+			findOrCreateFolder(vmFolder);
 		} catch (Throwable e) {
 			Throwables.propagate(e);
 		}
     }
 
+	private Folder findOrCreateFolder(String folderNameOrPath) throws Exception {
+		String folders[] = folderNameOrPath.split("/");
+
+		ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+		Folder rootFolder = si.getRootFolder();
+		Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+
+		Folder currentFolder = dc.getVmFolder();
+
+		Folder nextFolder = null;
+		for (String folderName:folders){
+			ManagedEntity[] me = currentFolder.getChildEntity();
+
+			for (ManagedEntity m: me) {
+				if (m instanceof Folder && m.getName().equals(folderName)) {
+					nextFolder = (Folder)m;
+					break;
+				}
+			}
+			if (nextFolder == null) {
+				nextFolder = currentFolder.createFolder(folderName);
+			}
+			currentFolder = nextFolder;
+			nextFolder = null;
+		}
+
+		return currentFolder;
+	}
+
 	public VirtualMachine getVm(String vmName) throws Exception {
-		Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-        Folder vmFolder = (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
-        if(vmFolder == null) {
-            throw new RuntimeException("could not find vm folder "+ domainName);
+        Folder folder = findOrCreateFolder(vmFolder);
+        if(folder == null) {
+            throw new RuntimeException("could not find vm folder "+ vmFolder);
         }
-        return (VirtualMachine) new InventoryNavigator(vmFolder).searchManagedEntity("VirtualMachine", vmName);
+        return (VirtualMachine) new InventoryNavigator(folder).searchManagedEntity("VirtualMachine", vmName);
 	}
 
 	public ManagedEntity[] getVms() throws Exception {
@@ -76,6 +104,15 @@ public class VirtualMachineManager {
 		}
 	}
 
+
+	private void renameVm(String oldName, String newName) throws Exception {
+		log.info("rename vm '"+oldName+"' to '"+newName+"'");
+		VirtualMachine vm = getVm(oldName);
+		Task task = vm.rename_Task(newName);
+		EsxUtils.waitForTask(task, "rename vm");
+	}
+
+
 	private boolean existsVm(String vmName) {
 		try {
 			VirtualMachine vm = getVm(vmName);
@@ -89,8 +126,7 @@ public class VirtualMachineManager {
 			boolean linked) throws Exception {
         log.info("Clone vm " + templateVmName + " -> " + vmDesc);
 
-        Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-        Folder vmFolder = (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        Folder folder = findOrCreateFolder(vmFolder);
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
         ResourcePool rp = getResourcePool(host);
 
@@ -98,7 +134,7 @@ public class VirtualMachineManager {
             log.error("Template " + templateVmName + " not found");
             return;
         }
-        VirtualMachine vm = (VirtualMachine) new InventoryNavigator(vmFolder)
+        VirtualMachine vm = (VirtualMachine) new InventoryNavigator(folder)
                 .searchManagedEntity("VirtualMachine", templateVmName);
 
         if (existsVm(vmDesc.vmName)) {
@@ -155,13 +191,13 @@ public class VirtualMachineManager {
         cloneSpec.setPowerOn(false);
         cloneSpec.setTemplate(false);
 
-        Task task = vm.cloneVM_Task(vmFolder, vmDesc.vmName, cloneSpec);
+        Task task = vm.cloneVM_Task(folder, vmDesc.vmName, cloneSpec);
         log.info("Launching the vm clone task ...");
 
         EsxUtils.waitForTask(task, "Clone vm "+ vm.getName());
 
         ManagedEntity[] me = {getVm(vmDesc.vmName)};
-        vmFolder.moveIntoFolder_Task(me);
+        folder.moveIntoFolder_Task(me);
     }
 
 	public void reconfigureVm(VmDescription vmDesc) throws Exception {
@@ -248,15 +284,14 @@ public class VirtualMachineManager {
 		vmcs.setDeviceChange(vDevConfSpecArray);
 
         Task task = vm.reconfigVM_Task(vmcs);
-        EsxUtils.waitForTask(task, "Reconfigure vm "+ vm.getName());
+        EsxUtils.waitForTask(task, "Reconfigure vm " + vm.getName());
 	}
 
 	public void deployTemplate(URL vmUrl, String templateVmName) throws Exception {
         log.info("Deploy template " + vmUrl + " to " + esxDesc);
 
         ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
-        Folder rootFolder = EsxConnectionManager.getConnection(esxDesc).getRootFolder();
-        Folder vmFolder = (Folder) new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
+        Folder folder = findOrCreateFolder(vmFolder);
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
         ResourcePool rp = getResourcePool(host);
         // find the datastore
@@ -339,7 +374,7 @@ public class VirtualMachineManager {
         }
         log.info("Total bytes: " + totalBytes);
 
-        HttpNfcLease httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(), vmFolder, host);
+        HttpNfcLease httpNfcLease = rp.importVApp(ovfImportResult.getImportSpec(), folder, host);
 
         // Wait until the HttpNfcLeaseState is ready
         HttpNfcLeaseState hls;
@@ -497,14 +532,19 @@ public class VirtualMachineManager {
         conn.disconnect();
     }
 
-	public void exportVM(String vmname, String targetFile) throws Exception {
-		log.info("Export vm " + vmname + " to " + targetFile);
+	public void exportVM(String vmName, String hostName, String targetFile) throws Exception {
+		log.info("Export vm " + hostName + "("+vmName+") to " + targetFile);
 
-		File exportDir = (new File(new File(targetFile).getParent() + "/" + vmname));
+		File exportDir = (new File(new File(targetFile).getParent() + "/" + hostName));
 		FileUtils.forceMkdir(exportDir);
 
 		ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
-		HttpNfcLease hnLease = getVm(vmname).exportVm();
+		VirtualMachine vm = getVm(vmName);
+		if (vmName != hostName) {
+			renameVm(vmName,hostName);
+		}
+
+		HttpNfcLease hnLease = getVm(hostName).exportVm();
 
 		// Wait until the HttpNfcLeaseState is ready
 		HttpNfcLeaseState hls;
@@ -562,9 +602,9 @@ public class VirtualMachineManager {
 
 			OvfCreateDescriptorParams ovfDescParams = new OvfCreateDescriptorParams();
 			ovfDescParams.setOvfFiles(ovfFiles);
-			OvfCreateDescriptorResult ovfCreateDescriptorResult = si.getOvfManager().createDescriptor(getVm(vmname), ovfDescParams);
+			OvfCreateDescriptorResult ovfCreateDescriptorResult = si.getOvfManager().createDescriptor(getVm(hostName), ovfDescParams);
 
-			String ovfFileName = vmname + ".ovf";
+			String ovfFileName = hostName + ".ovf";
 			FileWriter out = new FileWriter(exportDir + "/" +ovfFileName);
 			out.write(ovfCreateDescriptorResult.getOvfDescriptor());
 			out.close();
@@ -611,6 +651,10 @@ public class VirtualMachineManager {
 		tos.close();
 
 		log.info("Created " + targetFile);
+
+		if (vmName != hostName) {
+			renameVm(hostName, vmName);
+		}
 
 		// remove the ovf directory
 		FileUtils.forceDelete(exportDir);

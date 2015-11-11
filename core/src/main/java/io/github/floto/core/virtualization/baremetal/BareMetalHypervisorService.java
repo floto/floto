@@ -3,6 +3,7 @@ package io.github.floto.core.virtualization.baremetal;
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.dsl.model.BareMetalHypervisorDescription;
+import io.github.floto.dsl.model.Host;
 
 import java.io.File;
 import java.net.URL;
@@ -19,7 +20,7 @@ public class BareMetalHypervisorService implements HypervisorService {
     }
 
     @Override
-    public void exportVm(String vmname, String Path) {
+    public void exportVm(String vmName, String hostName, String Path) {
         throw new UnsupportedOperationException("Not supported on bare metal systems");
     }
 

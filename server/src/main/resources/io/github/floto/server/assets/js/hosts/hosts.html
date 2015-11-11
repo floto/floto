@@ -53,8 +53,8 @@
                                     ng-click="exportHosts({hosts: [host.name]})">Export
                             </button>
                         </td>
-                        <td ng-if="host.vmConfiguration.hypervisor.esxHost" style="width: 100%">{{host.name}} ( @{{host.vmConfiguration.hypervisor.esxHost}})</td>
-                        <td ng-if="!host.vmConfiguration.hypervisor.esxHost" style="width: 100%">{{host.name}}</td>
+                        <td ng-if="host.vmConfiguration.hypervisor.esxHost" style="width: 100%">{{host.name}}<small ng-if="host.vmConfiguration.vmName != host.name">({{host.vmConfiguration.vmName}})</small> @{{host.vmConfiguration.hypervisor.esxHost}}</td>
+						<td ng-if="!host.vmConfiguration.hypervisor.esxHost" style="width: 100%">{{host.name}}</td>
                     </tr>
                 </table>
             </div>

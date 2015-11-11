@@ -8,6 +8,7 @@ import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
 import io.github.floto.core.virtualization.VmDescription.Disk;
 import io.github.floto.dsl.model.EsxHypervisorDescription;
+import io.github.floto.dsl.model.Host;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +27,7 @@ public class EsxHypervisorService implements HypervisorService {
 
 
 
-    public EsxHypervisorService(EsxHypervisorDescription description, String domainName) {
+    public EsxHypervisorService(EsxHypervisorDescription description, String vmFolder) {
     	this.esxDesc = description;
         Preconditions.checkNotNull(description.networks, "networks");
         Preconditions.checkNotNull(description.esxHost, "esxHost");
@@ -34,7 +35,7 @@ public class EsxHypervisorService implements HypervisorService {
         Preconditions.checkNotNull(description.username, "username");
         Preconditions.checkNotNull(description.password, "password");
         Preconditions.checkNotNull(description.defaultDatastore, "datastore");
-        vmManager = new VirtualMachineManager(esxDesc, domainName);
+        vmManager = new VirtualMachineManager(esxDesc, vmFolder);
     }
 
 
@@ -239,9 +240,9 @@ public class EsxHypervisorService implements HypervisorService {
     }
 
     @Override
-    public void exportVm(String vmname, String Path) {
+    public void exportVm(String vmName, String hostName, String Path) {
 		try {
-			vmManager.exportVM(vmname, Path);
+			vmManager.exportVM(vmName, hostName, Path);
 		} catch (Throwable t) {
 			throw Throwables.propagate(t);
 		}

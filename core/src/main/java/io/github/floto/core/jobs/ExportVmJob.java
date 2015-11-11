@@ -21,6 +21,8 @@ public class ExportVmJob extends HypervisorJob<Void> {
 	public Void execute() throws Exception {
 		log.info("Exporting vm {}", host.name);
 
+		String vmName = host.vmConfiguration.vmName;
+
 		File rootDefinitionFile = new File(flotoService.getManifest().rootFile);
 		log.info("Root definition file: {}", rootDefinitionFile);
 		String gitDescription = new GitHelper(rootDefinitionFile.getParentFile()).describe();
@@ -30,7 +32,7 @@ public class ExportVmJob extends HypervisorJob<Void> {
 		// TODO: Zerofill disk?
 
 		// Stop VM
-		hypervisorService.stopVm(host.name);
+		hypervisorService.stopVm(vmName);
 
 		// HACK: Sleep a bit to give vmware workstation time to clean up its lock file
 		Thread.sleep(1000);
@@ -43,7 +45,7 @@ public class ExportVmJob extends HypervisorJob<Void> {
 
 		File exportFile = new File("vm/" + exportName);
 		FileUtils.forceMkdir(exportFile.getParentFile());
-		hypervisorService.exportVm(host.name, exportFile.getAbsolutePath());
+		hypervisorService.exportVm(vmName, host.name, exportFile.getAbsolutePath());
 
 		log.info("Exported to: {}", exportName);
 

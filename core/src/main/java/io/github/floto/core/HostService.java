@@ -103,7 +103,8 @@ public class HostService {
 			@Override
 			public T execute() throws Exception {
 				try {
-					return method.apply(hypervisorService, vmName);
+					Host host = flotoService.getManifest().findHost(vmName);
+					return method.apply(hypervisorService, host.vmConfiguration.vmName);
 				} catch (Throwable throwable) {
 					throw Throwables.propagate(throwable);
 				}
@@ -116,7 +117,8 @@ public class HostService {
 			@Override
 			public Object execute() throws Exception {
 				try {
-					method.accept(hypervisorService, vmName);
+					Host host = flotoService.getManifest().findHost(vmName);
+					method.accept(hypervisorService, host.vmConfiguration.vmName);
 					return null;
 				} catch (Throwable throwable) {
 					throw Throwables.propagate(throwable);
@@ -131,7 +133,7 @@ public class HostService {
 			@Override
 			public Object execute() throws Exception {
 				if (hypervisorService.isVmRunning(vmName)) {
-					HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService, vmName);
+					HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService);
 					hostStepRunner.run(host.reconfigureSteps);
 				}
 				return null;
