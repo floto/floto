@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+    http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2
+      http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+	<id>ui</id>
+	<formats>
+		<format>jar</format>
+	</formats>
+	<baseDirectory>io/github/floto/ui</baseDirectory>
+	<fileSets>
+		<fileSet>
+			<outputDirectory>.</outputDirectory>
+			<directory>${project.build.directory}/bundle</directory>
+		</fileSet>
+		<fileSet>
+			<outputDirectory>.</outputDirectory>
+			<directory>${project.basedir}/src</directory>
+			<includes>
+				<include>**/*.png</include>
+				<include>**/*.json</include>
+				<include>**/*.svg</include>
+			</includes>
+		</fileSet>
+		<fileSet>
+			<outputDirectory>.</outputDirectory>
+			<directory>${project.basedir}/src</directory>
+			<includes>
+				<include>index.html</include>
+			</includes>
+			<filtered>true</filtered>
+		</fileSet>
+	</fileSets>
+</assembly>

@@ -82,11 +82,7 @@ public class FlotoServer {
 
 		Server server = new Server(parameters.port);
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		String resourceBase = FlotoServer.class.getResource("assets").toExternalForm();
-		if(!resourceBase.startsWith("jar:")) {
-			// Load assets from src directory during development, do not require recompilation
-			resourceBase = "src/main/resources/io/github/floto/server/assets";
-		}
+		String resourceBase = FlotoServer.class.getResource("/io/github/floto/ui").toExternalForm();
 
 		context.setInitParameter("org.eclipse.jetty.servlet.Default.cacheControl", "no-cache, no-store, must-revalidate");
 		context.setResourceBase(resourceBase);

@@ -212,7 +212,6 @@ export function activatePatch(store, patchId) {
 
 export function uploadPatch(store, patchFile) {
 	taskService.httpPost(store, "patches/upload/"+patchFile.name, {blob: patchFile}, {uploadProgressFn: (progress) => {
-		console.log(progress.percentComplete);
 		store.dispatch({type: "PATCH_UPLOAD_PROGRESSED", payload: progress});
 	}})
 		.finally(() => {

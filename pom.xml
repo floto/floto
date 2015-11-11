@@ -66,6 +66,7 @@
         <module>util</module>
         <module>core</module>
         <module>dsl</module>
+		<module>ui</module>
         <module>server</module>
         <module>builder</module>
     </modules>

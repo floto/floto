@@ -23,6 +23,12 @@
 			<artifactId>floto-dsl</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>floto-ui</artifactId>
+			<version>${project.version}</version>
+			<classifier>ui</classifier>
+		</dependency>
 
 		<dependency>
 			<groupId>commons-lang</groupId>
@@ -113,33 +119,6 @@
 					<mainClass>io.github.floto.server.FlotoServer</mainClass>
 				</configuration>
 			</plugin>
-
-            <plugin>
-                <groupId>com.cj.jshintmojo</groupId>
-                <artifactId>jshint-maven-plugin</artifactId>
-                <version>${jshint-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>lint</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <version>${jshint.version}</version>
-                    <configFile>.jshintrc</configFile>
-                    <directories>
-                        <directory>src/main/resources/io/github/floto/server/assets/js</directory>
-                    </directories>
-                    <excludes>
-                        <exclude>src/main/resources/js/lodash.js</exclude>
-                    </excludes>
-                    <reporter>jslint</reporter>
-                    <reportFile>target/jshint.xml</reportFile>
-                    <failOnError>false</failOnError>
-                </configuration>
-            </plugin>
 
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>

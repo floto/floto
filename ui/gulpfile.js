@@ -63,28 +63,24 @@ gulp.task('dev', function () {
 	});
 });
 
-gulp.task('build', function (callback) {
-	// modify some webpack config options
-	var productionConfig = Object.create(webpackConfig);
-	productionConfig.plugins = productionConfig.plugins.concat(
-		new webpack.DefinePlugin({
-			"process.env": {
-				// This has effect on the react lib size
-				"NODE_ENV": JSON.stringify("production")
-			}
-		})
-		/*,
-		 new webpack.optimize.DedupePlugin(),
-		 new webpack.optimize.UglifyJsPlugin()*/
-	);
-	productionConfig.output.path = "target/dist";
-	productionConfig.output.publicPath =  "./";
-	productionConfig.debug = false;
-	productionConfig.devtool = "";
+gulp.task("production", [], function (callback) {
 	// run webpack
+	process.env.NODE_ENV = 'production';
+
+	var productionConfig = Object.create(webpackConfig);
+	productionConfig.devtool = "#source-map";
+	productionConfig.plugins.push(new webpack.DefinePlugin({
+		"process.env": {
+			NODE_ENV: JSON.stringify("production")
+		}
+	}));
+	/*productionConfig.plugins.push(new webpack.optimize.UglifyJsPlugin({
+	 mangle: false
+	 }));
+	 */
 	webpack(productionConfig, function (err, stats) {
-		if (err) throw new gutil.PluginError("webpack:build", err);
-		gutil.log("[webpack:build]", stats.toString({
+		if (err) throw new gutil.PluginError("webpack:build-dev", err);
+		gutil.log("[production]", stats.toString({
 			colors: true
 		}));
 		callback();

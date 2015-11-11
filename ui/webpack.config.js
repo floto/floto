@@ -11,7 +11,7 @@ module.exports = {
 	debug: true,
 	devtool: 'eval',
 	output: {
-		path: __dirname + "/dist/assets",
+		path: __dirname + "/target/bundle",
 		publicPath: "/",
 		// If you want to generate a filename with a hash of the content (for cache-busting)
 		// filename: "main-[hash].js",

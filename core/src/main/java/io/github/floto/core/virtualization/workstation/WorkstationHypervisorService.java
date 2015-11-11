@@ -21,7 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.*;
 
-public class WorkstationHypervisorService implements HypervisorService {
+public class  WorkstationHypervisorService implements HypervisorService {
     ExternalProgram vmrun = ExternalProgram.create("vmrun", "VMware");
     ExternalProgram ovftool = ExternalProgram.create("ovftool", "VMware");
     private Logger log = LoggerFactory.getLogger(WorkstationHypervisorService.class);
