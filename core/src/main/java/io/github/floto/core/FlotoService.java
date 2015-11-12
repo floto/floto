@@ -63,6 +63,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -1345,15 +1346,11 @@ public class FlotoService implements Closeable {
 
     public URL getTemplateUrl(Host host) throws Exception {
         URL url = new URL(host.vmConfiguration.ovaUrl);
-        /* TODO: registry fixup
-        if(useImageRegistry()) {
-			Host registryHost = this.findRegistryHost(this.manifest);
-            if(registryHost.name.equals(InetAddress.getLocalHost().getHostName())) {
-                // Running on registry host, deploy templates locally
-                url = new URL("http://" + registryHost.ip + ":40004/api/vmtemplate/" + FilenameUtils.getName(host.vmConfiguration.ovaUrl));
-            };
+		File overrideVmTemplate = new File("/floto/vmtemplates/vmtemplate.ova");
+		if(overrideVmTemplate.exists()) {
+			// Use override vm template
+			url = overrideVmTemplate.toURI().toURL();
 		}
-		 */
         return url;
     }
 
