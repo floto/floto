@@ -146,10 +146,11 @@ window.addEventListener("load", function () {
 	actions.refreshManifest(store);
 	actions.getFlotoInfo(store);
 
-	let config = {};
+	let config = {
+		armed: false
+	};
 
 	window.floto.configureFns.forEach((fn) => fn(config));
-
 	store.dispatch({type: "CONFIG_UPDATED", payload: config});
 });
 
