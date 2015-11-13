@@ -10,10 +10,13 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import com.google.inject.util.Types;
+import com.sun.javafx.iio.common.ImageDescriptor;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.patch.PatchInfo;
 import io.github.floto.core.proxy.HttpProxy;
+import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.core.ssh.SshService;
 import io.github.floto.core.util.DockerfileHelper;
@@ -57,6 +60,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
@@ -378,20 +382,28 @@ public class FlotoService implements Closeable {
             log.info("Deploying from patch: {}", activePatch.revision);
             String strippedBaseImageName = baseImageName.replaceFirst("-image$", "");
             String baseImageId = activePatch.imageMap.get(strippedBaseImageName);
+			String repoName = baseImageName;
+			baseImageName = baseImageName + ":" + baseImageId;
             log.info("Deploying image <{}> from layer {}", strippedBaseImageName, baseImageId);
-            WebTarget dockerTarget = createDockerTarget(host).path("/images/" + baseImageId + "/json");
-            Response response = dockerTarget.request().property("passThrough404", true).get(Response.class);
-            int statusCode = response.getStatusInfo().getStatusCode();
-            response.close();
-            if (statusCode == 404) {
+			WebTarget dockerTarget = createDockerTarget(host);
+			List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
+			Map<String, DockerImageDescription> presentImages = new HashMap<>();
+			for(DockerImageDescription imageDescription: imageDescriptions) {
+				presentImages.put(imageDescription.Id, imageDescription);
+			}
+
+			DockerImageDescription imageDescription = presentImages.get(baseImageId);
+            if (imageDescription == null || !imageDescription.RepoTags.contains(baseImageName)) {
                 log.info("Base Image <{}> not found, uploading to host", baseImageName);
                 List<String> imageIds = new ArrayList<>();
                 String currentImageId = baseImageId;
-                // find all parents
+				// find all parents
                 while (currentImageId != null && !currentImageId.isEmpty()) {
-                    // TODO: skip present images
-                    imageIds.add(currentImageId);
-                    currentImageId = imageRegistry.getImageDescription(currentImageId).parent;
+                    if(!presentImages.containsKey(currentImageId)) {
+						// not present on host, add it
+						imageIds.add(currentImageId);
+					}
+					currentImageId = imageRegistry.getImageDescription(currentImageId).parent;
                 }
                 // add images in reverse order
                 Lists.reverse(imageIds);
@@ -420,7 +432,8 @@ public class FlotoService implements Closeable {
                             Map<String, Object> repository = new HashMap<String, Object>();
                             HashMap<String, String> tags = new HashMap<String, String>();
                             tags.put("latest", finalImageId);
-                            repository.put(baseImageName, tags);
+							tags.put(finalImageId, finalImageId);
+                            repository.put(repoName, tags);
                             ObjectMapper mapper = new ObjectMapper();
                             byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
 
