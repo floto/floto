@@ -14,7 +14,13 @@ public class PatchDescription {
     // Date that this patch was created on
     public Instant creationDate;
 
-    // The site name (site.projectName)
+	// Name of the patch
+	public String name;
+
+	// Patch comment
+	public String comment;
+
+	// The site name (site.projectName)
     public String siteName;
 
     // The root definition file

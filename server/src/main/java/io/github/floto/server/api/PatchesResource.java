@@ -1,11 +1,10 @@
 package io.github.floto.server.api;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.patch.PatchCreationParams;
 import io.github.floto.core.patch.PatchService;
 import io.github.floto.core.patch.PatchesInfo;
 import io.github.floto.util.task.TaskInfo;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,7 @@ public class PatchesResource {
 	}
 
 
-
+/*'
 	@POST
 	@Path("create-full")
 	public TaskInfo<Void> createFullPatch() {
@@ -48,6 +47,12 @@ public class PatchesResource {
 	@Path("create-incremental-from/{parentPatchId}")
 	public TaskInfo<Void> createIncrementalPatch(@PathParam("parentPatchId") String parentPatchId) {
 		return patchService.createIncrementalPatch(parentPatchId);
+	}
+*/
+	@POST
+	@Path("create")
+	public TaskInfo<Void> createPatch(PatchCreationParams patchCreationParams) {
+		return patchService.createPatch(patchCreationParams);
 	}
 
 	@POST

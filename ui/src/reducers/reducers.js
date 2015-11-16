@@ -113,7 +113,6 @@ addReducers({
 		if(config.defaultDeploymentMode === "fromRootImage" && !config.canDeployFromRootImage) {
 			config.defaultDeploymentMode = "fromBaseImage";
 		}
-		console.log(config);
 		return {config, clientState: _.extend({}, state.clientState, {safetyArmed: config.armed})};
 	},
 

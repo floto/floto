@@ -29,7 +29,7 @@ export default connect(state => {
 					return null;
 				}
 				return <div style={{padding: "5px"}}>
-					<h2>{patch.revision}</h2>
+					<h2>{patch.name || patch.revision}</h2>
 					<span className="text-muted">{patch.id}</span>
 					<br/>
 					{config.patchMode === "apply" ?
@@ -54,6 +54,10 @@ export default connect(state => {
 							</td>
 						</tr>
 						<tr>
+							<td>Revision:</td>
+							<td>{patch.revision}</td>
+						</tr>
+						<tr>
 							<td>Parent revision:</td>
 							<td>{patch.parentRevision || '-'}{patch.parentId ? <span
 								className="text-muted"><br /> ({patch.parentId})</span> : null}</td>
@@ -68,6 +72,11 @@ export default connect(state => {
 						</tr>
 						</tbody>
 					</Table>
+					{patch.comment?
+						<div>
+					<h4>Comment</h4>
+					{patch.comment}
+							</div>:null}
 				</div>;
 
 			}

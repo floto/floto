@@ -43,7 +43,9 @@ export default connect(state => {
 				return <tr key={patch.id} onClick={this.navigateToPatch.bind(this, patch.id)}
 						   className={rowClassName} style={style}>
 					<td>{patch.creationDate}</td>
-					<td>{patch.revision}</td>
+					<td>{patch.name ?
+						<span>{patch.name} <span className="text-muted">({patch.revision})</span></span>
+						: patch.revision}</td>
 					<td>{patch.parentRevision || "-"}</td>
 				</tr>;
 			},

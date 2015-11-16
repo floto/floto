@@ -1,7 +1,9 @@
+
 import * as rest from "../util/rest.js";
 import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
 
+import PatchCreationDialog from "../patches/PatchCreationDialog";
 
 export function loadContainerStates(store) {
 	rest.send({method: "GET", url: "containers/_state"}).then((result) => {
@@ -191,15 +193,32 @@ export function loadPatchInfo(store, patchId) {
 
 
 export function createFullPatch(store) {
-	taskService.httpPost(store, "patches/create-full").then(() => {
+	createPatch(store, null);
+	taskService.httpPost(store, "patches").then(() => {
 		loadPatches(store);
 	});
 }
 
+
+function createPatch(store, parentPatchId) {
+	var elementById = document.getElementById("dialog");
+	let done = (patchProperties) => {
+		setTimeout(() => {
+			React.unmountComponentAtNode(elementById);
+		}, 0);
+		if(!patchProperties) {
+			return;
+		}
+		patchProperties.parentPatchId = parentPatchId;
+		taskService.httpPost(store, "patches/create", patchProperties).then(() => {
+			loadPatches(store);
+		});
+	};
+	React.render(<PatchCreationDialog done={done} show={true}/>, elementById);
+}
+
 export function createIncrementalPatch(store, parentPatchId) {
-	taskService.httpPost(store, "patches/create-incremental-from/"+parentPatchId).then(() => {
-		loadPatches(store);
-	});
+	createPatch(store, parentPatchId);
 }
 
 export function activatePatch(store, patchId) {
