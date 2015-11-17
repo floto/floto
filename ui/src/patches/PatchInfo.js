@@ -34,7 +34,9 @@ export default connect(state => {
 					<br/>
 					{config.patchMode === "apply" ?
 					<Button bsStyle="warning"
-							onClick={() => actions.activatePatch(patch.id)}>Activate patch</Button>:null}
+							onClick={() => actions.activatePatch(patch.id)}>Activate patch</Button>:
+						<Button bsStyle="success"
+								onClick={() => actions.downloadPatch(patch.id)}><Icon name="download" />&nbsp;&nbsp;Download patch</Button>}
 					{config.patchMode === "create" ?
 					<span className="pull-right">
 						<Button bsStyle="primary"

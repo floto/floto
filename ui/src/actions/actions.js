@@ -238,5 +238,17 @@ export function uploadPatch(store, patchFile) {
 }
 
 
+export function downloadPatch(store, patchId) {
+	var a = document.createElement('a');
+	document.body.appendChild(a);
+	a.download = patchId + ".floto-patch.zip";
+	a.href = "/api/patches/"+patchId+"/download";
+	a.click();
+	document.body.removeChild(a);
+}
+
+
+
+
 
 

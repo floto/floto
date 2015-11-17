@@ -64,7 +64,7 @@ export default connect(state => {
 								<Button onClick={actions.loadPatches}>Refresh</Button>
 									<span className="pull-right">
 										{this.props.uploadProgress?<span>Uploading...{this.props.uploadProgress.percentComplete}%</span>:
-										<FileUploadComponent title="Upload patch" extension=".floto-patch.zip"
+										<FileUploadComponent title={<span><Icon name="upload" />&nbsp;&nbsp;Upload patch</span>} extension=".floto-patch.zip"
 															 onFileSelected={(patchFile) => actions.uploadPatch(patchFile)}/>}
 								</span>
 								{config.patchMode === "create" ?

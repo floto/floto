@@ -434,6 +434,13 @@ public class PatchService {
 		});
 	}
 
+	public File getPatchFile(String patchId) {
+		PatchInfo patchInfo = getPatchInfo(patchId);
+		File patchDirectory = getPatchDirectory(patchInfo.id);
+		File patchFile = new File(patchDirectory, patchInfo.id + ".floto-patch.zip");
+		return patchFile;
+	}
+
 
 	@FunctionalInterface
 	public interface Consumer_WithExceptions<T> {
