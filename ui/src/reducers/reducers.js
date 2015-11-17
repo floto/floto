@@ -53,8 +53,8 @@ addReducers({
 			selectedHost,
 			manifest,
 			templateMap
-		}, mergeContainerStates(state.containerStates, manifest));
-        return newState;
+		}, mergeContainerStates(state.containerStates, manifest), mergeHostStates(state.hostStates, state.manifest));
+		return newState;
 	},
 
 	MANIFEST_ERROR_UPDATED(state, manifestError) {
@@ -87,6 +87,10 @@ addReducers({
 		return _.extend({containerStates}, mergeContainerStates(containerStates, state.manifest));
 	},
 
+	HOST_STATES_UPDATED(state, hostStates) {
+		return _.extend({hostStates}, mergeHostStates(hostStates, state.manifest));
+	},
+
 	FILE_SELECTED(state, selectedFile) {
 		return {selectedFile, selectedFileError: null};
 	},
@@ -110,7 +114,7 @@ addReducers({
 	},
 
 	CONFIG_UPDATED(state, config) {
-		if(config.defaultDeploymentMode === "fromRootImage" && !config.canDeployFromRootImage) {
+		if (config.defaultDeploymentMode === "fromRootImage" && !config.canDeployFromRootImage) {
 			config.defaultDeploymentMode = "fromBaseImage";
 		}
 		return {config, clientState: _.extend({}, state.clientState, {safetyArmed: config.armed})};
@@ -169,9 +173,24 @@ function mergeContainerStates(containerStates = {}, manifest = {}) {
 	return {unmanagedContainers, containers};
 }
 
-export const eventConstants = _.indexBy(_.keys(reducerMap));
+function mergeHostStates(hostStates = {}, manifest = {}) {
+	let hosts = manifest.hosts || [];
+	hosts = hosts.map(function (host) {
+		host.state = {status: "unknown"};
+		if (!hostStates[host.name]) {
+			host.state = {
+				status: "unknown"
+			};
+			return;
+		}
+		host.state = hostStates[host.name];
+		return host;
+	});
+	return {hosts};
+}
 
-// TODO: check that all event types have a reducer?
+
+export const eventConstants = _.indexBy(_.keys(reducerMap));
 
 export default (state, event) => {
 	let reducer = reducerMap[event.type];

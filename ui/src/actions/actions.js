@@ -1,4 +1,3 @@
-
 import * as rest from "../util/rest.js";
 import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
@@ -16,12 +15,10 @@ export function loadContainerStates(store) {
 
 export function loadHostStates(store) {
 	rest.send({method: "GET", url: "hosts/_state"}).then((result) => {
-		/* TODO
 		store.dispatch({
-			type: "CONTAINER_STATES_UPDATED",
+			type: "HOST_STATES_UPDATED",
 			payload: result.states
 		});
-		*/
 	});
 }
 export function loadTasks(store) {
@@ -97,7 +94,7 @@ export function destroyContainers(store, containerName, hostName) {
 export function redeployHosts(store, hostNames) {
 	taskService.httpPost(store, "hosts/_redeploy", {hosts: hostNames})
 		.finally(() => {
-			loadContainerStates(store);
+			loadHostStates(store);
 		});
 }
 
@@ -121,7 +118,6 @@ export function destroyHosts(store, hostNames) {
 			loadContainerStates(store);
 		});
 }
-
 
 
 export function getFlotoInfo(store) {
@@ -206,7 +202,7 @@ function createPatch(store, parentPatchId) {
 		setTimeout(() => {
 			React.unmountComponentAtNode(elementById);
 		}, 0);
-		if(!patchProperties) {
+		if (!patchProperties) {
 			return;
 		}
 		patchProperties.parentPatchId = parentPatchId;
@@ -230,9 +226,11 @@ export function activatePatch(store, patchId) {
 
 
 export function uploadPatch(store, patchFile) {
-	taskService.httpPost(store, "patches/upload/"+patchFile.name, {blob: patchFile}, {uploadProgressFn: (progress) => {
-		store.dispatch({type: "PATCH_UPLOAD_PROGRESSED", payload: progress});
-	}})
+	taskService.httpPost(store, "patches/upload/" + patchFile.name, {blob: patchFile}, {
+			uploadProgressFn: (progress) => {
+				store.dispatch({type: "PATCH_UPLOAD_PROGRESSED", payload: progress});
+			}
+		})
 		.finally(() => {
 			store.dispatch({type: "PATCH_UPLOAD_COMPLETED", payload: null});
 			loadPatches(store);

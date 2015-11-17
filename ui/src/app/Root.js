@@ -82,7 +82,10 @@ let routes = () => {
 				}}/>
 				</Route>
 			</Route>
-			<Route path="/hosts" component={Hosts}>
+			<Route path="/hosts" component={Hosts} onEnter={
+					(nextState, transition)=>{
+						actions.loadHostStates(store);
+					}}>
 				<Route path=":hostName" component={Host} onEnter={
 				(nextState, transition)=>{
 					store.dispatch({type: "HOST_SELECTED", payload: nextState.params.hostName});

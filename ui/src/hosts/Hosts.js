@@ -3,12 +3,21 @@ import { connect } from 'react-redux';
 import { History } from 'react-router';
 
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
-var Icon = require('react-fa');
+
+const labelStyleMapping = {
+	running: "success",
+	stopped: "warning",
+	"not-there": "danger"
+};
 
 export default connect(state => {
+	let hosts = state.hosts;
+	if(!hosts || hosts.length === 0) {
+		hosts = state.manifest.hosts;
+	}
 	return {
 		clientState: state.clientState,
-		hosts: state.manifest.hosts,
+		hosts: hosts,
 		selectedHost: state.selectedHost
 	};
 })(React.createClass({
@@ -35,8 +44,9 @@ export default connect(state => {
 				if(host === this.selectedHost) {
 					rowClassName = "info";
 				}
+				let labelStyle = labelStyleMapping[host.state] || "default";
 				return <tr key={host.name} onClick={this.navigateToHost.bind(this, host.name)} className={rowClassName}>
-					<td><Label bsStyle="default">{host.status || "unknown" }</Label></td>
+					<td><Label bsStyle={labelStyle}>{host.state || "unknown" }</Label></td>
 					<td><Button bsStyle="primary" bsSize="xs" disabled={!safetyArmed}
 								onClick={actions.redeployHosts.bind(null, [host.name])}>Redeploy</Button>
 					</td>
@@ -67,7 +77,7 @@ export default connect(state => {
 							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
 								<h2>Hosts <span className="text-muted">({hosts.length})</span></h2>
 								<ButtonGroup>
-									<Button onClick={actions.loadContainerStates}>Refresh</Button>
+									<Button onClick={actions.loadHostStates}>Refresh</Button>
 									<Button bsStyle="primary" onClick={() => actions.redeployHosts(allHostNames)}
 											disabled={!safetyArmed}>Redeploy all</Button>
 								</ButtonGroup>
@@ -90,7 +100,5 @@ export default connect(state => {
 		}
 	)
 );
-
-
 
 
