@@ -37,7 +37,6 @@ public class TaskPersistence {
     }).build(new CacheLoader<String, OutputStream>() {
         @Override
         public OutputStream load(String taskId) throws Exception {
-            // TODO: close
             return new FileOutputStream(getLogFile(taskId));
         }
     });

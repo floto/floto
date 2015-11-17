@@ -96,10 +96,7 @@ public class PatchService {
 
 	public void createPatchInternal(PatchCreationParams patchCreationParams) throws Exception {
 		String parentPatchId = patchCreationParams.parentPatchId;
-		// TODO: tempdir
-		// TODO: upload parent patch
 
-		// TODO build images
 		Manifest manifest = flotoService.getManifest();
 
 		Instant creationDate = Instant.now();
@@ -112,9 +109,6 @@ public class PatchService {
 
 		LinkedHashSet<String> imageNames = new LinkedHashSet<>(Lists.transform(manifest.containers, (container) -> container.image));
 
-		// TODO: remove
-//        imageNames.clear();
-//        imageNames.add("dns");
 		Host patchMakerHost = manifest.findHost("patch-maker");
 
 		int imageNumber = 1;
@@ -151,7 +145,6 @@ public class PatchService {
 
 		for (String imageName : imageNames) {
 			boolean haveAllImages = true;
-			// TODO: check build hash match
 			DockerImageDescription imageDescription = imageDescriptionMap.get(imageName + "-image:latest");
 			if (imageDescription == null) {
 				throw new IllegalStateException("No docker image found for " + imageName);
