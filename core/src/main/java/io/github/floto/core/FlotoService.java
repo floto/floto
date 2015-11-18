@@ -428,7 +428,6 @@ public class FlotoService implements Closeable {
                                     tarBallOutputStream.closeEntry();
                                 }
                             }
-                            // TODO: generate repository file?
                             Map<String, Object> repository = new HashMap<String, Object>();
                             HashMap<String, String> tags = new HashMap<String, String>();
                             tags.put("latest", finalImageId);

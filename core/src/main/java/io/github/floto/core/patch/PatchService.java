@@ -24,6 +24,8 @@ import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.apache.tools.tar.TarEntry;
+import org.apache.tools.tar.TarOutputStream;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -31,9 +33,12 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.WorkingTreeIterator;
 import org.slf4j.Logger;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -111,6 +116,69 @@ public class PatchService {
 
 		Host patchMakerHost = manifest.findHost("patch-maker");
 
+		PatchInfo parentPatchInfo = null;
+		if (parentPatchId != null) {
+			// Upload parent patch images
+			parentPatchInfo = getPatchInfo(parentPatchId);
+			Map<String, String> rootImageMap = parentPatchInfo.rootImageMap;
+			Set<String> imagesToUpload = new HashSet(parentPatchInfo.requiredImageIds);
+			List<DockerImageDescription> imageDescriptions = dockerTarget.path("/images/json").queryParam("all", "1").request().buildGet().submit(new GenericType<List<DockerImageDescription>>(Types.listOf(DockerImageDescription.class))).get();
+			for (DockerImageDescription dockerImageDescription : imageDescriptions) {
+				// remove existing images
+				imagesToUpload.remove(dockerImageDescription.Id);
+			}
+			log.info("Uploading the following {} images from parent patch: {}", imagesToUpload.size(), imagesToUpload);
+			Response createResponse = flotoService.createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
+				@Override
+				public void write(OutputStream output) throws IOException, WebApplicationException {
+					try (TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
+						for (String imageId : imagesToUpload) {
+							File imageDirectory = imageRegistry.getImageDirectory(imageId);
+							Path imagePath = imageDirectory.toPath();
+							for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
+								Path filePath = file.toPath();
+								Path relativePath = imagePath.relativize(filePath);
+								String tarFilename = imageId + "/" + relativePath.toString();
+								tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
+								try (FileInputStream fileInputStream = new FileInputStream(file)) {
+									IOUtils.copy(fileInputStream, tarBallOutputStream);
+								}
+								tarBallOutputStream.closeEntry();
+							}
+						}
+						// generate repository file with all root image tags
+						Map<String, Object> repositories = new HashMap<String, Object>();
+						for (Map.Entry<String, String> entry : rootImageMap.entrySet()) {
+							String fullTag = entry.getKey();
+							String imageId = entry.getValue();
+							int index = fullTag.indexOf(':');
+							String repoName = fullTag.substring(0, index);
+							String tagName = fullTag.substring(index + 1);
+							if (repoName.equals("<none>") || tagName.equals("<none>")) {
+								continue;
+							}
+							HashMap<String, String> tags = (HashMap<String, String>) repositories.get(repoName);
+							if (tags == null) {
+								tags = new HashMap<String, String>();
+								repositories.put(repoName, tags);
+								tags.put(tagName, imageId);
+							}
+						}
+						ObjectMapper mapper = new ObjectMapper();
+						byte[] repositoryBytes = mapper.writeValueAsBytes(repositories);
+
+						TarEntry repositoriesTarEntry = new TarEntry("repositories");
+						repositoriesTarEntry.setSize(repositoryBytes.length);
+						tarBallOutputStream.putNextEntry(repositoriesTarEntry);
+						IOUtils.write(repositoryBytes, tarBallOutputStream);
+						tarBallOutputStream.closeEntry();
+
+					}
+				}
+
+			}, "application/octet-stream")).invoke();
+		}
+
 		int imageNumber = 1;
 
 		for (String imageName : imageNames) {
@@ -142,7 +210,7 @@ public class PatchService {
 		Set<String> allRequiredImageIds = new HashSet<>();
 		Map<String, String> imageMap = new HashMap<String, String>();
 		log.info("images: {}", imageMap);
-
+		Map<String, String> rootImageMap = new HashMap<String, String>();
 		for (String imageName : imageNames) {
 			boolean haveAllImages = true;
 			DockerImageDescription imageDescription = imageDescriptionMap.get(imageName + "-image:latest");
@@ -152,6 +220,11 @@ public class PatchService {
 			String imageId = imageDescription.Id;
 			imageMap.put(imageName, imageId);
 			while (imageId != null) {
+				if (imageDescription.RepoTags != null) {
+					for (String repoTag : imageDescription.RepoTags) {
+						rootImageMap.put(repoTag, imageDescription.Id);
+					}
+				}
 				if (!imageRegistry.hasImage(imageId)) {
 					haveAllImages = false;
 				}
@@ -209,7 +282,6 @@ public class PatchService {
 		patchDescription.containedImageIds.addAll(allRequiredImageIds);
 
 		if (parentPatchId != null) {
-			PatchInfo parentPatchInfo = getPatchInfo(parentPatchId);
 			patchDescription.parentId = parentPatchId;
 			patchDescription.parentRevision = parentPatchInfo.revision;
 			// remove image ids already present
@@ -219,6 +291,7 @@ public class PatchService {
 
 
 		patchDescription.imageMap = imageMap;
+		patchDescription.rootImageMap = rootImageMap;
 
 		File patchDescriptionFile = getPatchDescriptionFile(tempDir);
 		objectMapper.writeValue(patchDescriptionFile, patchDescription);

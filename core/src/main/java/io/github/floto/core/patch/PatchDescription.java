@@ -41,6 +41,9 @@ public class PatchDescription {
     // Map of base image names to to image ids
     public Map<String, String> imageMap = new HashMap<>();
 
+	// Map of root image tags to to image ids
+	public Map<String, String> rootImageMap = new HashMap<>();
+
     // The list of required docker image ids
     public List<String> requiredImageIds = new ArrayList<>();
 
