@@ -284,6 +284,7 @@ public class PatchService {
 		if (parentPatchId != null) {
 			patchDescription.parentId = parentPatchId;
 			patchDescription.parentRevision = parentPatchInfo.revision;
+			patchDescription.parentName = parentPatchInfo.name;
 			// remove image ids already present
 			patchDescription.containedImageIds.removeAll(parentPatchInfo.requiredImageIds);
 		}

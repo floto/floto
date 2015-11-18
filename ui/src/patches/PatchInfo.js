@@ -60,6 +60,10 @@ export default connect(state => {
 							<td>{patch.revision}</td>
 						</tr>
 						<tr>
+							<td>Parent name:</td>
+							<td>{patch.parentName || '-'}</td>
+						</tr>
+						<tr>
 							<td>Parent revision:</td>
 							<td>{patch.parentRevision || '-'}{patch.parentId ? <span
 								className="text-muted"><br /> ({patch.parentId})</span> : null}</td>

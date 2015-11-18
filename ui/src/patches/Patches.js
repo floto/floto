@@ -46,7 +46,9 @@ export default connect(state => {
 					<td>{patch.name ?
 						<span>{patch.name} <span className="text-muted">({patch.revision})</span></span>
 						: patch.revision}</td>
-					<td>{patch.parentRevision || "-"}</td>
+					<td>{patch.parentName ?
+						<span>{patch.parentName} <span className="text-muted">({patch.parentRevision})</span></span>
+						: patch.parentRevision || "-"}</td>
 				</tr>;
 			},
 

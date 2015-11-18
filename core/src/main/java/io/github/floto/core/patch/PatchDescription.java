@@ -38,7 +38,10 @@ public class PatchDescription {
     // The id of the patch that this patch is based on (null in case of an initial patch)
     public String parentId;
 
-    // Map of base image names to to image ids
+	// The name of the patch that this patch is based on (null in case of an initial patch)
+	public String parentName;
+
+	// Map of base image names to to image ids
     public Map<String, String> imageMap = new HashMap<>();
 
 	// Map of root image tags to to image ids
