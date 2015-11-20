@@ -162,7 +162,9 @@ public class FlotoServer {
 		context.addServlet(new ServletHolder(servletContainer), "/api/*");
 		try {
             ServerContainer websocketContainer = createWebSocketEndpoint(context, (WebSocket webSocket) -> {
-                webSocket.addMessageHandler("subscribeToTaskLog", new SubscribeToTaskLogHandler(taskService));
+				SubscribeToTaskLogHandler subscribeToTaskLogHandler = new SubscribeToTaskLogHandler(taskService);
+				webSocket.addMessageHandler("subscribeToTaskLog", subscribeToTaskLogHandler);
+				webSocket.addMessageHandler("unsubscribeFromTaskLog", subscribeToTaskLogHandler.getUnsubscriptionHandler());
                 SubscribeToContainerLogHandler subscribeToContainerLogHandler = new SubscribeToContainerLogHandler(flotoService);
                 webSocket.addMessageHandler("subscribeToContainerLog", subscribeToContainerLogHandler);
                 webSocket.addMessageHandler("unsubscribeFromContainerLog", subscribeToContainerLogHandler.getUnsubscriptionHandler());

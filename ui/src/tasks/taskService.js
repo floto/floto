@@ -101,6 +101,7 @@ taskService.subscribeToLog = function subscribeToLog(taskId, callback) {
 		streamId: streamId
 	};
 	sendMessage(message);
+	return streamId;
 };
 
 export default taskService;

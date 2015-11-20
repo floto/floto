@@ -1,19 +1,19 @@
 package io.github.floto.server.api.websocket.handler;
 
+import com.google.common.base.Throwables;
 import io.github.floto.server.api.websocket.WebSocket;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.DataInputStream;
-import java.io.EOFException;
-import java.io.InputStream;
+import java.io.*;
 
 public class TaskLogPusher {
     private final Logger log = LoggerFactory.getLogger(TaskLogPusher.class);
     private final InputStream inputStream;
     private final String streamId;
     private WebSocket webSocket;
+	private volatile boolean stopped = false;
 
     public TaskLogPusher(InputStream inputStream, String streamId, WebSocket webSocket) {
         this.inputStream = inputStream;
@@ -27,7 +27,7 @@ public class TaskLogPusher {
                 DataInputStream dataInput = new DataInputStream(input);
                 byte[] buffer = new byte[4*1024];
                 try {
-                    while (true) {
+                    while (!stopped) {
                         IOUtils.skip(input, 1);
                         String line = dataInput.readLine();
                         if(line == null || line.isEmpty()) {
@@ -49,6 +49,11 @@ public class TaskLogPusher {
                     }
                 } catch(EOFException ignored) {
                     // EOF reached, terminate
+				} catch(IOException ioException) {
+					if(!this.stopped) {
+						// only throw if not stopped
+						Throwables.propagate(ioException);
+					}
                 }
                 log.trace("Log Pusher terminated");
             } catch(Throwable throwable) {
@@ -56,4 +61,9 @@ public class TaskLogPusher {
             }
         }, "LogPusher "+streamId).start();
     }
+
+	public void stop() {
+		stopped = true;
+		IOUtils.closeQuietly(inputStream);
+	}
 }
