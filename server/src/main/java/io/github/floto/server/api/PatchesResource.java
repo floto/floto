@@ -35,20 +35,6 @@ public class PatchesResource {
 		return new PatchResource(flotoService, patchService, patchId);
 	}
 
-
-/*'
-	@POST
-	@Path("create-full")
-	public TaskInfo<Void> createFullPatch() {
-		return patchService.createFullPatch();
-	}
-
-	@POST
-	@Path("create-incremental-from/{parentPatchId}")
-	public TaskInfo<Void> createIncrementalPatch(@PathParam("parentPatchId") String parentPatchId) {
-		return patchService.createIncrementalPatch(parentPatchId);
-	}
-*/
 	@POST
 	@Path("create")
 	public TaskInfo<Void> createPatch(PatchCreationParams patchCreationParams) {
