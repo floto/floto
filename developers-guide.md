@@ -37,6 +37,8 @@ The `patch-description.json` describes a patch and contains the following fields
 * **requiredImageIds**: An array containing the IDs of all required images
 * **containedImageIds**: An array containing the IDS of all images contained in this patch file
 * **imageMap**: an object mapping image names to image IDs
+* **author**: The user that created this patch
+* **producer**: The software used to create this patch
 
 \* Not applicable for initial patches
 

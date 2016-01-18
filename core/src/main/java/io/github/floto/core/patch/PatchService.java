@@ -12,6 +12,7 @@ import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.VersionUtil;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
@@ -290,6 +291,9 @@ public class PatchService {
 		}
 		List<String> containedImageIds = new ArrayList<String>(patchDescription.containedImageIds);
 
+
+		patchDescription.author = System.getProperty("user.name");
+		patchDescription.producer = "floto " + VersionUtil.version + " (" + VersionUtil.revision + ")";
 
 		patchDescription.imageMap = imageMap;
 		patchDescription.rootImageMap = rootImageMap;

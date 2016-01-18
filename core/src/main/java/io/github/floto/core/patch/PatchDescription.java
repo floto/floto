@@ -53,5 +53,9 @@ public class PatchDescription {
     // The list of required docker images
     public List<String> containedImageIds = new ArrayList<>();
 
+	// The username of the user that created this patch
+	public String author;
 
+	// The software used to create this patch
+	public String producer;
 }
