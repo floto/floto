@@ -190,9 +190,6 @@ export function loadPatchInfo(store, patchId) {
 
 export function createFullPatch(store) {
 	createPatch(store, null);
-	taskService.httpPost(store, "patches").then(() => {
-		loadPatches(store);
-	});
 }
 
 

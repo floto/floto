@@ -478,12 +478,12 @@ public class FlotoService implements Closeable {
 		String rootImage = this.getRootImage(image);
 		log.info("Will use root-image={}", rootImage);
 		List<JsonNode> buildSteps = new ArrayList<>(image.buildSteps);
-		String repoName = null;
+		String repoName = this.createRootImageName(rootImage);;
 		if (rootImage.startsWith("http://")) {
 			boolean needToImport = true;
-			String shortRepoName = "root-image";
-			String tagName = rootImage.replaceAll("[^A-Za-z0-9_.-]", "_");
-			repoName = shortRepoName + ":" + tagName;
+			int index = repoName.indexOf(":");
+			String shortRepoName = repoName.substring(0, index);
+			String tagName = repoName.substring(index+1);;
 			try {
 				WebTarget webTarget = createDockerTarget(host).path("/images/{imageName}/json").resolveTemplate("imageName", repoName);
 				webTarget.request().get().close();
@@ -541,6 +541,18 @@ public class FlotoService implements Closeable {
 		String baseImageName = this.createBaseImageName(image);
 		this.buildImage(baseImageName, buildSteps, host, this.manifest, Collections.emptyMap(), buildLogStream);
 		return baseImageName;
+	}
+
+	public String createRootImageName(String rootImage) {
+		String repoName = null;
+		if (rootImage.startsWith("http://")) {
+			String shortRepoName = "root-image";
+			String tagName = rootImage.replaceAll("[^A-Za-z0-9_.-]", "_");
+			repoName = shortRepoName + ":" + tagName;
+		} else {
+			repoName = rootImage;
+		}
+		return repoName;
 	}
 
 	private void createFinalImage(Host host, Container container, String baseImageName, FileOutputStream buildLogStream) {
