@@ -54,3 +54,6 @@ Patches are created on special patch-maker VMs in the following manner:
 #### Patch installation
 
 Patches are uploaded, but need to be "activated" to actually use them. This simplifies version rollbacks. After activation, the changed containers need to be redeployed.
+
+ 1. Patch upload by the user, the patch is then set as active patch.
+ 2. Redeployment by the user.

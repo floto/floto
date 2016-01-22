@@ -508,6 +508,7 @@ public class PatchService {
 				FileUtils.deleteDirectory(patchDirectory);
 			}
 			FileUtils.moveDirectory(tempDir, patchDirectory);
+			activatePatch(patchInfo.id).getResultFuture().get();
 			return null;
 		});
 	}
