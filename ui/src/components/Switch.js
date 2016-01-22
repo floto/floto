@@ -5,7 +5,7 @@ require("bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css");
 
 export default React.createClass({
 	componentDidMount() {
-		var domNode = React.findDOMNode(this);
+		var domNode = ReactDOM.findDOMNode(this);
 		$(domNode).bootstrapSwitch({
 			onText: "Armed",
 			offText: "Safe",
@@ -23,7 +23,7 @@ export default React.createClass({
 	},
 
 	componentDidUpdate() {
-		var domNode = React.findDOMNode(this);
+		var domNode = ReactDOM.findDOMNode(this);
 		$(domNode).bootstrapSwitch('state', this.props.checked, true);
 	},
 

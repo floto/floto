@@ -18,9 +18,9 @@ export default connect(state => {
 	};
 })(React.createClass({
 	displayName: "ContainerGroup",
-	mixins: [History],
 	contextTypes: {
-		actions: React.PropTypes.object.isRequired
+		actions: React.PropTypes.object.isRequired,
+		router: React.PropTypes.object.isRequired
 	},
 
 	navigateToContainer(containerName) {
@@ -29,7 +29,7 @@ export default connect(state => {
 			let currentUrl = "/containers/" + this.props.selectedContainer.name;
 			newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
 		}
-		this.history.pushState(null, newUrl, this.props.location.query);
+		this.context.router.push(null, newUrl, this.props.location.query);
 	},
 
 	renderContainer(container) {
@@ -51,7 +51,7 @@ export default connect(state => {
 				   onClick={this.navigateToContainer.bind(this, container.name)}>
 			<td><Label bsStyle={labelStyle}>{status || "unknown" }</Label></td>
 			<td>
-				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed}
+				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed} size="xs"
 														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>
 			</td>

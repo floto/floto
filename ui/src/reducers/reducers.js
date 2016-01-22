@@ -190,7 +190,7 @@ function mergeHostStates(hostStates = {}, manifest = {}) {
 }
 
 
-export const eventConstants = _.indexBy(_.keys(reducerMap));
+export const eventConstants = _.sortedIndexBy(_.keys(reducerMap));
 
 export default (state, event) => {
 	let reducer = reducerMap[event.type];

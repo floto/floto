@@ -1,7 +1,8 @@
 import { createStore, combineReducers, compose, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
-import { Redirect, Router, Route } from 'react-router';
-import createHistory from 'history/lib/createHashHistory';
+import { Redirect, Router, Route, useRouterHistory } from 'react-router';
+import createHashHistory from 'history/lib/createHashHistory';
+import createRouterHistory from 'react-router/lib/createRouterHistory';
 
 import NavigationBar from "./NavigationBar.js";
 import Application from "./Application";
@@ -52,12 +53,11 @@ if (module.hot) {
 	});
 }
 
-let history = createHistory({
+let history = useRouterHistory(createHashHistory)({
 	queryKey: false
 });
 
-let routes = () => {
-	return <Router history={history}>
+let routes = <Router history={history}>
 		<Redirect from="/" to="/containers"/>
 		<Route component={Application}>
 			<Route path="/containers" component={Containers} onEnter={
@@ -125,7 +125,7 @@ let routes = () => {
 			<Route path="/manifest" component={Manifest}/>
 		</Route>
 	</Router>;
-};
+
 export default React.createClass({
 
 	childContextTypes: {

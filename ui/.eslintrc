@@ -22,6 +22,7 @@
 	},
 	"globals": {
 		"React": true,
+		"ReactDOM": true,
 		"_": true,
 		"$": true,
 		"PNotify": true

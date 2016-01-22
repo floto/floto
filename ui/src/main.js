@@ -1,4 +1,7 @@
-require("babel/polyfill");
+require("babel-polyfill");
+_.findWhere = require('lodash.findwhere');
+
+
 
 import ErrorHandling from "./util/ErrorHandling.js";
 import Root from "./app/Root";
@@ -60,7 +63,7 @@ import taskService from "./tasks/taskService.js";
 
 
 window.onload = function () {
-	React.render(
+	ReactDOM.render(
 		<Root />,
 		document.getElementById('application'));
 	websocketService.start();

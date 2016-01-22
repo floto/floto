@@ -61,7 +61,7 @@ export default connect(state => {
 				let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
 				let containerGroupingKey = (this.props.location.query || {}).grouping || "none";
 				let containerGrouping = containerGroupings[containerGroupingKey] || containerGroupings.none;
-				let allContainerNames = _.pluck(containers, "name");
+				let allContainerNames = _.map(containers, (container) => container.name);
 				let groups = containerGrouping.groupFn(containers);
 				let unmanagedContainers = this.props.unmanagedContainers;
 				groups = _.sortBy(groups, "title");
@@ -83,7 +83,7 @@ export default connect(state => {
 					</div>;
 				}
 				_.forEach(groups, group => {
-					group.containerNames = _.pluck(group.containers, "name");
+					group.containerNames = _.map(group.containers, (container) => container.name);
 				});
 				if(this.props.manifestError) {
 					return <div style={{height: "100%", marginTop: 20, marginRight: 20}}>
@@ -99,7 +99,7 @@ export default connect(state => {
 								<h2>Containers <span className="text-muted">({containers.length})</span></h2>
 								<ButtonGroup>
 									<Button onClick={actions.loadContainerStates}>Refresh</Button>
-									<RedeployButton disabled={!safetyArmed} size="medium" title="Redeploy all"
+									<RedeployButton disabled={!safetyArmed} title="Redeploy all"
 													onExecute={(deploymentMode) => actions.redeployContainers( allContainerNames, deploymentMode)}/>
 									<Button bsStyle="success" onClick={() => actions.startContainers(allContainerNames)}
 											disabled={!safetyArmed}>Start all</Button>

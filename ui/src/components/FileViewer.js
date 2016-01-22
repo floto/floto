@@ -16,7 +16,7 @@ export default connect(state => {
 		if(this.scrolledDown || !this.needsScroll) {
 			return;
 		}
-		let domNode = React.findDOMNode(this);
+		let domNode = ReactDOM.findDOMNode(this);
 		if(!domNode) {
 			return;
 		}

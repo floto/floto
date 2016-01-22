@@ -49,8 +49,8 @@ export default connect(state => {
 			<div style={{flex: "1 1 auto", display: "flex", flexDirection: "row", minHeight: "0px"}}>
 				<div style={{flex: "0 0 auto", overflow: "scroll", minHeight: "0px", width: "10em"}}>
 					<ul className="nav nav-pills nav-stacked" role="tablist">
-						<li key="logtail" className={logtailClassname}><Link to={`/containers/${container.name}/log`}
-												query={this.props.location.query}
+						<li key="logtail" className={logtailClassname}><Link
+												to={{pathname: `/containers/${container.name}/log`,	query: this.props.location.query}}
 												title="Logtail">Logtail</Link></li>
 						{fileTargets.map((fileTarget) => {
 							let className = null;
@@ -58,8 +58,7 @@ export default connect(state => {
 								className = "active";
 							}
 							return <li key={fileTarget.file} className={className}>
-								<Link to={`/containers/${container.name}/file/${fileTarget.file}`}
-									  query={this.props.location.query}
+								<Link to={{pathname: `/containers/${container.name}/file/${fileTarget.file}`, query: this.props.location.query}}
 									  title={fileTarget.destination}
 									>{fileTarget.name}</Link>
 							</li>;

@@ -14,11 +14,11 @@ export default connect(state => {
 })(React.createClass({
 	contextTypes: {
 		actions: React.PropTypes.object.isRequired,
-		history: React.PropTypes.object
+		router: React.PropTypes.object
 	},
 
 	componentDidMount() {
-		this.unlistenToHistory = this.context.history.listen(() => {
+		this.unlistenToHistory = this.context.router.listen(() => {
 			this.forceUpdate();
 		});
 	},
@@ -34,13 +34,17 @@ export default connect(state => {
 
 
 	render() {
-		let isActive = this.context.history.isActive;
+		let isActive = this.context.router.isActive;
 		let isCompiling = this.props.serverState.isCompiling;
 		let site = this.props.site || {projectName: "?", projectRevision: "?"};
 		let siteName = site.projectName || site.domainName;
-		return <Navbar fixedTop fluid toggleNavKey={0} defaultNavExpanded={false}
-					   brand={<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>}>
-			<CollapsibleNav eventKey={0}>
+		return <Navbar fixedTop fluid>
+			<Navbar.Header>
+				<Navbar.Brand>
+					<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>
+				</Navbar.Brand>
+				</Navbar.Header>
+			<Navbar.Collapse>
 				<Nav navbar>
 					<NavItem active={isActive("/containers")} href="#/containers"><Icon name="cubes"/>&nbsp;&nbsp;
 						Containers</NavItem>
@@ -79,7 +83,7 @@ export default connect(state => {
 				<span style={{fontSize: "80%", position: "relative", top: "-4px"}}
 					  className="text-muted">{site.projectRevision}</span>
 				</div>
-			</CollapsibleNav>
+			</Navbar.Collapse>
 		</Navbar>;
 	}
 }));
