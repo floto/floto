@@ -24,14 +24,14 @@ export default connect(state => {
 
 	scrollDown(override) {
 		if (this.state.autoScroll || override) {
-			let scrollElement = React.findDOMNode(this.refs.scrollContainer);
+			let scrollElement = ReactDOM.findDOMNode(this.refs.scrollContainer);
 			scrollElement.scrollTop = scrollElement.scrollHeight;
 			this.autoScrollTop = scrollElement.scrollTop;
 		}
 	},
 
 	onScroll() {
-		let scrollElement = React.findDOMNode(this.refs.scrollContainer);
+		let scrollElement = ReactDOM.findDOMNode(this.refs.scrollContainer);
 		if (this.autoScrollTop !== scrollElement.scrollTop) {
 			// Different from our set scrollTop, assume it was done by user and unset the autoscroll flag
 			this.autoScrolltop = -1;
@@ -40,7 +40,7 @@ export default connect(state => {
 	},
 
 	onChangeAutoscroll() {
-		let autoScroll = React.findDOMNode(this.refs.autoScroll).checked;
+		let autoScroll = ReactDOM.findDOMNode(this.refs.autoScroll).checked;
 		if (autoScroll) {
 			this.scrollDown(true);
 		}
@@ -59,7 +59,7 @@ export default connect(state => {
 				<div className="checkbox pull-right">
 					<label>
 						<input ref="autoScroll" type="checkbox" checked={this.state.autoScroll}
-							   onChange={this.onChangeAutoscroll}> Auto-Scroll</input>
+							   onChange={this.onChangeAutoscroll} /> Auto-Scroll
 					</label>
 				</div>
 			</div>

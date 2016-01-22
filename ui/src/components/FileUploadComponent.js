@@ -5,16 +5,16 @@ export default React.createClass({
 
 	uploadFile(event) {
 		event.preventDefault();
-		var inputNode = React.findDOMNode(this.refs.fileUpload);
+		var inputNode = ReactDOM.findDOMNode(this.refs.fileUpload);
 		inputNode.click();
 	},
 	onFileSelected() {
-		var inputNode = React.findDOMNode(this.refs.fileUpload);
+		var inputNode = ReactDOM.findDOMNode(this.refs.fileUpload);
 		if(inputNode.files && inputNode.files[0]) {
 			let file = inputNode.files[0];
 			this.props.onFileSelected(file);
 		}
-		React.findDOMNode(this.refs.form).reset();
+		ReactDOM.findDOMNode(this.refs.form).reset();
 	},
 
 	render() {

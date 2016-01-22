@@ -1973,6 +1973,11 @@
       "from": "lodash._basefor@>=3.0.0 <4.0.0",
       "resolved": "https://registry.npmjs.org/lodash._basefor/-/lodash._basefor-3.0.3.tgz"
     },
+    "lodash._baseget": {
+      "version": "3.7.2",
+      "from": "lodash._baseget@>=3.0.0 <4.0.0",
+      "resolved": "https://registry.npmjs.org/lodash._baseget/-/lodash._baseget-3.7.2.tgz"
+    },
     "lodash._baseindexof": {
       "version": "3.1.0",
       "from": "lodash._baseindexof@>=3.0.0 <4.0.0",
@@ -2063,6 +2068,11 @@
       "from": "lodash._reinterpolate@>=3.0.0 <4.0.0",
       "resolved": "https://registry.npmjs.org/lodash._reinterpolate/-/lodash._reinterpolate-3.0.0.tgz"
     },
+    "lodash._topath": {
+      "version": "3.8.1",
+      "from": "lodash._topath@>=3.0.0 <4.0.0",
+      "resolved": "https://registry.npmjs.org/lodash._topath/-/lodash._topath-3.8.1.tgz"
+    },
     "lodash.camelcase": {
       "version": "3.0.1",
       "from": "lodash.camelcase@>=3.0.1 <4.0.0",
@@ -2123,6 +2133,11 @@
       "from": "lodash.keysin@>=3.0.0 <4.0.0",
       "resolved": "https://registry.npmjs.org/lodash.keysin/-/lodash.keysin-3.0.8.tgz"
     },
+    "lodash.map": {
+      "version": "3.1.4",
+      "from": "lodash.map@>=3.0.0 <4.0.0",
+      "resolved": "https://registry.npmjs.org/lodash.map/-/lodash.map-3.1.4.tgz"
+    },
     "lodash.merge": {
       "version": "3.3.2",
       "from": "lodash.merge@>=3.3.2 <4.0.0",
@@ -2137,6 +2152,11 @@
       "version": "3.0.1",
       "from": "lodash.pairs@>=3.0.0 <4.0.0",
       "resolved": "https://registry.npmjs.org/lodash.pairs/-/lodash.pairs-3.0.1.tgz"
+    },
+    "lodash.pluck": {
+      "version": "3.1.2",
+      "from": "lodash.pluck@latest",
+      "resolved": "https://registry.npmjs.org/lodash.pluck/-/lodash.pluck-3.1.2.tgz"
     },
     "lodash.restparam": {
       "version": "3.6.1",

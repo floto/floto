@@ -1,7 +1,5 @@
 import { connect } from 'react-redux';
 
-import { History } from 'react-router';
-
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 
 const labelStyleMapping = {
@@ -22,9 +20,9 @@ export default connect(state => {
 	};
 })(React.createClass({
 			displayName: "Hosts",
-			mixins: [History],
 			contextTypes: {
-				actions: React.PropTypes.object.isRequired
+				actions: React.PropTypes.object.isRequired,
+				router: React.PropTypes.object.isRequired
 			},
 
 
@@ -34,7 +32,7 @@ export default connect(state => {
 					let currentUrl = "/hosts/" + this.props.selectedHost.name;
 					newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
 				}
-				this.history.pushState(null, newUrl, this.props.location.query);
+				this.context.router.push({pathname: newUrl, query: this.props.location.query});
 			},
 
 			renderHost(host) {

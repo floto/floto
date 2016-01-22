@@ -45,8 +45,8 @@ export default connect(state => {
 								className = "active";
 							}
 							return <li key={fileTarget.file} className={className}>
-								<Link to={`/hosts/${host.name}/file/${fileTarget.file}`}
-									  query={this.props.location.query}
+								<Link to={{pathname:`/hosts/${host.name}/file/${fileTarget.file}`,
+									  query: this.props.location.query}}
 									  title={fileTarget.destination}
 									>{fileTarget.name}</Link>
 							</li>;

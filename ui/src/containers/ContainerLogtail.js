@@ -65,12 +65,12 @@ export default connect(state => {
 			streamId: myStreamId,
 			containerName: containerName
 		});
-		this.setState({container: React.findDOMNode(this.refs.container)});
+		this.setState({container: ReactDOM.findDOMNode(this.refs.container)});
 	},
 
 	componentDidUpdate() {
 		if(this.state.autoScroll) {
-			let container = React.findDOMNode(this.refs.container);
+			let container = ReactDOM.findDOMNode(this.refs.container);
 			container.scrollTop = container.scrollHeight;
 			this.autoScrollTop = container.scrollTop;
 		}
@@ -100,7 +100,7 @@ export default connect(state => {
 		if(!this.state.autoScroll) {
 			return;
 		}
-		let container = React.findDOMNode(this.refs.container);
+		let container = ReactDOM.findDOMNode(this.refs.container);
 		if(this.autoScrollTop !== container.scrollTop) {
 			this.setState({autoScroll: false});
 		}

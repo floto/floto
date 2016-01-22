@@ -1,7 +1,6 @@
 import { connect } from 'react-redux';
 
 import {Table, Label, Button, SplitButton, MenuItem} from "react-bootstrap";
-import { History } from 'react-router';
 
 var Icon = require('react-fa');
 
@@ -24,9 +23,9 @@ const classMap = {
 export default connect(state => {
 	return {tasks: state.tasks, activeTask: state.activeTask};
 })(React.createClass({
-			mixins: [History],
 			contextTypes: {
-				actions: React.PropTypes.object.isRequired
+				actions: React.PropTypes.object.isRequired,
+				router: React.PropTypes.object.isRequired
 			},
 
 			componentDidMount() {
@@ -48,7 +47,7 @@ export default connect(state => {
 					className = "info";
 				}
 				return <tr key={task.id} className={className}
-						   onClick={() => this.history.pushState(null, '/tasks/'+task.id)}>
+						   onClick={() => this.context.router.push('/tasks/'+task.id)}>
 					<td><span className="text-muted">#{task.id}</span></td>
 					<td><Icon spin={spin} name={icon}/> {task.title}</td>
 					<td title={task.creationDate}>{task.creationDate ? <TimeAgo date={task.creationDate}/> : ""}</td>

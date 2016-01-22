@@ -1,7 +1,5 @@
 import { connect } from 'react-redux';
 
-import { History } from 'react-router';
-
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 var Icon = require('react-fa');
 
@@ -19,14 +17,14 @@ export default connect(state => {
 	};
 })(React.createClass({
 			displayName: "Patches",
-			mixins: [History],
 			contextTypes: {
-				actions: React.PropTypes.object.isRequired
+				actions: React.PropTypes.object.isRequired,
+				router: React.PropTypes.object.isRequired
 			},
 
 			navigateToPatch(patchId) {
 				let newUrl = '/patches/' + patchId;
-				this.history.pushState(null, newUrl, this.props.location.query);
+				this.context.router.push({pathname: newUrl, query: this.props.location.query});
 			},
 
 			renderPatch(patch) {

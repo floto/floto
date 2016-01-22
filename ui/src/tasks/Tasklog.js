@@ -14,7 +14,7 @@ var classMap = {
 export default React.createClass({
 
 	componentDidMount() {
-		var table = $(React.findDOMNode(this.refs.table));
+		var table = $(ReactDOM.findDOMNode(this.refs.table));
 		this.streamId = taskService.subscribeToLog(this.props.taskId, (entry) => {
 			if (!this.isMounted()) {
 				// Not mounted anymore, bail early
@@ -51,10 +51,12 @@ export default React.createClass({
 	render() {
 		return <div style={{width: "100%", height: "100%"}}>
 			<table ref="table" className="table table-bordered table-striped table-hover table-condensed">
-				<col style={{width: "5em"}}/>
+				<colgroup>
+				<col style={{width: "6em"}}/>
 				<col />
 				<col style={{width: "5em"}}/>
 				<col style={{width: "5em"}}/>
+					</colgroup>
 			</table>
 		</div>;
 	}

@@ -1,5 +1,6 @@
 require("babel-polyfill");
 _.findWhere = require('lodash.findwhere');
+_.pluck = require('lodash.pluck');
 
 
 
@@ -26,6 +27,13 @@ require("bootstrap/dist/css/bootstrap.css");
 require("../lib/pnotify/pnotify.custom.min.css");
 require("./style/style.css");
 
+var Promise = require('bluebird');
+Promise.config({
+	warnings: {
+		// false positives in websocketservice send
+		wForgottenReturn: false
+	}
+});
 
 import websocketService from "./util/websocketService.js";
 import taskService from "./tasks/taskService.js";
