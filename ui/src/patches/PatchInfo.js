@@ -1,7 +1,5 @@
 import { connect } from 'react-redux';
 
-import { History } from 'react-router';
-
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 import TimeAgo from "react-timeago";
 var Icon = require('react-fa');
@@ -15,7 +13,6 @@ export default connect(state => {
 	};
 })(React.createClass({
 			displayName: "Patches",
-			mixins: [History],
 			contextTypes: {
 				actions: React.PropTypes.object.isRequired
 			},

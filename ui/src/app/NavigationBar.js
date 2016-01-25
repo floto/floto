@@ -1,6 +1,6 @@
 import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
 import {NavItemLink} from 'react-router-bootstrap';
-import {Link, History} from 'react-router';
+import {Link} from 'react-router';
 import { connect } from 'react-redux';
 
 var Icon = require('react-fa');

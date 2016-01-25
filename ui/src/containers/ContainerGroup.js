@@ -1,5 +1,4 @@
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
-import { History } from 'react-router';
 import { connect } from 'react-redux';
 var Icon = require('react-fa');
 
@@ -29,7 +28,7 @@ export default connect(state => {
 			let currentUrl = "/containers/" + this.props.selectedContainer.name;
 			newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
 		}
-		this.context.router.push(null, newUrl, this.props.location.query);
+		this.context.router.push({pathname: newUrl, query: this.props.location.query});
 	},
 
 	renderContainer(container) {

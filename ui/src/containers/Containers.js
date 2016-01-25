@@ -44,7 +44,8 @@ export default connect(state => {
 			displayName: "Containers",
 			mixins: [Navigation],
 			contextTypes: {
-				actions: React.PropTypes.object.isRequired
+				actions: React.PropTypes.object.isRequired,
+				router: React.PropTypes.object.isRequired
 			},
 
 			onChangeContainerGrouping(event, grouping) {
@@ -52,7 +53,8 @@ export default connect(state => {
 				if (grouping === "none") {
 					query = null;
 				}
-				this.transitionTo(this.props.location.pathname, query);
+				console.log(query);
+				this.context.router.push({pathname: this.props.location.pathname, query: query});
 			},
 
 			render() {
