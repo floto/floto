@@ -8,8 +8,8 @@ websocketService.addMessageHandler = function addMessageHandler(messageType, mes
 };
 
 websocketService.sendMessage = function sendMessage(message) {
-	wsPromise.then(function (ws) {
-		ws.send(JSON.stringify(message));
+	return wsPromise.then(function (ws) {
+		return ws.send(JSON.stringify(message));
 	});
 };
 
@@ -62,6 +62,7 @@ function connectWebSocket(timeout) {
 			};
 		}, timeout);
 	});
+	return wsPromise;
 }
 
 websocketService.start = function () {

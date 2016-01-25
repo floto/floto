@@ -23,7 +23,7 @@ export function loadHostStates(store) {
 }
 export function loadTasks(store) {
 	rest.send({method: "GET", url: "tasks"}).then((tasks) => {
-		store.dispatch({
+		return store.dispatch({
 			type: "TASKS_UPDATED",
 			payload: tasks
 		});
