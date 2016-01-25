@@ -1,3 +1,27 @@
+@media (min-width: 768px) and (max-width: 1020px) {
+	.navbar-collapse.collapse {
+		display: none !important;
+	}
+	.navbar-collapse.collapse.in {
+		display: block !important;
+	}
+
+	.navbar-toggle {
+		display: block !important;
+		float: right;
+	}
+
+	.navbar-header {
+		float: none;
+	}
+}
+
+@media (min-width: 1400px) {
+	.visible-xl {
+		display: block !important;
+	}
+}
+
 @font-face {
 	font-family: 'SourceSansPro';
 	src: url('fonts/SourceSansPro-Regular.ttf');
@@ -31,7 +55,6 @@ pre {
 .table {
 	margin-bottom: auto;
 }
-
 
 .log-output {
 	font-family: monospace, monospace;

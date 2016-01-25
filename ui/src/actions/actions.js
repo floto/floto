@@ -129,7 +129,8 @@ export function getFlotoInfo(store) {
 
 export function recompileManifest(store) {
 	store.dispatch({type: "MANIFEST_COMPILATION_STARTED"});
-	taskService.httpPost(store, "manifest/compile").then(() => {
+	return taskService.httpPost(store, "manifest/compile").then(() => {
+		return null;
 	}).finally(() => {
 		store.dispatch({type: "MANIFEST_COMPILATION_FINISHED"});
 		refreshManifest(store);
@@ -140,6 +141,7 @@ export function recompileManifest(store) {
 		if (state.selectedHostName && state.selectedFile) {
 			loadHostFile(store, state.selectedHostName, decodeURIComponent(state.selectedFile.fileName));
 		}
+		return null;
 	});
 }
 
@@ -152,12 +154,13 @@ export function refreshManifest(store) {
 			title += " (" + manifest.site.environment + ")";
 		}
 		document.title = title;
-
+		return null;
 	}).catch((error) => {
 		store.dispatch({
 			type: "MANIFEST_ERROR_UPDATED",
 			payload: error
 		});
+		return null;
 	});
 }
 

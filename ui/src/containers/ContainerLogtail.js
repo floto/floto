@@ -47,6 +47,10 @@ export default connect(state => {
 		let containerName = this.props.params.containerName;
 		var myStreamId = this.streamId = +(new Date()) + "-" + Math.random();
 		handlers[myStreamId] = (data) => {
+			if (!this.isMounted()) {
+				// Not mounted anymore, bail early
+				return;
+			}
 			data.messages.forEach((message) => {
 				var className = "log-" + message.stream;
 				var log = _.escape(message.log);

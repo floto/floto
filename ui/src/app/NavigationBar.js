@@ -8,7 +8,6 @@ var Icon = require('react-fa');
 import Switch from "../components/Switch.js";
 
 
-
 export default connect(state => {
 	return {serverState: state.serverState, clientState: state.clientState, site: state.manifest.site};
 })(React.createClass({
@@ -41,9 +40,10 @@ export default connect(state => {
 		return <Navbar fixedTop fluid>
 			<Navbar.Header>
 				<Navbar.Brand>
-					<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}} /></span>&nbsp;floto</a>
+					<a href="#"><span><img src="/img/floto-icon.svg" style={{height: 24}}/></span>&nbsp;floto</a>
 				</Navbar.Brand>
-				</Navbar.Header>
+				<Navbar.Toggle />
+			</Navbar.Header>
 			<Navbar.Collapse>
 				<Nav navbar>
 					<NavItem active={isActive("/containers")} href="#/containers"><Icon name="cubes"/>&nbsp;&nbsp;
@@ -72,11 +72,9 @@ export default connect(state => {
 							<Switch checked={this.props.clientState.safetyArmed} onChange={this.onChangeSafety}/>
 						</div>
 					</form>
-				<span className="navbar-brand pull-right" href="#">
-				</span>
 				</Nav>
 
-				<div className="nav navbar-nav navbar-right"
+				<div className="nav navbar-nav navbar-right hidden-xs hidden-md hidden-sm hidden-lg visible-xl"
 					 style={{textAlign: "center", paddingTop: "10px", paddingRight: "20px", height: "20px"}}>
 				<span style={{color: site.siteColor}}>{siteName}{site.environment ?
 					<span ng-if="site.environment"> ({site.environment})</span> : null}</span><br />
