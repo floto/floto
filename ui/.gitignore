@@ -1,4 +1,7 @@
-/node_modules/
+/node_modules/*
+!/node_modules/react-virtual-list/
+!/node_modules/react-virtual-list/*
+!/node_modules/react-virtual-list/**/*
 /node/
 /dist/
 /.idea/
