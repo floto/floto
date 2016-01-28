@@ -96,7 +96,7 @@ export default connect(state => {
 				}
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
-						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
+						<div style={{flex: "1 1 auto", width: "50%", height: "100%", display:"flex", flexDirection: "column"}}>
 							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
 								<h2>Containers <span className="text-muted">({containers.length})</span></h2>
 								<ButtonGroup>
@@ -124,7 +124,7 @@ export default connect(state => {
 								<ContainerGroup key={group.title || group.id} group={group} location={this.props.location}/>)}
 							</div>
 						</div>
-						<div key={selectedContainer.name} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
+						<div key={selectedContainer.name} style={{flex: "1 1 auto", width: "50%", paddingLeft: 20, height: "100%"}}>
 							{this.props.children}
 						</div>
 					</div>
