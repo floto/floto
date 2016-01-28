@@ -58,6 +58,9 @@
     <script src="/js/hosts/HostsController.js"></script>
     <script src="/js/hosts/HostController.js"></script>
 
+    <script src="/js/patches/PatchesController.js"></script>
+    <script src="/js/patches/PatchController.js"></script>
+
     <script src="/js/tasks/TaskService.js"></script>
     <script src="/js/tasks/TasksController.js"></script>
     <script src="/js/tasks/TaskController.js"></script>
@@ -84,12 +87,14 @@
                 <ul class="nav navbar-nav">
                     <li ui-sref-active="active"><a ui-sref="containers">Containers</a></li>
                     <li ui-sref-active="active"><a ui-sref="hosts">Hosts</a></li>
+                    <li ui-sref-active="active"><a ui-sref="patches">Patches</a></li>
                     <li ui-sref-active="active"><a ui-sref="tasks">Tasks</a></li>
                     <li class="dropdown">
                         <a style="cursor: pointer" class="dropdown-toggle" data-toggle="dropdown">Export <span class="caret"></span></a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="api/export/container-logs">Container Logs</a></li>
                             <li><a href="api/manifest" download="manifest-{{domainName}}-{{site.projectRevision}}.json">Manifest</a></li>
+                            <li><a ng-click="createPatch()">Create patch</a></li>
                         </ul>
                     </li>
                     <li ui-sref-active="active"><a ui-sref="manifest">Manifest</a></li>

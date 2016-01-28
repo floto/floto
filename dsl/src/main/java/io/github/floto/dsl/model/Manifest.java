@@ -1,5 +1,6 @@
 package io.github.floto.dsl.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.*;
@@ -11,6 +12,7 @@ public class Manifest {
 	public JsonNode site;
     public Map<String, Object> files = new HashMap<>();
     public String rootFile;
+    public String projectRevision;
 
     public Host findHost(String hostName) {
         for (Host candidate : hosts) {
@@ -23,5 +25,20 @@ public class Manifest {
     
     public Container findContainer(String containerName) {
     	return containers.stream().filter(c -> c.name.equals(containerName)).findFirst().orElse(null);
+    }
+
+    public Image findImage(String imageName) {
+        for (Image candidate : images) {
+            if (imageName.equals(candidate.name)) {
+                return candidate;
+            }
+        }
+        throw new IllegalArgumentException("Unknown image: " + imageName);
+    }
+
+
+    @JsonIgnore
+    public String getSiteName() {
+        return site.get("projectName").asText();
     }
 }

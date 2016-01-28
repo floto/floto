@@ -41,6 +41,13 @@ var app;
             }).state('manifest', {
                 url: "/manifest",
                 templateUrl: '/js/manifest/manifest.html'
+            }).state('patches', {
+                url: "/patches",
+                templateUrl: '/js/patches/patches.html'
+            }).state('patch', {
+                parent: "patches",
+                url: "/:patchId",
+                templateUrl: '/js/patches/patch.html'
             });
     });
 

@@ -16,7 +16,7 @@ public class SubscribeToContainerLogHandler implements MessageHandler {
         @Override
         public void handleMessage(JsonNode message, WebSocket webSocket) {
             String streamId = message.get("streamId").asText();
-            ContainerLogPusher containerLogPusher = subscriptionMap.get(webSocket.getSessionId() + "-" + streamId);
+            ContainerLogPusher containerLogPusher = subscriptionMap.remove(webSocket.getSessionId() + "-" + streamId);
             if(containerLogPusher != null) {
                 containerLogPusher.stop();
             }

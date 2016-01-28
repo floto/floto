@@ -15,7 +15,9 @@ import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.FlotoSettings;
 import io.github.floto.core.HostService;
+import io.github.floto.core.patch.PatchService;
 import io.github.floto.server.api.*;
 import io.github.floto.server.api.websocket.handler.SubscribeToContainerLogHandler;
 import io.github.floto.server.util.ThrowableExceptionMapper;
@@ -43,6 +45,7 @@ import org.woelker.jimix.servlet.JimixServlet;
 import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerEndpoint;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,11 +82,7 @@ public class FlotoServer {
 
 		Server server = new Server(parameters.port);
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		String resourceBase = FlotoServer.class.getResource("assets").toExternalForm();
-		if(!resourceBase.startsWith("jar:")) {
-			// Load assets from src directory during development, do not require recompilation
-			resourceBase = "src/main/resources/io/github/floto/server/assets";
-		}
+		String resourceBase = FlotoServer.class.getResource("/io/github/floto/ui").toExternalForm();
 
 		context.setInitParameter("org.eclipse.jetty.servlet.Default.cacheControl", "no-cache, no-store, must-revalidate");
 		context.setResourceBase(resourceBase);
@@ -125,14 +124,23 @@ public class FlotoServer {
 
         TaskService taskService = new TaskService();
         FlotoService flotoService = new FlotoService(parameters, taskService);
-        if(parameters.developmentMode) {
-            flotoService.setIgnoreRegistry(true);
-        }
         HostService hostService = new HostService(flotoService);
+        PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry());
+        FlotoSettings flotoSettings = flotoService.getSettings();
         try {
-            flotoService.compileManifest().getCompletionStage().thenAccept((x)->{
-                hostService.reconfigureVms();
-            });
+            TaskInfo<Void> compileTask = null;
+            if(flotoSettings.activePatchId != null) {
+                compileTask = patchService.activatePatch(flotoSettings.activePatchId);
+            } else if(flotoService.getRootDefinitionFile() != null){
+                compileTask = flotoService.compileManifest();
+            } else {
+                flotoService.setManifestCompilationError(new Throwable("No patch activated. Please upload and activate a patch first."));
+            }
+            if(compileTask != null) {
+                compileTask.getCompletionStage().thenAccept((x) -> {
+                    hostService.reconfigureVms();
+                });
+            }
         } catch(Throwable throwable) {
             // Error compiling manifest, continue anyway
             log.error("Error compiling manifest", throwable);
@@ -146,7 +154,7 @@ public class FlotoServer {
 		resourceConfig.register(new InfoResource());
 		resourceConfig.register(new ConfigResource());
 		resourceConfig.register(new BaseConfigResource(parameters));
-		resourceConfig.register(new VmTemplateResource());
+        resourceConfig.register(new PatchesResource(flotoService, patchService));
 
 		resourceConfig.register(new ThrowableExceptionMapper());
 		ServletContainer servletContainer = new ServletContainer(resourceConfig);
@@ -154,7 +162,9 @@ public class FlotoServer {
 		context.addServlet(new ServletHolder(servletContainer), "/api/*");
 		try {
             ServerContainer websocketContainer = createWebSocketEndpoint(context, (WebSocket webSocket) -> {
-                webSocket.addMessageHandler("subscribeToTaskLog", new SubscribeToTaskLogHandler(taskService));
+				SubscribeToTaskLogHandler subscribeToTaskLogHandler = new SubscribeToTaskLogHandler(taskService);
+				webSocket.addMessageHandler("subscribeToTaskLog", subscribeToTaskLogHandler);
+				webSocket.addMessageHandler("unsubscribeFromTaskLog", subscribeToTaskLogHandler.getUnsubscriptionHandler());
                 SubscribeToContainerLogHandler subscribeToContainerLogHandler = new SubscribeToContainerLogHandler(flotoService);
                 webSocket.addMessageHandler("subscribeToContainerLog", subscribeToContainerLogHandler);
                 webSocket.addMessageHandler("unsubscribeFromContainerLog", subscribeToContainerLogHandler.getUnsubscriptionHandler());

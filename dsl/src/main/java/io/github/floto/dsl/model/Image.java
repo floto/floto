@@ -10,4 +10,5 @@ import java.util.List;
 public class Image {
 	public String name;
 	public List<JsonNode> buildSteps = new ArrayList<>();
+	public String buildHash;
 }

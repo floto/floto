@@ -33,6 +33,19 @@
             return  recompilePromise;
         };
 
+        FlotoService.createInitialPatch = function createPatch() {
+            var createPatchPromise = TaskService.httpPost(app.urlPrefix + 'patches/create-initial');
+            return createPatchPromise;
+        };
+
+        FlotoService.getPatches = function getPatches() {
+            return $resource(app.urlPrefix + 'patches').get();
+        };
+
+        FlotoService.getPatchInfo = function getPatchInfo(patchId) {
+            return $resource(app.urlPrefix + 'patches/' + patchId + '/patchInfo').get();
+        };
+
         FlotoService.getContainerStates = function getContainerStates() {
             return $resource(app.urlPrefix + 'containers/_state').get();
         };

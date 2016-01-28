@@ -6,5 +6,8 @@
 			FlotoService.compileManifest();
 		};
 
+		$scope.createPatch = function createPatch() {
+			FlotoService.createInitialPatch();
+		};
 	});
 })();

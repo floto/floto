@@ -11,40 +11,44 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 @Path("/client-config.base.js")
 public class BaseConfigResource {
 
-	private FlotoServerParameters parameters;
+    private FlotoServerParameters parameters;
 
-	public BaseConfigResource(FlotoServerParameters parameters) {
-		this.parameters = parameters;
-	}
+    public BaseConfigResource(FlotoServerParameters parameters) {
+        this.parameters = parameters;
+    }
 
-	@GET
-	@Produces("text/javascript")
-	public Response getConfig() throws Exception {
-		StreamingOutput output = new StreamingOutput() {
-			@Override
-			public void write(OutputStream outputStream) throws IOException,
-					WebApplicationException {
-				File configFile = new File("client-config.js");
-				if(configFile.exists()) {
-					FileUtils.copyFile(configFile, outputStream);
-				} else {
-					outputStream.write(("// No base config required").getBytes(Charsets.UTF_8));
-				}
+    @GET
+    @Produces("text/javascript")
+    public Response getConfig() throws Exception {
+        StreamingOutput output = new StreamingOutput() {
+            public PrintStream out;
 
-			}
-		};
-		if(parameters.developmentMode) {
-			return Response.ok(new URLDataSource(BaseConfigResource.class.getResource("/io/github/floto/server/client-config.base.development.js"))).build();
-		} else {
-			return Response.ok("// No base config required").build();
-		}
-	}
+            @Override
+            public void write(OutputStream outputStream) throws IOException,
+                    WebApplicationException {
+                PrintStream out = this.out = new PrintStream(outputStream);
+                out.println("floto.configure(function(config) {");
+                if (parameters.developmentMode) {
+                    addConfig("armed", "true");
+                    addConfig("defaultDeploymentMode", "\"fromRootImage\"");
+                }
+                addConfig("patchMode", "\"" + parameters.patchMode + "\"");
+                addConfig("canDeployFromRootImage", parameters.patchMode.equals("apply")?"false":"true");
+                out.println("});");
+
+
+            }
+
+            private void addConfig(String key, String value) {
+                out.println("\tconfig." + key + " = " + value + ";");
+            }
+        };
+        return Response.ok(output).build();
+    }
 
 }

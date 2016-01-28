@@ -43,6 +43,9 @@ public class ContainerLogPusher {
                     if((flags & 0x2000000) != 0) {
                         stream = "stderr";
                     }
+                    if(size == 0) {
+                        continue;
+                    }
                     if(size > buffer.length) {
                         // Resize buffer
                         buffer = new byte[size];
@@ -54,7 +57,7 @@ public class ContainerLogPusher {
                     // separate timestamp and actual message
                     if(spaceIndex < 0) {
                         log.error("Malformed log message: {}", message);
-                        break;
+                        continue;
                     }
                     String timeStamp = message.substring(0, spaceIndex);
                     // Currently (docker 1.5) the timestamps are sometimes surround with brackets []

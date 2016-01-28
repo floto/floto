@@ -37,7 +37,6 @@ public class TaskPersistence {
     }).build(new CacheLoader<String, OutputStream>() {
         @Override
         public OutputStream load(String taskId) throws Exception {
-            // TODO: close
             return new FileOutputStream(getLogFile(taskId));
         }
     });
@@ -46,8 +45,17 @@ public class TaskPersistence {
         try {
             tasksDirectory = new File(System.getProperty("user.home") + "/.floto/tasks");
             FileUtils.forceMkdir(tasksDirectory);
-            long numberOfTasks = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter()).length;
-            nextTaskId = new AtomicLong(numberOfTasks + 1);
+            File[] directories = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+            long maximumTaskId = 0;
+            for(File directory: directories) {
+                try {
+                    long taskId = Long.parseLong(directory.getName(), 10);
+                    maximumTaskId = Math.max(maximumTaskId, taskId);
+                } catch(Throwable ignored) {
+
+                }
+            }
+            nextTaskId = new AtomicLong(maximumTaskId + 1);
             objectMapper = new ObjectMapper();
             objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
             objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);

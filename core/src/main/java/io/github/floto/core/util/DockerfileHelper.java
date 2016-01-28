@@ -6,14 +6,6 @@ import java.util.List;
 
 public class DockerfileHelper {
 
-    private boolean useProxy = false;
-    String httpProxyUrl = null;
-
-    public void setHttpProxy(String httpProxyUrl) {
-        this.httpProxyUrl = httpProxyUrl;
-        useProxy = true;
-    }
-
 
     public String createDockerfile(List<JsonNode> buildSteps) {
         StringBuilder dockerfileBuilder = new StringBuilder();
@@ -70,9 +62,6 @@ public class DockerfileHelper {
                 line = containerPath;
             }
 
-            if (useProxy && type.equals("RUN")) {
-                line = "export http_proxy=" + httpProxyUrl + "; export https_proxy=" + httpProxyUrl + "; " + line;
-            }
             dockerfileBuilder.append(type).append(" ").append(line);
             dockerfileBuilder.append("\n");
         }
