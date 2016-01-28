@@ -53,7 +53,7 @@ export default connect(state => {
 			}
 			data.messages.forEach((message) => {
 				var className = "log-" + message.stream;
-				var log = _.escape(message.log);
+				var log = _.escape(message.log).replace(/(?:\r\n|\r|\n)/g, '');;
 				var timestamp = message.time.substr(0, 10) + " " + message.time.substr(11, 8);
 				this.state.messages.push({key: nextId, className, log, timestamp});
 				nextId++;
