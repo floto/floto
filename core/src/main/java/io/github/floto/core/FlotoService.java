@@ -248,7 +248,14 @@ public class FlotoService implements Closeable {
 	}
 
 	private void generateContainerHashes(Manifest manifest) {
-		manifest.images.forEach(image -> image.buildHash = generateBuildHash(image.buildSteps));
+		if (activePatch != null) {
+			// use patch image hash
+			manifest.images.forEach(image -> {
+				image.buildHash = activePatch.imageMap.get(image.name);
+			});
+		} else {
+			manifest.images.forEach(image -> image.buildHash = generateBuildHash(image.buildSteps));
+		}
 		manifest.containers.forEach(container ->
 		{
 			Image image = findImage(container.image, manifest);
@@ -478,12 +485,14 @@ public class FlotoService implements Closeable {
 		String rootImage = this.getRootImage(image);
 		log.info("Will use root-image={}", rootImage);
 		List<JsonNode> buildSteps = new ArrayList<>(image.buildSteps);
-		String repoName = this.createRootImageName(rootImage);;
+		String repoName = this.createRootImageName(rootImage);
+		;
 		if (rootImage.startsWith("http://")) {
 			boolean needToImport = true;
 			int index = repoName.indexOf(":");
 			String shortRepoName = repoName.substring(0, index);
-			String tagName = repoName.substring(index+1);;
+			String tagName = repoName.substring(index + 1);
+			;
 			try {
 				WebTarget webTarget = createDockerTarget(host).path("/images/{imageName}/json").resolveTemplate("imageName", repoName);
 				webTarget.request().get().close();
@@ -504,7 +513,7 @@ public class FlotoService implements Closeable {
 					try {
 						File cacheDirectory = new File(flotoHome, "cache/repositories");
 						File repoFile = new File(cacheDirectory, downloadUrl.replaceAll("[^A-Za-z0-9_.-]", "_"));
-						if(!repoFile.exists()) {
+						if (!repoFile.exists()) {
 							log.info("Downloading repo file from {} to {}", downloadUrl, repoFile);
 							// Download repoFile
 							FileUtils.forceMkdir(cacheDirectory);

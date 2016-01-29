@@ -161,6 +161,8 @@ export function refreshManifest(store) {
 			payload: error
 		});
 		return null;
+	}).finally(() => {
+		loadContainerStates(store);
 	});
 }
 

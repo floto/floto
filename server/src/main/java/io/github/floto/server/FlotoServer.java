@@ -127,9 +127,9 @@ public class FlotoServer {
         HostService hostService = new HostService(flotoService);
         PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry());
         FlotoSettings flotoSettings = flotoService.getSettings();
-        try {
+		try {
             TaskInfo<Void> compileTask = null;
-            if(flotoSettings.activePatchId != null) {
+            if(flotoSettings.activePatchId != null && parameters.patchMode.equals("apply")) {
                 compileTask = patchService.activatePatch(flotoSettings.activePatchId);
             } else if(flotoService.getRootDefinitionFile() != null){
                 compileTask = flotoService.compileManifest();

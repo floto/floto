@@ -51,6 +51,7 @@ export default connect(state => {
 			<td><Label bsStyle={labelStyle}>{status || "unknown" }</Label></td>
 			<td>
 				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed} size="xs"
+														  bsStyle={containerState.needsRedeploy?"primary": "default"}
 														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>
 			</td>
