@@ -11,7 +11,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.inject.util.Types;
-import com.sun.javafx.iio.common.ImageDescriptor;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.patch.PatchInfo;
@@ -19,10 +18,7 @@ import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.core.ssh.SshService;
-import io.github.floto.core.util.DockerfileHelper;
-import io.github.floto.core.util.ErrorClientResponseFilter;
-import io.github.floto.core.util.MavenHelper;
-import io.github.floto.core.util.TemplateUtil;
+import io.github.floto.core.util.*;
 import io.github.floto.dsl.FlotoDsl;
 import io.github.floto.dsl.model.*;
 import io.github.floto.util.VersionUtil;
@@ -31,25 +27,18 @@ import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.*;
 import org.apache.commons.io.input.CloseShieldInputStream;
-import org.apache.commons.io.output.CloseShieldOutputStream;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.util.EntityUtils;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
-import org.eclipse.jetty.util.UrlEncoded;
 import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
-import org.glassfish.jersey.client.ClientResponse;
 import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,14 +55,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.net.*;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -248,22 +233,27 @@ public class FlotoService implements Closeable {
 	}
 
 	private void generateContainerHashes(Manifest manifest) {
+		FileHashCache fileHashCache = new FileHashCache();
 		if (activePatch != null) {
 			// use patch image hash
 			manifest.images.forEach(image -> {
 				image.buildHash = activePatch.imageMap.get(image.name);
 			});
 		} else {
-			manifest.images.forEach(image -> image.buildHash = generateBuildHash(image.buildSteps));
+			manifest.images.forEach(image -> image.buildHash = generateBuildHash(fileHashCache, image.buildSteps));
 		}
 		manifest.containers.forEach(container ->
 		{
 			Image image = findImage(container.image, manifest);
-			container.buildHash = generateBuildHash(container.configureSteps, image.buildHash);
+			container.buildHash = generateBuildHash(fileHashCache, container.configureSteps, image.buildHash);
 		});
 	}
 
-	private String generateBuildHash(List<JsonNode> buildSteps, String... additionalInputs) {
+	private void digestFile(FileHashCache fileHashCache, MessageDigest messageDigest, File file) {
+		messageDigest.update(fileHashCache.getHash(file));
+	}
+
+	private String generateBuildHash(FileHashCache fileHashCache, List<JsonNode> buildSteps, String... additionalInputs) {
 		Map<String, Object> globalConfig = createGlobalConfig(manifest);
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA");
@@ -274,10 +264,44 @@ public class FlotoService implements Closeable {
 				md.update(step.toString().getBytes(Charsets.UTF_8));
 
 				String type = step.path("type").asText();
-				// TODO: Files
 				if ("ADD_TEMPLATE".equals(type)) {
 					String template = new TemplateUtil().getTemplate(step, globalConfig);
 					md.update(template.getBytes(Charsets.UTF_8));
+				} else if("ADD_FILE".equals(type)) {
+					File file = new File(step.path("file").asText());
+					digestFile(fileHashCache, md, file);
+				} else if("COPY_DIRECTORY".equals(type)) {
+					JsonNode options = step.path("options");
+					JsonNode newName = options.path("newName");
+
+					String source = step.path("source").asText();
+					JsonNode excludeDirectories = options.path("excludeDirectories");
+					JsonNode excludeFiles = options.path("excludeFiles");
+
+					File sourceFile = new File(source);
+					List<File> files = new ArrayList<File>(getCopyDirectoryFiles(excludeDirectories, excludeFiles, sourceFile));
+					Collections.sort(files);
+					for (File file : files) {
+						md.update(sourceFile.toURI().relativize(file.toURI()).getPath().toString().getBytes(Charsets.UTF_8));
+						digestFile(fileHashCache, md, file);
+					}
+				} else if("ADD_MAVEN".equals(type)) {
+					String coordinates = step.path("coordinates").asText();
+					JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
+					File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
+					digestFile(fileHashCache, md, artifactFile);
+				} else if("COPY_FILES".equals(type)) {
+					JsonNode fileList = step.path("fileList");
+					List<String> files = new ArrayList<String>();
+					Iterator<Map.Entry<String, JsonNode>> iterator = fileList.fields();
+					while (iterator.hasNext()) {
+						files.add(iterator.next().getKey());
+					}
+					for (String filename : files) {
+						File file = new File(filename);
+						md.update(file.toURI().relativize(file.toURI()).getPath().toString().getBytes(Charsets.UTF_8));
+						digestFile(fileHashCache, md, file);
+					}
 				}
 
 			});
@@ -795,37 +819,15 @@ public class FlotoService implements Closeable {
 							}
 
 						} else if ("COPY_DIRECTORY".equals(type)) {
-							String source = step.path("source").asText();
 							JsonNode options = step.path("options");
-							JsonNode excludeDirectories = options.path("excludeDirectories");
-							JsonNode excludeFiles = options.path("excludeFiles");
 							JsonNode newName = options.path("newName");
 
-							List<IOFileFilter> dirFilters = new ArrayList<IOFileFilter>();
-							for (JsonNode node : excludeDirectories) {
-								dirFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
-							}
-							IOFileFilter directoryFilter = new AndFileFilter(dirFilters);
-							if (dirFilters.isEmpty()) {
-								directoryFilter = TrueFileFilter.INSTANCE;
-							}
-
-							List<IOFileFilter> fileFilters = new ArrayList<IOFileFilter>();
-							for (JsonNode node : excludeFiles) {
-								fileFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
-							}
-							IOFileFilter fileFilter = new AndFileFilter(fileFilters);
-							if (fileFilters.isEmpty()) {
-								fileFilter = TrueFileFilter.INSTANCE;
-							}
+							String source = step.path("source").asText();
+							JsonNode excludeDirectories = options.path("excludeDirectories");
+							JsonNode excludeFiles = options.path("excludeFiles");
 
 							File sourceFile = new File(source);
-							Collection<File> files;
-							if (sourceFile.isDirectory()) {
-								files = FileUtils.listFiles(sourceFile, fileFilter, directoryFilter);
-							} else {
-								files = Collections.singleton(sourceFile);
-							}
+							Collection<File> files = getCopyDirectoryFiles(excludeDirectories, excludeFiles, sourceFile);
 							String destination = step.path("destination").asText();
 
 							for (File file : files) {
@@ -886,6 +888,33 @@ public class FlotoService implements Closeable {
 			buildLogWriter.flush();
 			response.close();
 		}
+	}
+
+	private Collection<File> getCopyDirectoryFiles(JsonNode excludeDirectories, JsonNode excludeFiles, File sourceFile) {
+		List<IOFileFilter> dirFilters = new ArrayList<IOFileFilter>();
+		for (JsonNode node : excludeDirectories) {
+            dirFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+        }
+		IOFileFilter directoryFilter = new AndFileFilter(dirFilters);
+		if (dirFilters.isEmpty()) {
+            directoryFilter = TrueFileFilter.INSTANCE;
+        }
+
+		List<IOFileFilter> fileFilters = new ArrayList<IOFileFilter>();
+		for (JsonNode node : excludeFiles) {
+            fileFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+        }
+		IOFileFilter fileFilter = new AndFileFilter(fileFilters);
+		if (fileFilters.isEmpty()) {
+            fileFilter = TrueFileFilter.INSTANCE;
+        }
+		Collection<File> files;
+		if (sourceFile.isDirectory()) {
+            files = FileUtils.listFiles(sourceFile, fileFilter, directoryFilter);
+        } else {
+            files = Collections.singleton(sourceFile);
+        }
+		return files;
 	}
 
 	private String createDockerFile(List<JsonNode> buildSteps) {
