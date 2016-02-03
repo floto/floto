@@ -55,8 +55,11 @@ export default connect(state => {
 														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>
 			</td>
-			<td><Button bsStyle="success" bsSize="xs" onClick={actions.startContainers.bind(null, [container.name])}
-						disabled={!safetyArmed}>Start</Button></td>
+			<td>{status === "running"?<Button bsStyle="success" bsSize="xs" onClick={actions.restartContainers.bind(null, [container.name])}
+						disabled={!safetyArmed}>Restart</Button>:
+				<Button bsStyle="success" bsSize="xs" onClick={actions.startContainers.bind(null, [container.name])}
+						disabled={!safetyArmed}>Start</Button>}
+			</td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.stopContainers.bind(null, [container.name])}
 						disabled={!safetyArmed}>Stop</Button></td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.purgeContainerData.bind(null, [container.name])}

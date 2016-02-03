@@ -72,6 +72,13 @@ export function startContainers(store, containerNames) {
 		});
 }
 
+export function restartContainers(store, containerNames) {
+	taskService.httpPost(store, "containers/_restart", {containers: containerNames})
+		.finally(() => {
+			loadContainerStates(store);
+		});
+}
+
 export function stopContainers(store, containerNames) {
 	taskService.httpPost(store, "containers/_stop", {containers: containerNames})
 		.finally(() => {
