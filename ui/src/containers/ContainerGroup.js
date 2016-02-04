@@ -22,7 +22,10 @@ export default connect(state => {
 		router: React.PropTypes.object.isRequired
 	},
 
-	navigateToContainer(containerName) {
+	navigateToContainer(containerName, event) {
+		if(event.button === 1) {
+			return; // ignore middle click for navigation
+		}
 		let newUrl = '/containers/' + containerName;
 		if (this.props.selectedContainer) {
 			let currentUrl = "/containers/" + this.props.selectedContainer.name;

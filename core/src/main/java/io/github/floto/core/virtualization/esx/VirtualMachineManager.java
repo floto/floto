@@ -27,11 +27,8 @@ public class VirtualMachineManager {
     private Logger log = LoggerFactory.getLogger(VirtualMachineManager.class);
     private EsxHypervisorDescription esxDesc;
 
-    String vmFolder;
-
-    public VirtualMachineManager(EsxHypervisorDescription description, String vmFolder) {
+    public VirtualMachineManager(EsxHypervisorDescription description) {
     	this.esxDesc = description;
-    	this.vmFolder = vmFolder;
 
         try {
 			ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
@@ -39,11 +36,6 @@ public class VirtualMachineManager {
 			Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
 
 			rootFolder = dc.getVmFolder();
-//			ManagedEntity me = new InventoryNavigator(rootFolder).searchManagedEntity("Folder", domainName);
-//			if (me == null) {
-//				rootFolder.createFolder(domainName);
-//			}
-			findOrCreateFolder(vmFolder);
 		} catch (Throwable e) {
 			Throwables.propagate(e);
 		}
@@ -79,11 +71,20 @@ public class VirtualMachineManager {
 	}
 
 	public VirtualMachine getVm(String vmName) throws Exception {
-        Folder folder = findOrCreateFolder(vmFolder);
+		String vmFolder = getVmFolder(vmName);
+		Folder folder = findOrCreateFolder(vmFolder);
         if(folder == null) {
             throw new RuntimeException("could not find vm folder "+ vmFolder);
         }
-        return (VirtualMachine) new InventoryNavigator(folder).searchManagedEntity("VirtualMachine", vmName);
+        return (VirtualMachine) new InventoryNavigator(folder).searchManagedEntity("VirtualMachine", getShortVmName(vmName));
+	}
+
+	public String getVmFolder(String vmName) {
+		return vmName.substring(0, vmName.lastIndexOf("/"));
+	}
+
+	private String getShortVmName(String vmName) {
+		return vmName.substring(vmName.lastIndexOf("/") + 1);
 	}
 
 	public ManagedEntity[] getVms() throws Exception {
@@ -126,7 +127,7 @@ public class VirtualMachineManager {
 			boolean linked) throws Exception {
         log.info("Clone vm " + templateVmName + " -> " + vmDesc);
 
-        Folder folder = findOrCreateFolder(vmFolder);
+        Folder folder = findOrCreateFolder(getVmFolder(templateVmName));
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
         ResourcePool rp = getResourcePool(host);
 
@@ -135,7 +136,7 @@ public class VirtualMachineManager {
             return;
         }
         VirtualMachine vm = (VirtualMachine) new InventoryNavigator(folder)
-                .searchManagedEntity("VirtualMachine", templateVmName);
+                .searchManagedEntity("VirtualMachine", getShortVmName(templateVmName));
 
         if (existsVm(vmDesc.vmName)) {
             log.error("Vm " + vmDesc.vmName + " already exists");
@@ -191,7 +192,7 @@ public class VirtualMachineManager {
         cloneSpec.setPowerOn(false);
         cloneSpec.setTemplate(false);
 
-        Task task = vm.cloneVM_Task(folder, vmDesc.vmName, cloneSpec);
+        Task task = vm.cloneVM_Task(folder, getShortVmName(vmDesc.vmName), cloneSpec);
         log.info("Launching the vm clone task ...");
 
         EsxUtils.waitForTask(task, "Clone vm "+ vm.getName());
@@ -291,7 +292,7 @@ public class VirtualMachineManager {
         log.info("Deploy template " + vmUrl + " to " + esxDesc);
 
         ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
-        Folder folder = findOrCreateFolder(vmFolder);
+        Folder folder = findOrCreateFolder(getVmFolder(templateVmName));
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
         ResourcePool rp = getResourcePool(host);
         // find the datastore
@@ -308,11 +309,11 @@ public class VirtualMachineManager {
             log.warn("Template " + templateVmName + " already exists");
             return;
         }
-
+		String shortName = getShortVmName(templateVmName);
         OvfCreateImportSpecParams importSpecParams = new OvfCreateImportSpecParams();
         importSpecParams.setHostSystem(host.getMOR());
         importSpecParams.setLocale("US");
-        importSpecParams.setEntityName(templateVmName);
+        importSpecParams.setEntityName(shortName);
         importSpecParams.setDeploymentOption("");
         OvfNetworkMapping networkMapping = new OvfNetworkMapping();
         networkMapping.setName("Network 1");

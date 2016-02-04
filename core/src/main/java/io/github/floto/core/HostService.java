@@ -132,7 +132,8 @@ public class HostService {
 		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
 			@Override
 			public Object execute() throws Exception {
-				if (hypervisorService.isVmRunning(vmName)) {
+				Host host = flotoService.getManifest().findHost(vmName);
+				if (hypervisorService.isVmRunning(host.vmConfiguration.vmName)) {
 					HostStepRunner hostStepRunner = new HostStepRunner(host, flotoService, manifest, hypervisorService);
 					hostStepRunner.run(host.reconfigureSteps);
 				}

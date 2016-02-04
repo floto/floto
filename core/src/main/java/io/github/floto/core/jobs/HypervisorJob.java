@@ -25,13 +25,7 @@ public abstract class HypervisorJob<T> extends HostJob<T> {
 					System.getProperty("user.home") + "/.floto/vm"));
 		} else if (hypervisorDescription instanceof EsxHypervisorDescription) {
 			final EsxHypervisorDescription description = (EsxHypervisorDescription) hypervisorDescription;
-			String vmFolder = "NA";
-			if (manifest.site.get("vmFolder") != null) {
-				vmFolder = manifest.site.get("vmFolder").asText();
-			} else {
-				vmFolder = manifest.site.get("domainName").asText();
-			}
-			return new EsxHypervisorService(description, vmFolder);
+			return new EsxHypervisorService(description);
 		} else if (hypervisorDescription instanceof VirtualboxHypervisorDescription) {
 			final VirtualboxHypervisorDescription description = (VirtualboxHypervisorDescription) hypervisorDescription;
 			return new VirtualboxHypervisorService(description);

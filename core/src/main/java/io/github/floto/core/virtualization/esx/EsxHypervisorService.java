@@ -27,7 +27,7 @@ public class EsxHypervisorService implements HypervisorService {
 
 
 
-    public EsxHypervisorService(EsxHypervisorDescription description, String vmFolder) {
+    public EsxHypervisorService(EsxHypervisorDescription description) {
     	this.esxDesc = description;
         Preconditions.checkNotNull(description.networks, "networks");
         Preconditions.checkNotNull(description.esxHost, "esxHost");
@@ -35,7 +35,7 @@ public class EsxHypervisorService implements HypervisorService {
         Preconditions.checkNotNull(description.username, "username");
         Preconditions.checkNotNull(description.password, "password");
         Preconditions.checkNotNull(description.defaultDatastore, "datastore");
-        vmManager = new VirtualMachineManager(esxDesc, vmFolder);
+        vmManager = new VirtualMachineManager(esxDesc);
     }
 
 
@@ -139,7 +139,7 @@ public class EsxHypervisorService implements HypervisorService {
 
     @Override
     public boolean isVmRunning(String vmname) {
-        try {
+		try {
             VirtualMachine vm = vmManager.getVm(vmname);
             if (vm == null) {
                 return false;
@@ -258,7 +258,7 @@ public class EsxHypervisorService implements HypervisorService {
                     vmUrl.toString().length());
             String fileNameWithoutExt = fileName.substring(0,
                     fileName.lastIndexOf('.'));
-            String templateVmName = fileNameWithoutExt +"_"+ esxDesc.esxHost;
+            String templateVmName = vmManager.getVmFolder(vmDesc.vmName) + "/" + fileNameWithoutExt +"_"+ esxDesc.esxHost;
 
 
             if (templateList.addIfAbsent(templateVmName) && vmManager.getVm(templateVmName) == null) {
