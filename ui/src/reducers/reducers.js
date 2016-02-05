@@ -148,11 +148,8 @@ function mergeContainerStates(containerStates = {}, manifest = {}) {
 	var containerHash = {};
 	let containers = manifest.containers || [];
 	containers.forEach(function (container) {
-		container.state = {status: "unknown"};
+		container.state = {status: "unknown", needsRedeploy: true};
 		if (!containerStates[container.name]) {
-			container.state = {
-				status: "unknown"
-			};
 			return;
 		}
 		container.state = containerStates[container.name];

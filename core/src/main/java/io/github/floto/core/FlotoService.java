@@ -219,11 +219,11 @@ public class FlotoService implements Closeable {
 				String projectRevision = manifest.site.get("projectRevision").asText();
 				manifest.projectRevision = projectRevision;
 				manifest.containers.forEach(container -> container.projectRevision = projectRevision);
+				log.info("Compiled manifest");
 
+				log.info("Generating container hashes");
 				generateContainerHashes(manifest);
 				this.manifestString = manifestString;
-				log.info("Compiled manifest");
-				validateTemplates();
 			} catch (Throwable compilationError) {
 				this.manifestCompilationError = compilationError;
 				throw compilationError;
@@ -1174,15 +1174,15 @@ public class FlotoService implements Closeable {
 						state.containerName = name;
 						state.hostName = host.name;
 
-						state.needsRedeploy = false;
+						state.needsRedeploy = true;
 						String projectRevision = container.path("Labels").path("projectRevision").textValue();
 						state.projectRevision = projectRevision;
 						Container manifestContainer = findContainerMaybe(name, manifest);
 						if (manifestContainer != null && manifestContainer.buildHash != null) {
 							String buildHash = container.path("Labels").path("buildHash").textValue();
 							if (buildHash != null) {
-								if (!buildHash.equals(manifestContainer.buildHash)) {
-									state.needsRedeploy = true;
+								if (buildHash.equals(manifestContainer.buildHash)) {
+									state.needsRedeploy = false;
 								}
 							}
 						}
