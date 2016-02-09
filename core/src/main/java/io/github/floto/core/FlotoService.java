@@ -445,41 +445,49 @@ public class FlotoService implements Closeable {
 				log.info("Uploading image layers: {}", imageIds);
 
 				final String finalImageId = baseImageId;
-				Response createResponse = createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
-					@Override
-					public void write(OutputStream output) throws IOException, WebApplicationException {
-						try (TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
-							for (String imageId : imageIds) {
-								File imageDirectory = imageRegistry.getImageDirectory(imageId);
-								Path imagePath = imageDirectory.toPath();
-								for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
-									Path filePath = file.toPath();
-									Path relativePath = imagePath.relativize(filePath);
-									String tarFilename = imageId + "/" + relativePath.toString();
-									tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
-									try (FileInputStream fileInputStream = new FileInputStream(file)) {
-										IOUtils.copy(fileInputStream, tarBallOutputStream);
+				Response createResponse = null;
+				try {
+					createResponse = createDockerTarget(host).path("/images/load").request().buildPost(Entity.entity(new StreamingOutput() {
+						@Override
+						public void write(OutputStream output) throws IOException, WebApplicationException {
+							try (TarOutputStream tarBallOutputStream = new TarOutputStream(output)) {
+								for (String imageId : imageIds) {
+									File imageDirectory = imageRegistry.getImageDirectory(imageId);
+									Path imagePath = imageDirectory.toPath();
+									for (File file : FileUtils.listFiles(imageDirectory, TrueFileFilter.TRUE, TrueFileFilter.TRUE)) {
+										Path filePath = file.toPath();
+										Path relativePath = imagePath.relativize(filePath);
+										String tarFilename = imageId + "/" + relativePath.toString();
+										tarBallOutputStream.putNextEntry(new TarEntry(file, tarFilename));
+										try (FileInputStream fileInputStream = new FileInputStream(file)) {
+											IOUtils.copy(fileInputStream, tarBallOutputStream);
+										}
+										tarBallOutputStream.closeEntry();
 									}
-									tarBallOutputStream.closeEntry();
 								}
+								Map<String, Object> repository = new HashMap<String, Object>();
+								HashMap<String, String> tags = new HashMap<String, String>();
+								tags.put("latest", finalImageId);
+								tags.put(finalImageId, finalImageId);
+								repository.put(repoName, tags);
+								ObjectMapper mapper = new ObjectMapper();
+								byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
+
+								TarEntry repositoriesTarEntry = new TarEntry("repositories");
+								repositoriesTarEntry.setSize(repositoryBytes.length);
+								tarBallOutputStream.putNextEntry(repositoriesTarEntry);
+								IOUtils.write(repositoryBytes, tarBallOutputStream);
+								tarBallOutputStream.closeEntry();
+
 							}
-							Map<String, Object> repository = new HashMap<String, Object>();
-							HashMap<String, String> tags = new HashMap<String, String>();
-							tags.put("latest", finalImageId);
-							tags.put(finalImageId, finalImageId);
-							repository.put(repoName, tags);
-							ObjectMapper mapper = new ObjectMapper();
-							byte[] repositoryBytes = mapper.writeValueAsBytes(repository);
-
-							TarEntry repositoriesTarEntry = new TarEntry("repositories");
-							repositoriesTarEntry.setSize(repositoryBytes.length);
-							tarBallOutputStream.putNextEntry(repositoriesTarEntry);
-							IOUtils.write(repositoryBytes, tarBallOutputStream);
-							tarBallOutputStream.closeEntry();
-
 						}
+					}, "application/octet-stream")).invoke();
+				} finally {
+					if (createResponse != null) {
+						createResponse.close();
 					}
-				}, "application/octet-stream")).invoke();
+				}
+
 				log.info("Base Image <{}> uploaded", baseImageName);
 			} else {
 				log.info("Base Image <{}> already on host", baseImageName);
@@ -510,7 +518,6 @@ public class FlotoService implements Closeable {
 		log.info("Will use root-image={}", rootImage);
 		List<JsonNode> buildSteps = new ArrayList<>(image.buildSteps);
 		String repoName = this.createRootImageName(rootImage);
-		;
 		if (rootImage.startsWith("http://")) {
 			boolean needToImport = true;
 			int index = repoName.indexOf(":");
