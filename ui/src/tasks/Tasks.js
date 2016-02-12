@@ -60,7 +60,7 @@ export default connect(state => {
 				let tasks = this.props.tasks || [];
 				return <div style={{height: "100%"}}>
 					<div style={{height: "100%", display: "flex", flexDirection: "row", flexWrap: "nowrap"}}>
-						<div style={{height: "100%", flex: "1 1"}}>
+						<div style={{height: "100%", flex: "1 1 auto", width: "50%"}}>
 							<div style={{height: "100%", display: "flex", flexDirection: "column", flexWrap: "nowrap"}}>
 								<div style={{flex: "0 0 auto"}}>
 									<h2>Tasks<Button className="pull-right" bsStyle="default"
@@ -86,7 +86,7 @@ export default connect(state => {
 							</div>
 						</div>
 
-						<div style={{flex: "1", paddingLeft: 20, height: "100%"}}>
+						<div style={{flex: "1 1 auto", paddingLeft: 20, height: "100%", width: "50%"}}>
 							{this.props.children}
 						</div>
 					</div>

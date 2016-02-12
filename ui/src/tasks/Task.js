@@ -1,6 +1,9 @@
 import { connect } from 'react-redux';
 
 import Tasklog from "./Tasklog.js";
+import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
+var Icon = require('react-fa');
+
 
 export default connect(state => {
 	return {task: state.activeTask};
@@ -47,6 +50,44 @@ export default connect(state => {
 		this.setState({autoScroll});
 	},
 
+	onDownload() {
+		let task = this.props.task;
+		let tasklogNode = ReactDOM.findDOMNode(this);
+		if (tasklogNode) {
+			let escapedTitle = task.title;
+			escapedTitle = escapedTitle.replace(/&/g, '&amp;')
+				.replace(/>/g, '&gt;')
+				.replace(/</g, '&lt;')
+				.replace(/"/g, '&quot;');
+			var elementHtml = `<!DOCTYPE html><html><head><meta charset="utf-8" /><title>${escapedTitle}</title><style type="text/css">
+			input, button, label  {
+				display: none;
+			}
+			.pull-right {
+				    float: right !important;
+			}
+			table {
+				border-spacing: 0;
+				border-collapse: collapse;
+			}
+			.table-bordered > tbody > tr > td {
+    			border: 1px solid #ddd;
+    			padding: 4px;
+			}
+			.table-striped > tbody > tr:nth-of-type(odd) {
+ 			   background-color: #f9f9f9;
+			}
+		</style></head><body>` + tasklogNode.innerHTML + "</body></html>";
+			var link = document.createElement('a');
+			let mimeType = mimeType || 'text/plain';
+			let filename = "task-" + task.id + "-" + task.title.replace(/[^a-zA-Z0-9_ ]/gi, '_').toLowerCase() + ".html";
+
+			link.setAttribute('download', filename);
+			link.setAttribute('href', 'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(elementHtml));
+			link.click();
+		}
+	},
+
 	render() {
 		let task = this.props.task;
 		if (!task) {
@@ -54,17 +95,20 @@ export default connect(state => {
 		}
 		return <div style={{height: "100%", display: "flex", flexDirection: "column"}}>
 			<div style={{flex: "0 0 auto", paddingRight: "20px"}}>
-				<h3 style={{overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{task.title}<span className="text-muted pull-right">#{task.id}</span></h3>
+				<h3 style={{overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>{task.title}<span
+					className="text-muted pull-right">#{task.id}</span></h3>
+				<Button bsStyle="default" onClick={this.onDownload}
+				><Icon name="download"/> Download</Button>
 
 				<div className="checkbox pull-right">
 					<label>
 						<input ref="autoScroll" type="checkbox" checked={this.state.autoScroll}
-							   onChange={this.onChangeAutoscroll} /> Auto-Scroll
+							   onChange={this.onChangeAutoscroll}/> Auto-Scroll
 					</label>
 				</div>
 			</div>
 			<div ref="scrollContainer" style={{flex: "1 1 auto", overflow: "scroll"}} onScroll={this.onScroll}>
-				<Tasklog key={task.id} taskId={task.id} scrollDown={this.scrollDown}/>
+				<Tasklog ref="tasklog" key={task.id} taskId={task.id} scrollDown={this.scrollDown}/>
 			</div>
 		</div>;
 	}
