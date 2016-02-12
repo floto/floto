@@ -73,10 +73,18 @@ public class  WorkstationHypervisorService implements HypervisorService {
             File[] files = dir.listFiles();
             for (File file: files){
 
-                file.renameTo(new File(vmDirectory, vmDescription.vmName + "/" + file.getName()));
-            }
-            dir.delete();
-        }
+				try {
+					FileUtils.rename(file, new File(vmDirectory, vmDescription.vmName + "/" + file.getName()));
+				} catch (IOException e) {
+					Throwables.propagate(e);
+				}
+			}
+			try {
+				FileUtils.deleteDirectory(dir);
+			} catch (IOException e) {
+				Throwables.propagate(e);
+			}
+		}
         
 
         Map<String, String> vmxConfiguration;

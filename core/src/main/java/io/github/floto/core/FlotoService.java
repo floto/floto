@@ -175,7 +175,7 @@ public class FlotoService implements Closeable {
 								addresses.sort(new Comparator<InetAddress>() {
 									@Override
 									public int compare(InetAddress o1, InetAddress o2) {
-										return -o1.getHostAddress().compareTo(o2.getHostAddress());
+										return o2.getHostAddress().compareTo(o1.getHostAddress());
 									}
 								});
 								if (commonParameters.proxyPrefix != null) {
@@ -999,56 +999,13 @@ public class FlotoService implements Closeable {
 		return null;
 	}
 
-	private String getRootImage(String imageName) {
-		return this.getRootImage(this.findImage(imageName, this.manifest));
-	}
-
 	public String getRootImage(Image image) {
 		return image.buildSteps.stream().filter(node -> node.get("type").textValue().equals("FROM"))
-			// .peek(node -> log.info(node.toString()))
 			.map(node -> node.get("line").textValue()).findFirst().get();
-	}
-
-	private void setRootImage(Image image, String newRootImageName) {
-		image.buildSteps.stream().filter(node -> node.get("type").textValue().equals("FROM")).forEach(n -> {
-			ObjectNode on = (ObjectNode) n;
-			on.remove("line");
-			on.put("line", newRootImageName);
-		});
-
 	}
 
 	private String createBaseImageName(Image image) {
 		return image.name + "-image";
-	}
-
-	private boolean hostHasImage(String imageName, Host host) throws Exception {
-		// Pair<String, String> splittedName = this.splitImageName(imageName);
-		WebTarget dockerTarget = this.createDockerTarget(host);
-		JsonNode response = null;
-		try {
-			response = dockerTarget.path("images").path(imageName).path("json").request().buildGet().submit(JsonNode.class).get();
-		} catch (Throwable t) {
-			// 'Hacky' workaround...
-			if (!t.getMessage().contains("404")) {
-				Throwables.propagate(t);
-			}
-		}
-		if (response != null && response.size() > 0 && response.get("Container") != null) {
-			return true;
-		}
-		return false;
-	}
-
-	private void tagImage(Host host, String imageName, String privateName, String tag) {
-		WebTarget dockerTarget = createDockerTarget(host);
-		try {
-			Response response = dockerTarget.path("/images/" + imageName + "/tag").queryParam("repo", privateName).queryParam("tag", tag).queryParam("force", "true").request()
-				.post(Entity.text(""));
-			response.close();
-		} catch (Throwable t) {
-			Throwables.propagate(t);
-		}
 	}
 
 	private void deleteImage(Host host, String imageName) {

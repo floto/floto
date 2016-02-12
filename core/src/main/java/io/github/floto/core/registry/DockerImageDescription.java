@@ -7,8 +7,11 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerImageDescription {
+	@SuppressWarnings("NM_FIELD_NAMING_CONVENTION")
     public String Id;
+	@SuppressWarnings("NM_FIELD_NAMING_CONVENTION")
     public String ParentId;
+	@SuppressWarnings("NM_FIELD_NAMING_CONVENTION")
     public List<String> RepoTags = new ArrayList<>();
 
     @Override

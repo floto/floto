@@ -1,13 +1,8 @@
 package io.github.floto.util.task;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Throwables;
-import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -17,7 +12,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 
-public class TaskInfo<RESULT_TYPE> implements Serializable {
+public class TaskInfo<RESULT_TYPE> {
     public enum Status {
         QUEUED,
         RUNNING,
