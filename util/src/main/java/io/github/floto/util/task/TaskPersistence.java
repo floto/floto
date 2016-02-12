@@ -84,11 +84,11 @@ public class TaskPersistence {
         }
     }
 
-    private File getTaskInfoFile(String taskId) {
+    public File getTaskInfoFile(String taskId) {
         return new File(getTaskDirectory(taskId), "info.json");
     }
 
-    private File getLogFile(String taskId) {
+    public File getLogFile(String taskId) {
         return new File(getTaskDirectory(taskId), "log.json");
     }
 
@@ -96,26 +96,11 @@ public class TaskPersistence {
         return new File(tasksDirectory, taskId);
     }
 
-    public Collection<TaskInfo<?>> getTasks() {
-//        return taskMap.values();
-        return Collections.emptyList();
-    }
-
     public void writeTasks(OutputStream output) {
         try {
             output.write("[\n".getBytes());
             boolean needComma = false;
-            File[] files = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
-            List<Integer> numbers = new ArrayList<>();
-            for (File directory : files) {
-                try {
-                    numbers.add(Integer.valueOf(directory.getName()));
-                } catch (Throwable ignored) {
-
-                }
-            }
-            numbers.sort(Comparator.<Integer>reverseOrder());
-            numbers = numbers.subList(0, Math.min(100, numbers.size()));
+			List<Integer> numbers = getTaskNumbers();
             for (int taskId: numbers) {
                 File infoFile = new File(new File(tasksDirectory, String.valueOf(taskId)), "info.json");
                 if (!infoFile.exists()) {
@@ -136,6 +121,21 @@ public class TaskPersistence {
             throw Throwables.propagate(e);
         }
     }
+
+	public List<Integer> getTaskNumbers() {
+		File[] files = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
+		List<Integer> numbers = new ArrayList<>();
+		for (File directory : files) {
+            try {
+                numbers.add(Integer.valueOf(directory.getName()));
+            } catch (Throwable ignored) {
+
+            }
+        }
+		numbers.sort(Comparator.<Integer>reverseOrder());
+		numbers = numbers.subList(0, Math.min(100, numbers.size()));
+		return numbers;
+	}
 
     public void addLogEntry(String id, LogEntry logEntry) {
         try {

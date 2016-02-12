@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.io.input.Tailer;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.Instant;
@@ -123,7 +124,19 @@ public class TaskService {
         return inputStream;
     }
 
-    public void addTaskCompletionListener(BiConsumer<TaskInfo, Throwable> taskCompletionListener) {
+	public File getLogFile(String taskId) {
+		return taskPersistence.getLogFile(taskId);
+	}
+
+	public File getTaskInfoFile(String taskId) {
+		return taskPersistence.getTaskInfoFile(taskId);
+	}
+
+	public List<Integer> getTaskNumbers() {
+		return taskPersistence.getTaskNumbers();
+	}
+
+	public void addTaskCompletionListener(BiConsumer<TaskInfo, Throwable> taskCompletionListener) {
         taskCompletionListeners.add(taskCompletionListener);
     }
 }

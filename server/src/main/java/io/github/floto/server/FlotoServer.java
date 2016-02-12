@@ -150,7 +150,7 @@ public class FlotoServer {
 		resourceConfig.register(new ManifestResource(flotoService));
 		resourceConfig.register(new ContainersResource(flotoService));
 		resourceConfig.register(new HostsResource(flotoService, hostService, taskService));
-		resourceConfig.register(new ExportResource(flotoService));
+		resourceConfig.register(new ExportResource(flotoService, taskService));
 		resourceConfig.register(new InfoResource());
 		resourceConfig.register(new ConfigResource());
 		resourceConfig.register(new BaseConfigResource(parameters));
