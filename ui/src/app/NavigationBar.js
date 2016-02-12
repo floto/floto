@@ -55,6 +55,7 @@ export default connect(state => {
 					<NavDropdown title={<span><Icon name="download" />&nbsp;&nbsp;Export</span>}
 								 id='basic-nav-dropdown'>
 						<MenuItem href="api/export/container-logs">Container Logs</MenuItem>
+						<MenuItem href="api/export/build-logs">Build Logs</MenuItem>
 						<li><a href="api/manifest"
 							   download={`manifest-${siteName}-${site.projectRevision}.json`}>Manifest</a></li>
 					</NavDropdown>

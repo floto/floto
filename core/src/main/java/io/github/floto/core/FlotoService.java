@@ -59,6 +59,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -85,6 +88,7 @@ public class FlotoService implements Closeable {
 	private Map<String, String> externalHostIpMap = new HashMap<>();
 	Set<String> DEPLOYMENT_CONTAINER_NAMES = Sets.newHashSet("floto");
 	private PatchInfo activePatch;
+	DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd' 'HH:mm:ssX");
 
 	public enum DeploymentMode {
 		fromRootImage, fromBaseImage, containerRebuild
@@ -348,21 +352,31 @@ public class FlotoService implements Closeable {
 				// In bootstrap mode only deploy to registry host to upload images
 				boolean isBootStrapMode = false;
 				try (FileOutputStream buildLogStream = new FileOutputStream(getContainerBuildLogFile(containerName))) {
-					Image image = this.findImage(container.image, this.manifest);
+					buildLogStream.write(("Build started at " + dateTimeFormatter.format(Instant.now().atOffset(ZoneOffset.UTC)) + "\n").getBytes());
+					try {
+						Image image = this.findImage(container.image, this.manifest);
 //					Host host = isBootStrapMode ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
-					// TODO deployment host
-					Host host = this.findHost(container.host, this.manifest);
-					if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
-						this.redeployFromRootImage(host, container, buildLogStream);
-					} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
-						String baseImageName = this.createBaseImageName(image);
-						this.redeployFromBaseImage(host, container, baseImageName, buildLogStream);
-					} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
-						this.rebuildContainer(container, true);
-					} else {
-						throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
+						// TODO deployment host
+						Host host = this.findHost(container.host, this.manifest);
+						if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
+							this.redeployFromRootImage(host, container, buildLogStream);
+						} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
+							String baseImageName = this.createBaseImageName(image);
+							this.redeployFromBaseImage(host, container, baseImageName, buildLogStream);
+						} else if (DeploymentMode.containerRebuild.equals(deploymentMode)) {
+							this.rebuildContainer(container, true);
+						} else {
+							throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
+						}
+						numberOfContainersDeployed++;
+					} catch(Throwable throwable) {
+						buildLogStream.write(("Build failed at " + dateTimeFormatter.format(Instant.now().atOffset(ZoneOffset.UTC)) + "\n").getBytes());
+						PrintStream ps = new PrintStream(buildLogStream);
+						throwable.printStackTrace(ps);
+						ps.flush();
+						throw throwable;
 					}
-					numberOfContainersDeployed++;
+					buildLogStream.write(("Build completed at " + dateTimeFormatter.format(Instant.now().atOffset(ZoneOffset.UTC)) + "\n").getBytes());
 				} catch (Throwable t) {
 					Throwables.propagate(t);
 				}
