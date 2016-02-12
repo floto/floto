@@ -53,7 +53,6 @@ export default connect(state => {
 				if (grouping === "none") {
 					query = null;
 				}
-				console.log(query);
 				this.context.router.push({pathname: this.props.location.pathname, query: query});
 			},
 

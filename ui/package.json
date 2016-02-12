@@ -24,6 +24,7 @@
     "babel-preset-react": "^6.3.13",
     "css-loader": "^0.23.1",
     "delicate-error-reporter": "0.0.9",
+    "eslint": "^1.10.3",
     "eslint-plugin-react": "^3.15.0",
     "expose-loader": "^0.7.1",
     "file-loader": "^0.8.5",
