@@ -21,7 +21,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 
 public class DeployerBuilder {
 	
@@ -77,12 +76,12 @@ public class DeployerBuilder {
             
             
             
-            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false, true, true, false, false);
+            flotoService.redeployDeployerContainer(deploymentHost, flotoContainer, true, false);
 
             manifest.containers.stream().filter(container -> container != flotoContainer).
         	forEach(container -> {
                 try {
-                    flotoService.redeployDeployerContainer(deploymentHost, container, true, false, true, false, true, false);
+                    flotoService.redeployDeployerContainer(deploymentHost, container, false, false);
                 } catch (Exception ex) {
                     throw Throwables.propagate(ex);
                 }

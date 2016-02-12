@@ -329,17 +329,10 @@ public class FlotoService implements Closeable {
 		}
 		return taskService.startTask(taskName, () -> {
 			log.info("Redeploying containers " + Joiner.on(", ").join(requestedContainers));
-			boolean excludeDeploymentContainers = false;
-			// TODO: when to exclude?
 
 			int numberOfContainersDeployed = 0;
 
 			for (String containerName : containers) {
-				if (excludeDeploymentContainers && DEPLOYMENT_CONTAINER_NAMES.contains(containerName)) {
-					log.warn("Excluding container {} from deployment to prevent rendering system unusable", containerName);
-					continue;
-				}
-
 				log.info("Will deploy container='{}'", containerName);
 
 				File buildLogDirectory = new File(flotoHome, "buildLog");
@@ -349,14 +342,10 @@ public class FlotoService implements Closeable {
 					Throwables.propagate(e);
 				}
 				Container container = this.findContainer(containerName, this.manifest);
-				// In bootstrap mode only deploy to registry host to upload images
-				boolean isBootStrapMode = false;
 				try (FileOutputStream buildLogStream = new FileOutputStream(getContainerBuildLogFile(containerName))) {
 					buildLogStream.write(("Build started at " + dateTimeFormatter.format(Instant.now().atOffset(ZoneOffset.UTC)) + "\n").getBytes());
 					try {
 						Image image = this.findImage(container.image, this.manifest);
-//					Host host = isBootStrapMode ? this.findRegistryHost(this.manifest) : this.findHost(container.host, this.manifest);
-						// TODO deployment host
 						Host host = this.findHost(container.host, this.manifest);
 						if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
 							this.redeployFromRootImage(host, container, buildLogStream);
@@ -388,9 +377,8 @@ public class FlotoService implements Closeable {
 		});
 	}
 
-	public TaskInfo<Void> redeployDeployerContainer(Host host, Container container, boolean usePrivateRootImage, boolean pushRootImage, boolean pushBaseImage,
-													boolean createContainer, boolean deleteCreatedImages, boolean startContainer) {
-		// TODO: cleanup params
+	public TaskInfo<Void> redeployDeployerContainer(Host host, Container container,
+													boolean createContainer, boolean startContainer) {
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		List<String> images2Delete = Lists.newArrayList();
 		try {
