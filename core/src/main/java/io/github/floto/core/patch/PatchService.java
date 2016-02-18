@@ -12,6 +12,7 @@ import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.GitHelper;
 import io.github.floto.util.VersionUtil;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
@@ -24,6 +25,7 @@ import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
@@ -333,21 +335,13 @@ public class PatchService {
 
 				}
 			}
-			// copy .git directory
-			FileUtils.copyDirectory(repository.getDirectory(), new File(tempDir, "conf/.git"));
-
-			Collection<File> files = FileUtils.listFiles(
-				repository.getDirectory(),
-				FileFilterUtils.fileFileFilter(),
-				DirectoryFileFilter.DIRECTORY
-			);
-			Path gitPath = repository.getDirectory().toPath();
-
-			for (File file : files) {
-				Path relativePath = gitPath.relativize(file.toPath());
-				addEntryToZipFile(patchOutputStream, "conf/.git/" + relativePath.toString(), new FileInputStream(file));
-			}
-
+			GitHelper gitHelper = new GitHelper(flotoService.getRootDefinitionFile().getParentFile());
+			String gitDescribe = gitHelper.describe();
+			String timestamp = gitHelper.timestamp();
+			addEntryToZipFile(patchOutputStream, "conf/.GIT_TIMESTAMP", new ReaderInputStream(new StringReader(timestamp)));
+			addEntryToZipFile(patchOutputStream, "conf/.GIT_DESCRIBE", new ReaderInputStream(new StringReader(gitDescribe)));
+			FileUtils.writeStringToFile(new File(tempDir, "conf/.GIT_TIMESTAMP"), timestamp);
+			FileUtils.writeStringToFile(new File(tempDir, "conf/.GIT_DESCRIBE"), gitDescribe);
 		}
 		File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
 		FileUtils.moveDirectory(tempDir, sitePatchDirectory);
