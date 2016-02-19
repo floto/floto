@@ -20,6 +20,9 @@ import Manifest from "../manifest/Manifest";
 import Patches from "../patches/Patches";
 import PatchInfo from "../patches/PatchInfo";
 
+import Documents from "../documents/Documents";
+import Document from "../documents/Document";
+
 import FileViewer from "../components/FileViewer.js";
 
 import reducers from '../reducers/reducers';
@@ -112,6 +115,12 @@ let routes = <Router history={history}>
 					actions.loadPatchInfo(store, nextState.params.patchId);
 				}} onLeave={() => {
 					store.dispatch({type: "PATCH_SELECTED", payload: null});
+				}} />
+			</Route>
+			<Route path="/documents" component={Documents} >
+				<Route path=":documentId" component={Document} onEnter={
+				(nextState, transition)=>{
+					actions.selectDocument(store, nextState.params.documentId);
 				}} />
 			</Route>
 			<Route path="tasks" component={Tasks}>

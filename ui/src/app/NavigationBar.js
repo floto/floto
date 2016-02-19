@@ -51,6 +51,8 @@ export default connect(state => {
 					<NavItem active={isActive("/hosts")} href="#/hosts"><Icon name="server"/>&nbsp;&nbsp;Hosts</NavItem>
 					<NavItem active={isActive("/patches")} href="#/patches"><Icon name="file-archive-o"/>&nbsp;&nbsp;
 						Patches</NavItem>
+					<NavItem active={isActive("/documents")} href="#/documents"><Icon name="file-o"/>&nbsp;&nbsp;
+						Documents</NavItem>
 					<NavItem active={isActive("/tasks")} href="#/tasks"><Icon name="list"/>&nbsp;&nbsp;Tasks</NavItem>
 					<NavDropdown title={<span><Icon name="download" />&nbsp;&nbsp;Export</span>}
 								 id='basic-nav-dropdown'>

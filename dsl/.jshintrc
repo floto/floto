@@ -6,6 +6,7 @@
 	"unused": "vars",
 	"globals": {
 		"Java": true,
+		"java": true,
 		"_": true,
 		"load": true,
 		"__ROOT_FILE__": true

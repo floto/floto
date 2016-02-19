@@ -109,6 +109,10 @@ addReducers({
 		return {activeTask, activeTaskId: taskId};
 	},
 
+	DOCUMENT_SELECTED(state, document) {
+		return {selectedDocument: document};
+	},
+
 	SAFETY_CHANGED(state, safetyArmed) {
 		return {clientState: _.extend({}, state.clientState, {safetyArmed})};
 	},

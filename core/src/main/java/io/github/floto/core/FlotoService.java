@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Charsets;
@@ -11,6 +12,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.inject.util.Types;
+import freemarker.template.*;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
 import io.github.floto.core.patch.PatchInfo;
@@ -60,6 +62,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -271,10 +274,10 @@ public class FlotoService implements Closeable {
 				if ("ADD_TEMPLATE".equals(type)) {
 					String template = new TemplateUtil().getTemplate(step, globalConfig);
 					md.update(template.getBytes(Charsets.UTF_8));
-				} else if("ADD_FILE".equals(type)) {
+				} else if ("ADD_FILE".equals(type)) {
 					File file = new File(step.path("file").asText());
 					digestFile(fileHashCache, md, file);
-				} else if("COPY_DIRECTORY".equals(type)) {
+				} else if ("COPY_DIRECTORY".equals(type)) {
 					JsonNode options = step.path("options");
 					JsonNode newName = options.path("newName");
 
@@ -289,12 +292,12 @@ public class FlotoService implements Closeable {
 						md.update(sourceFile.toURI().relativize(file.toURI()).getPath().toString().getBytes(Charsets.UTF_8));
 						digestFile(fileHashCache, md, file);
 					}
-				} else if("ADD_MAVEN".equals(type)) {
+				} else if ("ADD_MAVEN".equals(type)) {
 					String coordinates = step.path("coordinates").asText();
 					JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
 					File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
 					digestFile(fileHashCache, md, artifactFile);
-				} else if("COPY_FILES".equals(type)) {
+				} else if ("COPY_FILES".equals(type)) {
 					JsonNode fileList = step.path("fileList");
 					List<String> files = new ArrayList<String>();
 					Iterator<Map.Entry<String, JsonNode>> iterator = fileList.fields();
@@ -358,7 +361,7 @@ public class FlotoService implements Closeable {
 							throw new IllegalStateException("Unknown deploymentMode=" + deploymentMode);
 						}
 						numberOfContainersDeployed++;
-					} catch(Throwable throwable) {
+					} catch (Throwable throwable) {
 						buildLogStream.write(("Build failed at " + dateTimeFormatter.format(Instant.now().atOffset(ZoneOffset.UTC)) + "\n").getBytes());
 						PrintStream ps = new PrintStream(buildLogStream);
 						throwable.printStackTrace(ps);
@@ -902,27 +905,27 @@ public class FlotoService implements Closeable {
 	private Collection<File> getCopyDirectoryFiles(JsonNode excludeDirectories, JsonNode excludeFiles, File sourceFile) {
 		List<IOFileFilter> dirFilters = new ArrayList<IOFileFilter>();
 		for (JsonNode node : excludeDirectories) {
-            dirFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
-        }
+			dirFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+		}
 		IOFileFilter directoryFilter = new AndFileFilter(dirFilters);
 		if (dirFilters.isEmpty()) {
-            directoryFilter = TrueFileFilter.INSTANCE;
-        }
+			directoryFilter = TrueFileFilter.INSTANCE;
+		}
 
 		List<IOFileFilter> fileFilters = new ArrayList<IOFileFilter>();
 		for (JsonNode node : excludeFiles) {
-            fileFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
-        }
+			fileFilters.add(new NotFileFilter(new NameFileFilter(node.asText())));
+		}
 		IOFileFilter fileFilter = new AndFileFilter(fileFilters);
 		if (fileFilters.isEmpty()) {
-            fileFilter = TrueFileFilter.INSTANCE;
-        }
+			fileFilter = TrueFileFilter.INSTANCE;
+		}
 		Collection<File> files;
 		if (sourceFile.isDirectory()) {
-            files = FileUtils.listFiles(sourceFile, fileFilter, directoryFilter);
-        } else {
-            files = Collections.singleton(sourceFile);
-        }
+			files = FileUtils.listFiles(sourceFile, fileFilter, directoryFilter);
+		} else {
+			files = Collections.singleton(sourceFile);
+		}
 		return files;
 	}
 
@@ -1283,6 +1286,61 @@ public class FlotoService implements Closeable {
 		Map<String, Object> globalConfig = createGlobalConfig(manifest);
 		return new TemplateUtil().getTemplate(templateStep, globalConfig);
 	}
+
+	public String getDocumentString(String documentId) {
+		Manifest manifest = this.manifest;
+		List<DocumentDefinition> documents = manifest.documents;
+		DocumentDefinition foundDocument = null;
+		for (DocumentDefinition document : documents) {
+			if (document.id.equals(documentId)) {
+				foundDocument = document;
+				break;
+			}
+		}
+		if (foundDocument == null) {
+			throw new WebApplicationException("The document could not be found", Response.Status.NOT_FOUND);
+		}
+		try {
+			Configuration cfg = new Configuration();
+			File inputFile = new File(foundDocument.template);
+			Path rootPath = rootDefinitionFile.toPath().getRoot();
+			cfg.setDirectoryForTemplateLoading(rootPath.toFile());
+
+			cfg.setObjectWrapper(new DefaultObjectWrapper());
+			cfg.setNumberFormat("0.######");
+
+			cfg.setDefaultEncoding("UTF-8");
+			cfg.setTemplateExceptionHandler(TemplateExceptionHandler.DEBUG_HANDLER);
+			cfg.setIncompatibleImprovements(new Version(2, 3, 20));
+
+
+			Path relativePath = rootPath.relativize(inputFile.toPath());
+			System.err.println(relativePath);
+			Template template = cfg.getTemplate(relativePath.toString());
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputStreamWriter writer = new OutputStreamWriter(baos);
+
+			Map<String, Object> root = new HashMap<>();
+
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectReader reader = mapper.reader(Map.class);
+			Map<String, Object> manifestJson = reader.readValue(manifestString);
+			root.put("manifest", manifestJson);
+			Map<String, Object> containerMap = new HashMap<>();
+			List<Map<String, Object>> containers = (List<Map<String, Object>>) manifestJson.get("containers");
+			for (Map<String, Object> container : containers) {
+				containerMap.put((String) container.get("name"), container);
+			}
+			root.put("containers", containerMap);
+
+			template.process(root, writer);
+			return new String(baos.toByteArray());
+		} catch (Exception e) {
+			throw Throwables.propagate(e);
+		}
+
+	}
+
 
 	public Manifest getManifest() {
 		return manifest;

@@ -9,6 +9,7 @@ public class Manifest {
 	public List<Image> images = new ArrayList<>();
 	public List<Container> containers = new ArrayList<>();
 	public List<Host> hosts = new ArrayList<>();
+	public List<DocumentDefinition> documents = new ArrayList<>();
 	public JsonNode site;
     public Map<String, Object> files = new HashMap<>();
     public String rootFile;

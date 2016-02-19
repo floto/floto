@@ -8,7 +8,8 @@
 		containers: [],
 		hosts: [],
 		site: site,
-		files: {}
+		files: {},
+		documents: []
 	};
 	var manifest = global.manifest;
 
@@ -68,10 +69,10 @@
 		});
 	};
 	
-	global.user = function user(user) {
+	global.user = function user(username) {
 		currentSteps.push({
 			type: "USER",
-			line: user 
+			line: username
 		});
 	};
 
@@ -194,6 +195,14 @@
 			definition.vmConfiguration.vmName = definition.name;
 		}
 		manifest.hosts.push(definition);
+	};
+
+	global.document = function document(definition) {
+		if(!definition.id) {
+			definition.id = definition.title;
+		}
+		definition.id = definition.id.replace(/[^a-zA-Z0-9]/g, "_");
+		manifest.documents.push(definition);
 	};
 
 

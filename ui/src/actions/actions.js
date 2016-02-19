@@ -185,6 +185,10 @@ export function changeSafety(store, safetyArmed) {
 	store.dispatch({type: "SAFETY_CHANGED", payload: safetyArmed});
 }
 
+export function selectDocument(store, document) {
+	store.dispatch({type: "DOCUMENT_SELECTED", payload: document});
+}
+
 
 export function loadPatches(store) {
 	rest.send({method: "GET", url: "patches"}).then((result) => {

@@ -2,10 +2,7 @@ package io.github.floto.dsl;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.github.floto.dsl.model.Container;
-import io.github.floto.dsl.model.Host;
-import io.github.floto.dsl.model.Image;
-import io.github.floto.dsl.model.Manifest;
+import io.github.floto.dsl.model.*;
 import org.junit.Test;
 
 import java.io.File;
@@ -67,6 +64,16 @@ public class FlotoDslTest {
 		Manifest manifest = generateManifest("environment.js", "foobar");
 		assertEquals("foobar", manifest.site.path("env").asText());
 	}
+
+	@Test
+	public void testDocument() {
+		Manifest manifest = generateManifest("document.js", "testing");
+		assertEquals(1, manifest.documents.size());
+		DocumentDefinition documentDefinition = manifest.documents.get(0);
+		assertEquals("Don't panic!", documentDefinition.title);
+		assertEquals("dont_panic.html", documentDefinition.template);
+	}
+
 
 	private Manifest generateManifest(String name, String environment) {
 		return flotoDsl.generateManifest(new File("src/test/resources/js/" + name), environment);
