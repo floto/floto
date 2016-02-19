@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 
 import { Navigation } from 'react-router';
+var Icon = require('react-fa');
 
 
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup, Panel} from "react-bootstrap";
@@ -24,7 +25,7 @@ export default connect(state => {
 
 		renderDocument(document) {
 			return <tr key={document.title} onClick={this.navigateToDocument.bind(this, document)}>
-				<td style={{width: "100%"}}>{document.title}</td>
+				<td style={{width: "100%"}}>{document.title}<span className="pull-right"> <a href={"/api/documents/"+document.id} download={document.title+".html"}><Icon name="download" /> Download</a></span></td>
 			</tr>;
 		},
 

@@ -19,7 +19,7 @@ export default connect(state => {
 			render() {
 				var selectedDocument = this.props.selectedDocument;
 				return <div style={{height: "100%", width: "100%"}}>
-					<iframe style={{height: "100%", width: "100%", border: "1px solid grey"}} src={"/api/documents/" + selectedDocument} />
+					<iframe style={{height: "100%", width: "100%", border: "2px solid #CCC"}} src={"/api/documents/" + selectedDocument} />
 				</div>;
 
 			}
