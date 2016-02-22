@@ -294,9 +294,12 @@ public class FlotoService implements Closeable {
 					}
 				} else if ("ADD_MAVEN".equals(type)) {
 					String coordinates = step.path("coordinates").asText();
-					JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
-					File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
-					digestFile(fileHashCache, md, artifactFile);
+					if(coordinates.endsWith("-SNAPSHOT")) {
+						// We assume that non-SNAPSHOT artifacts are immutable
+						JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
+						File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
+						digestFile(fileHashCache, md, artifactFile);
+					}
 				} else if ("COPY_FILES".equals(type)) {
 					JsonNode fileList = step.path("fileList");
 					List<String> files = new ArrayList<String>();
