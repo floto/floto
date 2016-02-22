@@ -29,6 +29,8 @@ import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.StatusCommand;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -103,6 +105,15 @@ public class PatchService {
 	}
 
 	public void createPatchInternal(PatchCreationParams patchCreationParams) throws Exception {
+		FileRepositoryBuilder builder = new FileRepositoryBuilder();
+		Repository repository = builder.readEnvironment().findGitDir(flotoService.getRootDefinitionFile()).readEnvironment().build();
+		Git git = Git.wrap(repository);
+		if(!git.status().call().isClean()) {
+			throw new IllegalStateException("Git repository has changes that are not checked in, aborting patch creation");
+		} else {
+			log.info("Git repository is clean, proceeding with patch creation");
+		}
+
 		String parentPatchId = patchCreationParams.parentPatchId;
 
 		Manifest manifest = flotoService.getManifest();
@@ -271,9 +282,6 @@ public class PatchService {
 		Path pathAbsolute = Paths.get("/var/data/stuff/xyz.dat");
 		Path pathBase = Paths.get("/var/data");
 		Path pathRelative = pathBase.relativize(pathAbsolute);
-
-		FileRepositoryBuilder builder = new FileRepositoryBuilder();
-		Repository repository = builder.readEnvironment().findGitDir(flotoService.getRootDefinitionFile()).readEnvironment().build();
 
 		Path confDirectory = repository.getWorkTree().toPath();
 		Path rootDefinitionPath = flotoService.getRootDefinitionFile().toPath();
