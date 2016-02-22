@@ -339,7 +339,7 @@ public class FlotoService implements Closeable {
 			int numberOfContainersDeployed = 0;
 
 			for (String containerName : containers) {
-				log.info("Will deploy container='{}'", containerName);
+				log.info("Will deploy container='{}' ({}/{})", containerName, numberOfContainersDeployed+1, containers.size());
 
 				File buildLogDirectory = new File(flotoHome, "buildLog");
 				try {
