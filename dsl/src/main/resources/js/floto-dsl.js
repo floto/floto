@@ -3,6 +3,11 @@
 	global.site = {};
 	var site = global.site;
 
+	if(typeof PATCH_INFO !== "undefined" && PATCH_INFO) {
+		global.PATCH = JSON.parse(PATCH_INFO);
+    }
+
+
 	global.manifest = {
 		images: [],
 		containers: [],

@@ -1,12 +1,11 @@
 package io.github.floto.core;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -92,6 +91,16 @@ public class FlotoService implements Closeable {
 	Set<String> DEPLOYMENT_CONTAINER_NAMES = Sets.newHashSet("floto");
 	private PatchInfo activePatch;
 	DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd' 'HH:mm:ssX");
+
+	private final ObjectMapper objectMapper;
+
+	{
+		objectMapper = new ObjectMapper();
+		objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+		objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		objectMapper.registerModule(new JSR310Module());
+	}
 
 	public enum DeploymentMode {
 		fromRootImage, fromBaseImage, containerRebuild
@@ -216,10 +225,32 @@ public class FlotoService implements Closeable {
 		}
 	}
 
+	private void generateContainerHashes(Manifest manifest) {
+		FileHashCache fileHashCache = new FileHashCache();
+		if (activePatch != null) {
+			// use patch image hash
+			manifest.images.forEach(image -> {
+				image.buildHash = activePatch.imageMap.get(image.name);
+			});
+		} else {
+			manifest.images.forEach(image -> image.buildHash = generateBuildHash(fileHashCache, image.buildSteps));
+		}
+		manifest.containers.forEach(container ->
+		{
+			Image image = findImage(container.image, manifest);
+			container.buildHash = generateBuildHash(fileHashCache, container.configureSteps, image.buildHash);
+		});
+	}
+
 	public TaskInfo<Void> compileManifest() {
 		return taskService.startTask("Compile manifest", () -> {
 			try {
 				log.info("Compiling manifest");
+				if(activePatch != null) {
+					flotoDsl.setGlobal("PATCH_INFO", objectMapper.writeValueAsString(activePatch));
+				} else {
+					flotoDsl.setGlobal("PATCH_INFO", null);
+				}
 				String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
 				manifest = flotoDsl.toManifest(manifestString);
 
@@ -236,23 +267,6 @@ public class FlotoService implements Closeable {
 				throw compilationError;
 			}
 			return null;
-		});
-	}
-
-	private void generateContainerHashes(Manifest manifest) {
-		FileHashCache fileHashCache = new FileHashCache();
-		if (activePatch != null) {
-			// use patch image hash
-			manifest.images.forEach(image -> {
-				image.buildHash = activePatch.imageMap.get(image.name);
-			});
-		} else {
-			manifest.images.forEach(image -> image.buildHash = generateBuildHash(fileHashCache, image.buildSteps));
-		}
-		manifest.containers.forEach(container ->
-		{
-			Image image = findImage(container.image, manifest);
-			container.buildHash = generateBuildHash(fileHashCache, container.configureSteps, image.buildHash);
 		});
 	}
 
@@ -294,7 +308,7 @@ public class FlotoService implements Closeable {
 					}
 				} else if ("ADD_MAVEN".equals(type)) {
 					String coordinates = step.path("coordinates").asText();
-					if(coordinates.endsWith("-SNAPSHOT")) {
+					if (coordinates.endsWith("-SNAPSHOT")) {
 						// We assume that non-SNAPSHOT artifacts are immutable
 						JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
 						File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
@@ -339,7 +353,7 @@ public class FlotoService implements Closeable {
 			int numberOfContainersDeployed = 0;
 
 			for (String containerName : containers) {
-				log.info("Will deploy container='{}' ({}/{})", containerName, numberOfContainersDeployed+1, containers.size());
+				log.info("Will deploy container='{}' ({}/{})", containerName, numberOfContainersDeployed + 1, containers.size());
 
 				File buildLogDirectory = new File(flotoHome, "buildLog");
 				try {
