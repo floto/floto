@@ -181,7 +181,7 @@ public class FlotoService implements Closeable {
 						Enumeration e = NetworkInterface.getNetworkInterfaces();
 						while (e.hasMoreElements()) {
 							NetworkInterface n = (NetworkInterface) e.nextElement();
-							if (n.getDisplayName().startsWith("eth") || n.getDisplayName().startsWith("wlan")) {
+							if (n.getDisplayName().startsWith("eth") || n.getDisplayName().startsWith("wlan") || n.getDisplayName().startsWith("en")) {
 								List<InetAddress> addresses = Collections.list(n.getInetAddresses());
 								// Force deterministic address order, highest first
 								addresses.sort(new Comparator<InetAddress>() {
