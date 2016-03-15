@@ -1332,7 +1332,7 @@ public class FlotoService implements Closeable {
 
 
 			Path relativePath = rootPath.relativize(inputFile.toPath());
-			Template template = cfg.getTemplate(relativePath.toString());
+			Template template = cfg.getTemplate(relativePath.toString().replaceAll("\\\\", "/"));
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			OutputStreamWriter writer = new OutputStreamWriter(baos);
 
