@@ -52,7 +52,6 @@ export default connect(state => {
 				return;
 			}
 			data.messages.forEach((message) => {
-				console.log(message.log);
 				var className = "log-" + message.stream;
 				var log = message.log.replace(/(?:\r\n|\r|\n)/g, '');
 				var timestamp = message.time.substr(0, 10) + " " + message.time.substr(11, 8);
