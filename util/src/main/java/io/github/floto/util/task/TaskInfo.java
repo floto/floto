@@ -31,6 +31,7 @@ public class TaskInfo<RESULT_TYPE> {
     private Long durationInMs;
     private List<LogEntry> logEntries = new ArrayList<>();
     private Status status = Status.QUEUED;
+	private int numberOfWarnings = 0;
 
     public TaskInfo(String taskId, String title, Callable<RESULT_TYPE> taskCallable) {
         creationDate = Instant.now();
@@ -121,4 +122,17 @@ public class TaskInfo<RESULT_TYPE> {
     public Long getDurationInMs() {
         return durationInMs;
     }
+
+	public int getNumberOfWarnings() {
+		return numberOfWarnings;
+	}
+
+	public void setNumberOfWarnings(int numberOfWarnings) {
+		this.numberOfWarnings = numberOfWarnings;
+	}
+
+	public void incrementNumberOfWarnings() {
+		this.numberOfWarnings++;
+	}
+
 }

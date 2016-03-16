@@ -180,6 +180,7 @@ public class FlotoServer {
                     result.put("taskId", taskInfo.getId());
                     result.put("taskTitle", taskInfo.getTitle());
                     result.put("status", throwable == null ? "success" : "error");
+					result.put("numberOfWarnings", taskInfo.getNumberOfWarnings());
                     if (throwable != null) {
                         result.put("errorMessage", throwable.getMessage());
                     }

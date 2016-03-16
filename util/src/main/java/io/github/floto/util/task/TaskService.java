@@ -1,5 +1,6 @@
 package io.github.floto.util.task;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.pattern.RootCauseFirstThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -52,6 +53,9 @@ public class TaskService {
                         logEntry.setStackTrace(throwableConverter.convert(loggingEvent));
                     }
                     taskPersistence.addLogEntry(taskInfo.getId(), logEntry);
+					if(loggingEvent.getLevel().isGreaterOrEqual(Level.WARN)) {
+						taskInfo.incrementNumberOfWarnings();
+					}
                     taskInfo.getLogEntries().add(logEntry);
                 }
             }

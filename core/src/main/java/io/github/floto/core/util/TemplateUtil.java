@@ -24,6 +24,7 @@ public class TemplateUtil {
                 throw new IllegalStateException("Template file not found: " + templateFile.getAbsolutePath());
             }
             Configuration cfg = new Configuration();
+			cfg.setLogTemplateExceptions(false);
             cfg.setNumberFormat("0.######");
             cfg.setObjectWrapper(new DefaultObjectWrapper());
             cfg.setDirectoryForTemplateLoading(templateFile.getParentFile());
@@ -36,14 +37,10 @@ public class TemplateUtil {
             cfg.setTemplateExceptionHandler(TemplateExceptionHandler.DEBUG_HANDLER);
             Template templateFunc = cfg.getTemplate(templateFile.getName());
             StringWriter stringWriter = new StringWriter();
-            try {
-                templateFunc.process(config, stringWriter);
-            } catch (TemplateException e) {
-                throw new RuntimeException(e);
-            }
+			templateFunc.process(config, stringWriter);
             String templated = stringWriter.toString();
             return templated;
-        } catch (IOException e) {
+        } catch (Throwable e) {
             throw Throwables.propagate(e);
         }
     }

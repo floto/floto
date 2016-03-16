@@ -80,6 +80,7 @@ public class FlotoDsl {
 		try {
             engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put("__ROOT_FILE__", file.getAbsolutePath());
 			engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put("ENVIRONMENT", environment);
+			engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put("logger", LoggerFactory.getLogger(file.getName()));
             globals.forEach((key, value) -> {
                 engine.getContext().getBindings(ScriptContext.GLOBAL_SCOPE).put(key, value);
             });

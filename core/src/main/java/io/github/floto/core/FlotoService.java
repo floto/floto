@@ -246,7 +246,7 @@ public class FlotoService implements Closeable {
 		return taskService.startTask("Compile manifest", () -> {
 			try {
 				log.info("Compiling manifest");
-				if(activePatch != null) {
+				if (activePatch != null) {
 					flotoDsl.setGlobal("PATCH_INFO", objectMapper.writeValueAsString(activePatch));
 				} else {
 					flotoDsl.setGlobal("PATCH_INFO", null);
@@ -261,13 +261,41 @@ public class FlotoService implements Closeable {
 
 				log.info("Generating container hashes");
 				generateContainerHashes(manifest);
+				validateTemplates();
 				this.manifestString = manifestString;
+				validateDocuments();
 			} catch (Throwable compilationError) {
 				this.manifestCompilationError = compilationError;
 				throw compilationError;
 			}
 			return null;
 		});
+	}
+
+	private void validateDocuments() {
+		log.info("Validating documents");
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectReader reader = mapper.reader(Map.class);
+			Map<String, Object> manifestJson = reader.readValue(manifestString);
+			new ManifestJob<Void>(manifest) {
+				@Override
+				public Void execute() throws Exception {
+					for (DocumentDefinition document : manifest.documents) {
+						try {
+							FlotoService.this.getDocumentString(document.id, manifestJson);
+						} catch (Throwable throwable) {
+							log.warn("Unable to generate document " + document.id, throwable);
+						}
+					}
+					return null;
+				}
+			}.execute();
+		} catch (Exception e) {
+			Throwables.propagate(e);
+		}
+		log.info("Documents validated");
+
 	}
 
 	private void digestFile(FileHashCache fileHashCache, MessageDigest messageDigest, File file) {
@@ -1305,6 +1333,18 @@ public class FlotoService implements Closeable {
 	}
 
 	public String getDocumentString(String documentId) {
+		try {
+			ObjectMapper mapper = new ObjectMapper();
+			ObjectReader reader = mapper.reader(Map.class);
+			Map<String, Object> manifestJson = reader.readValue(manifestString);
+			return getDocumentString(documentId, manifestJson);
+		} catch (Exception e) {
+			throw Throwables.propagate(e);
+		}
+
+	}
+
+	public String getDocumentString(String documentId, Map<String, Object> manifestJson) {
 		Manifest manifest = this.manifest;
 		List<DocumentDefinition> documents = manifest.documents;
 		DocumentDefinition foundDocument = null;
@@ -1322,7 +1362,7 @@ public class FlotoService implements Closeable {
 			File inputFile = new File(foundDocument.template);
 			Path rootPath = rootDefinitionFile.toPath().getRoot();
 			cfg.setDirectoryForTemplateLoading(rootPath.toFile());
-
+			cfg.setLogTemplateExceptions(false);
 			cfg.setObjectWrapper(new DefaultObjectWrapper());
 			cfg.setNumberFormat("0.######");
 
@@ -1338,9 +1378,6 @@ public class FlotoService implements Closeable {
 
 			Map<String, Object> root = new HashMap<>();
 
-			ObjectMapper mapper = new ObjectMapper();
-			ObjectReader reader = mapper.reader(Map.class);
-			Map<String, Object> manifestJson = reader.readValue(manifestString);
 			root.put("manifest", manifestJson);
 			Map<String, Object> containerMap = new HashMap<>();
 			List<Map<String, Object>> containers = (List<Map<String, Object>>) manifestJson.get("containers");
@@ -1415,7 +1452,12 @@ public class FlotoService implements Closeable {
 					for (JsonNode step : steps) {
 						String type = step.path("type").asText();
 						if ("ADD_TEMPLATE".equals(type)) {
-							new TemplateUtil().getTemplate(step, globalConfig);
+							try {
+								new TemplateUtil().getTemplate(step, globalConfig);
+							} catch (Throwable throwable) {
+								String template = step.path("template").asText();
+								log.warn("Unable to generate template " + template, throwable);
+							}
 						}
 					}
 				}

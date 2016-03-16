@@ -334,4 +334,9 @@
 		version: Java.type('io.github.floto.util.VersionUtil').version
 	};
 
+	global.warn = function(arg) {
+		logger.warn(arg);
+	};
+
+
 })(this);

@@ -53,17 +53,26 @@ websocketService.addMessageHandler("taskComplete", function (message) {
 	var deferred = taskService.getTaskCompletionDeferred(taskId);
 	var linkText = ' <a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">(#' + taskId + ')</a>';
 	if (message.status === "success") {
-		notificationService.notify({
-			title: "Task success: " + message.taskTitle + linkText,
-			type: 'success'
-		});
+		if(message.numberOfWarnings) {
+			notificationService.notify({
+				title: "Task success (with " + message.numberOfWarnings + " warnings): " + message.taskTitle + linkText,
+				text: '<a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">Click here to see details</a>',
+				type: 'notice',
+				hide: false
+			});
+		} else {
+			notificationService.notify({
+				title: "Task success: " + message.taskTitle + linkText,
+				type: 'success'
+			});
+		}
 		if(deferred && deferred.resolve) {
 			deferred.resolve(null);
 		}
 	} else {
 		notificationService.notify({
 			title: "Task error: " + message.taskTitle + linkText,
-			text: message.errorMessage,
+			text: '<a onclick="$(this).closest(\'.ui-pnotify\').find(\'.ui-pnotify-closer\').trigger(\'click\');" href="#/tasks/' + taskId + '">Click here to see details</a><br>' + message.errorMessage,
 			type: 'error',
 			hide: false
 		});
