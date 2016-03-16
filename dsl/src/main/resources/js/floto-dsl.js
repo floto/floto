@@ -36,7 +36,7 @@
 	
 	// deprecated
 	global.setImageRegistry = function setImageRegistry(imageRegistry) {
-		java.lang.System.out.println("WARNING: using deprecated command 'setImageRegistry()' in configuration, a registry is not needed anymore in floto >= 2.0");
+		logger.warn("Using deprecated command 'setImageRegistry()' in configuration. a registry is not needed anymore in floto >= 2.0");
 	};
 
 	global.run = function run(what) {
