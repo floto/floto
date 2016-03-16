@@ -79,7 +79,6 @@ public class FlotoService implements Closeable {
 	private Manifest manifest = new Manifest();
 	private Throwable manifestCompilationError = new Throwable("Manifest is being compiled");
 	private SshService sshService = new SshService();
-	private int proxyPort = 40005;
 	private File flotoHome;
 	private boolean useProxy;
 	private String httpProxyUrl;
@@ -166,7 +165,7 @@ public class FlotoService implements Closeable {
 		}
 		this.useProxy = !commonParameters.noProxy;
 		if (this.useProxy) {
-			proxy = new HttpProxy(proxyPort);
+			proxy = new HttpProxy(commonParameters.proxyPort);
 			proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
 			proxy.start();
 			try {
@@ -212,7 +211,8 @@ public class FlotoService implements Closeable {
 					}
 				}
 				log.info("Using proxy address: {}", ownAddress);
-				httpProxyUrl = "http://" + ownAddress + ":" + proxyPort + "/";
+				httpProxyUrl = "http://" + ownAddress + ":" + commonParameters.proxyPort + "/";
+				log.info("Proxy URL: {}", httpProxyUrl);
 				flotoDsl.setGlobal("httpProxy", httpProxyUrl);
 				flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
 				flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
