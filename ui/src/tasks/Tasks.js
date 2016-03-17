@@ -42,6 +42,10 @@ export default connect(state => {
 				let icon = iconMap[task.status] || "question";
 				let spin = task.status === "RUNNING";
 				let className = classMap[task.status];
+				if(task.status == "SUCCESS" && task.numberOfWarnings) {
+					icon = "exclamation-triangle";
+					className = "warning";
+				}
 				let style = null;
 				if (task === this.props.activeTask) {
 					className = "info";
