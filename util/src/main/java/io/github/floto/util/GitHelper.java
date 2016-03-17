@@ -43,7 +43,7 @@ public class GitHelper {
             }
             boolean clean = git.status().call().isClean();
             if(!clean) {
-                description += "-dirty";
+                description += "-mod";
             }
             return description;
         } catch (Exception e) {
