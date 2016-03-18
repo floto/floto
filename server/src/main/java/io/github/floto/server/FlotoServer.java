@@ -47,6 +47,7 @@ import javax.websocket.server.ServerEndpoint;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -82,7 +83,14 @@ public class FlotoServer {
 
 		Server server = new Server(parameters.port);
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		String resourceBase = FlotoServer.class.getResource("/io/github/floto/ui").toExternalForm();
+		URL resource = FlotoServer.class.getResource("/io/github/floto/ui");
+		String resourceBase;
+		if(resource != null) {
+			resourceBase = resource.toExternalForm();
+		} else {
+			resourceBase = "../ui/target/bundle";
+		}
+		log.info("Using resourceBase: {}", resourceBase);
 
 		context.setInitParameter("org.eclipse.jetty.servlet.Default.cacheControl", "no-cache, no-store, must-revalidate");
 		context.setResourceBase(resourceBase);
