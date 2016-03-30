@@ -117,6 +117,8 @@ public class HostsResource {
 	public TaskInfo<Void> deleteHosts(HostsRequest hostsRequest) {
         return taskService.startTask("Delete hosts " + getHostsString(hostsRequest), () -> {
             for (String host : hostsRequest.hosts) {
+				log.info("Stopping: {}", host);
+				hostService.stopVm(host);
                 log.info("Deleting: {}", host);
                 hostService.deleteVm(host);
             }

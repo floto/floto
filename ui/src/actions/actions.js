@@ -1,6 +1,9 @@
 import * as rest from "../util/rest.js";
 import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
+import bootstrap from "bootstrap";
+import bootbox from "bootbox";
+
 
 import PatchCreationDialog from "../patches/PatchCreationDialog";
 
@@ -87,7 +90,25 @@ export function stopContainers(store, containerNames) {
 }
 
 export function purgeContainerData(store, containerNames) {
-	taskService.httpPost(store, "containers/_purgeData", {containers: containerNames});
+	bootbox.dialog({
+		title: "Purge Data in " + containerNames.join(","),
+		message: "Warning: Purging data will remove ALL data associated with this container",
+		buttons: {
+			purge: {
+				label: "Purge " + containerNames.join(","),
+				className: "btn-danger",
+				callback: function() {
+					taskService.httpPost(store, "containers/_purgeData", {containers: containerNames})
+				}
+			},
+			main: {
+				label: "Cancel",
+				className: "btn-primary",
+				callback: function() {
+				}
+			}
+		}
+	});
 }
 
 
@@ -120,10 +141,29 @@ export function stopHosts(store, hostNames) {
 }
 
 export function destroyHosts(store, hostNames) {
-	taskService.httpPost(store, "hosts/_delete", {hosts: hostNames})
-		.finally(() => {
-			loadContainerStates(store);
-		});
+	bootbox.dialog({
+		title: "Destroy host " + hostNames.join(","),
+		message: "Warning: Destroying this host might impact system availability.",
+		buttons: {
+			destroy: {
+				label: "Destroy "+hostNames.join(","),
+				className: "btn-danger",
+				callback: function() {
+					taskService.httpPost(store, "hosts/_delete", {hosts: hostNames})
+						.finally(() => {
+							loadHostStates(store);
+						});
+				}
+			},
+			main: {
+				label: "Cancel",
+				className: "btn-primary",
+				callback: function() {
+				}
+			}
+		}
+	});
+
 }
 
 

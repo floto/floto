@@ -45,6 +45,7 @@
     "babel-core": "^6.4.5",
     "babel-polyfill": "^6.3.14",
     "bluebird": "^3.1.1",
+    "bootbox": "^4.4.0",
     "bootstrap": "^3.3.6",
     "bootstrap-switch": "^3.3.2",
     "history": "^2.0.0-rc2",
