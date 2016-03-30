@@ -97,14 +97,14 @@ export function purgeContainerData(store, containerNames) {
 			purge: {
 				label: "Purge " + containerNames.join(","),
 				className: "btn-danger",
-				callback: function() {
+				callback: function () {
 					taskService.httpPost(store, "containers/_purgeData", {containers: containerNames})
 				}
 			},
 			main: {
 				label: "Cancel",
 				className: "btn-primary",
-				callback: function() {
+				callback: function () {
 				}
 			}
 		}
@@ -146,9 +146,9 @@ export function destroyHosts(store, hostNames) {
 		message: "Warning: Destroying this host might impact system availability.",
 		buttons: {
 			destroy: {
-				label: "Destroy "+hostNames.join(","),
+				label: "Destroy " + hostNames.join(","),
 				className: "btn-danger",
-				callback: function() {
+				callback: function () {
 					taskService.httpPost(store, "hosts/_delete", {hosts: hostNames})
 						.finally(() => {
 							loadHostStates(store);
@@ -158,7 +158,7 @@ export function destroyHosts(store, hostNames) {
 			main: {
 				label: "Cancel",
 				className: "btn-primary",
-				callback: function() {
+				callback: function () {
 				}
 			}
 		}
@@ -222,7 +222,28 @@ export function updateManifest(store, manifest) {
 }
 
 export function changeSafety(store, safetyArmed) {
-	store.dispatch({type: "SAFETY_CHANGED", payload: safetyArmed});
+	if (safetyArmed) {
+		bootbox.prompt({
+			title: "Enter safety password",
+			message: "Enter safety password",
+			inputType: "password",
+			buttons: {
+				confirm: {
+					className: "btn-warning",
+					label: "Unlock"
+				}
+			},
+			callback: function (result) {
+				if (result === "superuser") {
+					store.dispatch({type: "SAFETY_CHANGED", payload: true});
+				} else {
+					store.dispatch({type: "SAFETY_CHANGED", payload: false});
+				}
+			}
+		});
+	} else {
+		store.dispatch({type: "SAFETY_CHANGED", payload: false});
+	}
 }
 
 export function selectDocument(store, document) {
@@ -295,7 +316,7 @@ export function downloadPatch(store, patchId) {
 	var a = document.createElement('a');
 	document.body.appendChild(a);
 	a.download = patchId + ".floto-patch.zip";
-	a.href = "/api/patches/"+patchId+"/download";
+	a.href = "/api/patches/" + patchId + "/download";
 	a.click();
 	document.body.removeChild(a);
 }
