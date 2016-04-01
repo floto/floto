@@ -10,6 +10,7 @@ import com.google.inject.util.Types;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
+import io.github.floto.dsl.model.DocumentDefinition;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Image;
 import io.github.floto.dsl.model.Manifest;
@@ -117,6 +118,7 @@ public class PatchService {
 
 		String parentPatchId = patchCreationParams.parentPatchId;
 
+		flotoService.compileManifest().getResultFuture().get();
 		Manifest manifest = flotoService.getManifest();
 
 		Instant creationDate = Instant.now();
@@ -269,7 +271,7 @@ public class PatchService {
 		String siteName = manifest.site.get("projectName").asText();
 		String revision = manifest.site.get("projectRevision").asText();
 		String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
-		String patchId = patchDirName + "." + safeFilename(manifest.getSiteName());
+		String patchId = patchDirName + "_" + safeFilename(patchCreationParams.name) + "_" + safeFilename(manifest.getSiteName());
 
 
 		PatchDescription patchDescription = new PatchDescription();
@@ -279,10 +281,6 @@ public class PatchService {
 
 		patchDescription.name = patchCreationParams.name;
 		patchDescription.comment = patchCreationParams.comment;
-
-		Path pathAbsolute = Paths.get("/var/data/stuff/xyz.dat");
-		Path pathBase = Paths.get("/var/data");
-		Path pathRelative = pathBase.relativize(pathAbsolute);
 
 		Path confDirectory = repository.getWorkTree().toPath();
 		Path rootDefinitionPath = flotoService.getRootDefinitionFile().toPath();
@@ -312,6 +310,7 @@ public class PatchService {
 		File patchDescriptionFile = getPatchDescriptionFile(tempDir);
 		objectMapper.writeValue(patchDescriptionFile, patchDescription);
 
+		log.info("Writing patch (Revision {})", patchDescription.revision);
 		File patchFile = new File(tempDir, patchId + ".floto-patch.zip");
 		try (ZipOutputStream patchOutputStream = new ZipOutputStream(new FileOutputStream(patchFile))) {
 			// Version
@@ -320,7 +319,27 @@ public class PatchService {
 			// Description
 			addEntryToZipFile(patchOutputStream, "patch-description.json", new FileInputStream(patchDescriptionFile));
 
+
+			// Documents
+			log.info("Adding documents");
+			for(DocumentDefinition document: manifest.documents) {
+				String documentString = flotoService.getDocumentString(document.id);
+				String extension = "";
+				String template = document.template;
+				int lastDotIndex = template.lastIndexOf(".");
+				if(lastDotIndex > 0) {
+					extension = template.substring(lastDotIndex);
+				}
+				addEntryToZipFile(patchOutputStream, "documents/" + document.title + extension, new Consumer_WithExceptions<OutputStream>() {
+					@Override
+					public void accept(OutputStream outputStream) throws Exception {
+						IOUtils.write(documentString, outputStream);
+					}
+				});
+			}
+
 			// Images
+			log.info("Adding images");
 			for (String imageId : containedImageIds) {
 				File imageDirectory = imageRegistry.getImageDirectory(imageId);
 				Path imagePath = imageDirectory.toPath();
@@ -332,6 +351,7 @@ public class PatchService {
 			}
 
 			// conf
+			log.info("Adding config");
 			FileTreeIterator fileTreeIterator = new FileTreeIterator(repository);
 			TreeWalk treeWalk = new TreeWalk(repository);
 			treeWalk.addTree(fileTreeIterator);
@@ -354,6 +374,7 @@ public class PatchService {
 		}
 		File sitePatchDirectory = new File(sitePatchesDirectory, patchId);
 		FileUtils.moveDirectory(tempDir, sitePatchDirectory);
+		log.info("Patch created successfully");
 
 	}
 
