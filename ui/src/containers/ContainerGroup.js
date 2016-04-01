@@ -58,18 +58,20 @@ export default connect(state => {
 														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>
 			</td>
-			<td>{status === "running"?<Button bsStyle="success" bsSize="xs" onClick={actions.restartContainers.bind(null, [container.name])}
+			<td><div style={{width: 50}}>
+				{status === "running"?<Button bsStyle="success" bsSize="xs" onClick={actions.restartContainers.bind(null, [container.name])}
 						disabled={!safetyArmed}>Restart</Button>:
 				<Button bsStyle="success" bsSize="xs" onClick={actions.startContainers.bind(null, [container.name])}
 						disabled={!safetyArmed}>Start</Button>}
+				</div>
 			</td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.stopContainers.bind(null, [container.name])}
 						disabled={!safetyArmed}>Stop</Button></td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.purgeContainerData.bind(null, [container.name])}
 						disabled={!safetyArmed}>Purge
 				Data</Button></td>
-			<td style={{whiteSpace: "nowrap"}}>{config.webUrl ?
-				<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;{config.webTitle || "Web UI"}</a> : null}</td>
+			<td style={{whiteSpace: "nowrap"}}><div style={{width: 70}}>{config.webUrl ?
+				<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;{config.webTitle || "Web UI"}</a> : null}</div></td>
 			<td style={{width: "100%"}}>{config.icon ?
 				<Icon name={config.icon} style={{paddingRight: 5}}/> : null}{container.name}<span
 				className="text-muted">@{container.host}</span><span
