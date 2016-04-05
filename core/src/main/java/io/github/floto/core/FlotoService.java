@@ -888,11 +888,9 @@ public class FlotoService implements Closeable {
 							String destination = step.path("destination").asText();
 
 							for (File file : files) {
-//								TarEntry templateTarEntry = new TarEntry(file, destination + file.getAbsolutePath().replaceAll("^.:", "").replaceAll("\\\\", "/"));
-
 								String targetDirName = newName != null && !newName.isMissingNode() ? newName.asText() : sourceFile.getName();
 								String relative = targetDirName + "/" + FilenameUtils.separatorsToUnix(sourceFile.toURI().relativize(file.toURI()).getPath());
-								TarEntry templateTarEntry = new TarEntry(file, destination + "/" + relative);
+								TarEntry templateTarEntry = new TarEntry(file, "." + destination + "/" + relative);
 								out.putNextEntry(templateTarEntry);
 								FileUtils.copyFile(file, out);
 								out.closeEntry();
