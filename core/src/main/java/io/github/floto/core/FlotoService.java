@@ -697,6 +697,17 @@ public class FlotoService implements Closeable {
 		response.close();
 	}
 
+	private void restartContainer(String containerName) {
+		Manifest manifest = this.manifest;
+		Container container = findContainer(containerName, manifest);
+		Host host = findHost(container.host, manifest);
+		WebTarget dockerTarget = createDockerTarget(host).path("/containers/" + container.name + "/restart").queryParam("t", "10");
+		Builder request = dockerTarget.request();
+		Response response = request.post(Entity.text(""));
+		response.close();
+	}
+
+
 	private void setVolumeOwnership(Image image, Container container, Host host) {
 		ArrayList<JsonNode> steps = new ArrayList<>(image.buildSteps);
 		steps.addAll(container.configureSteps);
@@ -1107,7 +1118,7 @@ public class FlotoService implements Closeable {
 			List<Exception> errors = new ArrayList<>();
 			for (String container : containers) {
 				try {
-					runContainerCommand("restart").accept(container);
+					restartContainer(container);
 				} catch (Exception e) {
 					errors.add(e);
 				}
@@ -1149,21 +1160,6 @@ public class FlotoService implements Closeable {
 		Host host = findHost(container.host, manifest);
 		Image image = findImage(container.image, manifest);
 		startContainer(image, container, host);
-	}
-
-	private Consumer<? super String> runContainerCommand(String command) {
-		return (String containerName) -> {
-			Manifest manifest = this.manifest;
-			Container container = findContainer(containerName, manifest);
-			Host host = findHost(container.host, manifest);
-			WebTarget dockerTarget = createDockerTarget(host);
-			try {
-				Response response = dockerTarget.path("/containers/" + containerName + "/" + command).request().post(Entity.text(""));
-				response.close();
-			} catch (Throwable t) {
-				Throwables.propagate(t);
-			}
-		};
 	}
 
 	public Map<String, ContainerState> getContainerStates() {
