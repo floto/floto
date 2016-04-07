@@ -158,7 +158,8 @@
       "dependencies": {
         "lodash": {
           "version": "3.10.1",
-          "from": "lodash@>=3.10.0 <4.0.0"
+          "from": "lodash@3.10.1",
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-3.10.1.tgz"
         }
       }
     },
@@ -174,7 +175,8 @@
       "dependencies": {
         "lodash": {
           "version": "3.10.1",
-          "from": "lodash@>=3.10.0 <4.0.0"
+          "from": "lodash@3.10.1",
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-3.10.1.tgz"
         }
       }
     },
@@ -205,7 +207,8 @@
       "dependencies": {
         "lodash": {
           "version": "3.10.1",
-          "from": "lodash@>=3.10.0 <4.0.0"
+          "from": "lodash@3.10.1",
+          "resolved": "https://registry.npmjs.org/lodash/-/lodash-3.10.1.tgz"
         }
       }
     },
@@ -510,6 +513,11 @@
       "version": "3.1.1",
       "from": "bluebird@>=3.1.1 <4.0.0",
       "resolved": "https://registry.npmjs.org/bluebird/-/bluebird-3.1.1.tgz"
+    },
+    "bootbox": {
+      "version": "4.4.0",
+      "from": "bootbox@latest",
+      "resolved": "https://registry.npmjs.org/bootbox/-/bootbox-4.4.0.tgz"
     },
     "bootstrap": {
       "version": "3.3.6",
@@ -2890,9 +2898,16 @@
       "resolved": "https://registry.npmjs.org/react-redux/-/react-redux-4.0.6.tgz"
     },
     "react-router": {
-      "version": "2.0.0-rc5",
-      "from": "react-router@latest",
-      "resolved": "https://registry.npmjs.org/react-router/-/react-router-2.0.0-rc5.tgz"
+      "version": "2.0.1",
+      "from": "react-router@>=2.0.1 <3.0.0",
+      "resolved": "https://registry.npmjs.org/react-router/-/react-router-2.0.1.tgz",
+      "dependencies": {
+        "history": {
+          "version": "2.0.1",
+          "from": "history@>=2.0.0 <3.0.0",
+          "resolved": "https://registry.npmjs.org/history/-/history-2.0.1.tgz"
+        }
+      }
     },
     "react-router-bootstrap": {
       "version": "0.20.1",
@@ -2917,12 +2932,7 @@
     "react-virtual-list": {
       "version": "1.8.0",
       "from": "react-virtual-list@>=1.8.0 <2.0.0",
-      "resolved": "https://registry.npmjs.org/react-virtual-list/-/react-virtual-list-1.8.0.tgz",
-      "dependencies": {
-        "react": {
-          "version": "0.14.6"
-        }
-      }
+      "resolved": "https://registry.npmjs.org/react-virtual-list/-/react-virtual-list-1.8.0.tgz"
     },
     "read-json-sync": {
       "version": "1.1.1",
@@ -3606,7 +3616,8 @@
       "dependencies": {
         "esprima": {
           "version": "2.7.1",
-          "from": "esprima@>=2.5.0 <3.0.0"
+          "from": "esprima@2.7.1",
+          "resolved": "https://registry.npmjs.org/esprima/-/esprima-2.7.1.tgz"
         },
         "supports-color": {
           "version": "3.1.2",
