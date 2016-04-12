@@ -107,6 +107,7 @@ public class PatchService {
 	}
 
 	public void createPatchInternal(PatchCreationParams patchCreationParams) throws Exception {
+		Instant creationDate = Instant.now();
 		FileRepositoryBuilder builder = new FileRepositoryBuilder();
 		Repository repository = builder.readEnvironment().findGitDir(flotoService.getRootDefinitionFile()).readEnvironment().build();
 		Git git = Git.wrap(repository);
@@ -116,12 +117,36 @@ public class PatchService {
 			log.info("Git repository is clean, proceeding with patch creation");
 		}
 
-		String parentPatchId = patchCreationParams.parentPatchId;
+		// First compile to get revision
+		flotoService.setPatchDescription(null);
+		flotoService.compileManifest().getResultFuture().get();
+		Manifest tempManifest = flotoService.getManifest();
 
+		String siteName = tempManifest.site.get("projectName").asText();
+		String revision = tempManifest.site.get("projectRevision").asText();
+		String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
+		String patchId = patchDirName + "_" + safeFilename(patchCreationParams.name) + "_" + safeFilename(tempManifest.getSiteName());
+
+
+		PatchDescription patchDescription = new PatchDescription();
+		patchDescription.id = patchId;
+		patchDescription.revision = revision;
+		patchDescription.creationDate = creationDate;
+		patchDescription.siteName = siteName;
+
+		patchDescription.name = patchCreationParams.name;
+		patchDescription.comment = patchCreationParams.comment;
+
+		patchDescription.author = System.getProperty("user.name");
+		patchDescription.producer = "floto " + VersionUtil.version + " (" + VersionUtil.revision + ")";
+
+		// Second compile to set patchinfo
+		flotoService.setPatchDescription(patchDescription);
 		flotoService.compileManifest().getResultFuture().get();
 		Manifest manifest = flotoService.getManifest();
 
-		Instant creationDate = Instant.now();
+		String parentPatchId = patchCreationParams.parentPatchId;
+
 		File sitePatchesDirectory = getSitePatchesDirectory(manifest);
 		File tempDir = new File(sitePatchesDirectory, ".tmp-" + UUID.randomUUID());
 		FileUtils.forceMkdir(tempDir);
@@ -268,25 +293,11 @@ public class PatchService {
 			imageRegistry.storeImages(imageTarballInputStream);
 		}
 
-		String siteName = manifest.site.get("projectName").asText();
-		String revision = manifest.site.get("projectRevision").asText();
-		String patchDirName = safeFilename(creationDate.toString()) + "-" + safeFilename(revision);
-		String patchId = patchDirName + "_" + safeFilename(patchCreationParams.name) + "_" + safeFilename(manifest.getSiteName());
-
-
-		PatchDescription patchDescription = new PatchDescription();
-		patchDescription.id = patchId;
-		patchDescription.creationDate = creationDate;
-		patchDescription.siteName = siteName;
-
-		patchDescription.name = patchCreationParams.name;
-		patchDescription.comment = patchCreationParams.comment;
 
 		Path confDirectory = repository.getWorkTree().toPath();
 		Path rootDefinitionPath = flotoService.getRootDefinitionFile().toPath();
 
 		patchDescription.rootDefinitionFile = confDirectory.relativize(rootDefinitionPath).toString();
-		patchDescription.revision = revision;
 		patchDescription.requiredImageIds.addAll(allRequiredImageIds);
 
 		patchDescription.containedImageIds.addAll(allRequiredImageIds);
@@ -300,9 +311,6 @@ public class PatchService {
 		}
 		List<String> containedImageIds = new ArrayList<String>(patchDescription.containedImageIds);
 
-
-		patchDescription.author = System.getProperty("user.name");
-		patchDescription.producer = "floto " + VersionUtil.version + " (" + VersionUtil.revision + ")";
 
 		patchDescription.imageMap = imageMap;
 		patchDescription.rootImageMap = rootImageMap;

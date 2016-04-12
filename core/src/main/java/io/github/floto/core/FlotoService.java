@@ -14,6 +14,7 @@ import com.google.inject.util.Types;
 import freemarker.template.*;
 import io.github.floto.core.jobs.HostJob;
 import io.github.floto.core.jobs.ManifestJob;
+import io.github.floto.core.patch.PatchDescription;
 import io.github.floto.core.patch.PatchInfo;
 import io.github.floto.core.proxy.HttpProxy;
 import io.github.floto.core.registry.DockerImageDescription;
@@ -92,6 +93,7 @@ public class FlotoService implements Closeable {
 	DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd' 'HH:mm:ssX");
 
 	private final ObjectMapper objectMapper;
+	private PatchDescription patchDescription;
 
 	{
 		objectMapper = new ObjectMapper();
@@ -248,6 +250,8 @@ public class FlotoService implements Closeable {
 				log.info("Compiling manifest");
 				if (activePatch != null) {
 					flotoDsl.setGlobal("PATCH_INFO", objectMapper.writeValueAsString(activePatch));
+				} else if(patchDescription != null) {
+					flotoDsl.setGlobal("PATCH_INFO", objectMapper.writeValueAsString(patchDescription));
 				} else {
 					flotoDsl.setGlobal("PATCH_INFO", null);
 				}
@@ -1601,4 +1605,13 @@ public class FlotoService implements Closeable {
 	public void setManifestCompilationError(Throwable manifestCompilationError) {
 		this.manifestCompilationError = manifestCompilationError;
 	}
+
+	public void setPatchDescription(PatchDescription patchDescription) {
+		this.patchDescription = patchDescription;
+	}
+
+	public PatchDescription getPatchDescription() {
+		return patchDescription;
+	}
+
 }
