@@ -11,6 +11,7 @@ import io.github.floto.dsl.model.Container;
 import io.github.floto.dsl.model.DocumentDefinition;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
 import org.apache.commons.io.FileUtils;
@@ -64,8 +65,16 @@ public class FlotoBuilder {
 
             TaskService taskService = new TaskService();
             flotoService = new FlotoService(parameters, taskService);
-            flotoService.compileManifest().getResultFuture().get();
-            flotoService.validateTemplates();
+			TaskInfo<Void> taskInfo = flotoService.compileManifest();
+			taskInfo.getResultFuture().get();
+			if(taskInfo.getNumberOfWarnings() > 0) {
+				log.error("Aborting build due to {} warnings", taskInfo.getNumberOfWarnings());
+				System.exit(2);
+			}
+			if(parameters.compileCheck) {
+				log.info("Compile check completed successfully");
+				System.exit(0);
+			}
 
             flotoService.enableBuildOutputDump(true);
 
