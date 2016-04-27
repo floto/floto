@@ -52,7 +52,7 @@ public class EsxHypervisorService implements HypervisorService {
             VirtualMachine vm = vmManager.getVm(vmname);
 
             if (vm == null) {
-                log.error("Vm " + vmname + " not found");
+                log.info("Vm " + vmname + " not found, skipping delete");
                 return;
             }
 
@@ -188,7 +188,7 @@ public class EsxHypervisorService implements HypervisorService {
                     vm.shutdownGuest();
                     for (int i = 0; i < SHUTDOWN_GRACE_PERIOD; i++) {
                         if (!isVmRunning(vmname)) {
-                            log.warn("VM {} shutdown gracefully", vmname);
+                            log.info("VM {} shutdown gracefully", vmname);
                             return;
                         }
                         Thread.sleep(1000);
@@ -204,7 +204,7 @@ public class EsxHypervisorService implements HypervisorService {
                     Task task = vm.powerOffVM_Task();
                     EsxUtils.waitForTask(task, "Power off " + vmname);
 				} catch (Throwable throwable) {
-					log.warn("Machine failed to poweroff on first try: "+ throwable.getMessage());
+					log.info("Machine failed to poweroff on first try: "+ throwable.getMessage());
 					// Maybe machine is off already?
 					Thread.sleep(1000);
 					if (!isVmRunning(vmname)) {
@@ -272,7 +272,7 @@ public class EsxHypervisorService implements HypervisorService {
 			} else {
 				VirtualMachine vm = vmManager.getVm(templateVmName);
 				if (vm == null || vm.getResourcePool() != null) {
-					log.warn("Template seems to be in deployment right now - wait ...");
+					log.info("Template seems to be in deployment right now - wait ...");
 					long timeout = 600;
 					for (int i=1; i<timeout; i+=1) {
 						try {
