@@ -239,6 +239,20 @@
 		manifest.files[manifest.rootFile] = null;
 
 		// Images
+		// Only build used images
+		var imageSet = {};
+		manifest.containers.forEach(function (container) {
+			imageSet[container.image] = true;
+		});
+
+		var images = [];
+
+		_.keys(imageSet).forEach(function (imageName) {
+			images.push(findImage(imageName));
+		});
+
+		manifest.images = images;
+
 		manifest.images.forEach(function (image) {
 			global.currentImage = image;
 			currentSteps = [];
