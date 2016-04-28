@@ -18,18 +18,29 @@ import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
 import org.eclipse.aether.transport.http.HttpTransporterFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MavenHelper {
+	private static Logger log = LoggerFactory.getLogger(MavenHelper.class);
+	private static String m2Dir;
     List<RemoteRepository> remoteRepositories = new ArrayList<>();
 
+	static {
+		String userHome = System.getProperty("user.home");
+		m2Dir = System.getenv("M2_DIR");
+		if (m2Dir == null) {
+			m2Dir = userHome + "/.m2";
+		}
+		log.info("Using M2 directory: {}", m2Dir);
+	}
 
     public MavenHelper(JsonNode repositories) {
-        if (repositories == null || repositories.isMissingNode()) {
+		if (repositories == null || repositories.isMissingNode()) {
             RemoteRepository central = new RemoteRepository.Builder("central", "default", "http://repo1.maven.org/maven2/").build();
             remoteRepositories.add(central);
         } else {
@@ -48,8 +59,7 @@ public class MavenHelper {
     public File resolveMavenDependency(String coordinates) {
         RepositorySystem system = newRepositorySystem();
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-        String userHome = System.getProperty("user.home");
-        LocalRepository localRepo = new LocalRepository(userHome + "/.m2/repository");
+		LocalRepository localRepo = new LocalRepository(m2Dir + "/repository");
         session.setLocalRepositoryManager(system.newLocalRepositoryManager(session, localRepo));
         Artifact artifact = new DefaultArtifact(coordinates);
 
