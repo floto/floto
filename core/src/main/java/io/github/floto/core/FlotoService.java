@@ -94,6 +94,7 @@ public class FlotoService implements Closeable {
 
 	private final ObjectMapper objectMapper;
 	private PatchDescription patchDescription;
+	private FlotoCommonParameters commonParameters;
 
 	{
 		objectMapper = new ObjectMapper();
@@ -134,6 +135,7 @@ public class FlotoService implements Closeable {
 	}
 
 	public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
+		this.commonParameters = commonParameters;
 
 		this.patchMakerMode = commonParameters.patchMaker;
 		if (commonParameters.patchMaker) {
@@ -1619,4 +1621,7 @@ public class FlotoService implements Closeable {
 		return patchDescription;
 	}
 
+	public FlotoCommonParameters getCommonParameters() {
+		return commonParameters;
+	}
 }

@@ -112,7 +112,11 @@ public class PatchService {
 		Repository repository = builder.readEnvironment().findGitDir(flotoService.getRootDefinitionFile()).readEnvironment().build();
 		Git git = Git.wrap(repository);
 		if(!git.status().call().isClean()) {
-			throw new IllegalStateException("Git repository has changes that are not checked in, aborting patch creation");
+			if(flotoService.getCommonParameters().dirtyPatchesAllowed) {
+				log.warn("Git repository is NOT clean, but proceeding with patch creation because --allow-dirty-patches was used");
+			} else {
+				throw new IllegalStateException("Git repository has changes that are not checked in, aborting patch creation");
+			}
 		} else {
 			log.info("Git repository is clean, proceeding with patch creation");
 		}
