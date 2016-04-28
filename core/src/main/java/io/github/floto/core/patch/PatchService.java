@@ -137,7 +137,11 @@ public class PatchService {
 		patchDescription.name = patchCreationParams.name;
 		patchDescription.comment = patchCreationParams.comment;
 
-		patchDescription.author = System.getProperty("user.name");
+		String author = System.getenv("FLOTO_AUTHOR");
+		if(author == null) {
+			author = System.getProperty("user.name");
+		}
+		patchDescription.author = author;
 		patchDescription.producer = "floto " + VersionUtil.version + " (" + VersionUtil.revision + ")";
 
 		// Second compile to set patchinfo
