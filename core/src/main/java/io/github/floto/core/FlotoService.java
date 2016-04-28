@@ -229,13 +229,18 @@ public class FlotoService implements Closeable {
 
 	private void generateContainerHashes(Manifest manifest) {
 		FileHashCache fileHashCache = new FileHashCache();
+		HashSet<Image> activeImages = new HashSet<Image>();
+		manifest.containers.forEach(container ->
+		{
+			activeImages.add(findImage(container.image, manifest));
+		});
 		if (activePatch != null) {
 			// use patch image hash
-			manifest.images.forEach(image -> {
+			activeImages.forEach(image -> {
 				image.buildHash = activePatch.imageMap.get(image.name);
 			});
 		} else {
-			manifest.images.forEach(image -> image.buildHash = generateBuildHash(fileHashCache, image.buildSteps));
+			activeImages.forEach(image -> image.buildHash = generateBuildHash(fileHashCache, image.buildSteps));
 		}
 		manifest.containers.forEach(container ->
 		{
