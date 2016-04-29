@@ -114,16 +114,23 @@ export default connect(state => {
 			}
 
 
+			let filteredContainerCount = 0;
+			let filteredContainerNames = [];
 			_.forEach(groups, group => {
 				group.containers = _.sortBy(group.containers, "name");
+				group.totalCount = group.containers.length;
 				if(containerFilterRegex !== null) {
 					group.containers = _.filter(group.containers, (container) => containerFilterRegex.test(container.name));
 				}
 				group.containerNames = _.map(group.containers, (container) => container.name);
+				filteredContainerNames = filteredContainerNames.concat(group.containerNames);
+				filteredContainerCount += group.containers.length;
 			});
 
 
 			groups = _.filter(groups, (group) => group.containers.length > 0);
+
+
 			if (this.props.manifestError) {
 				return <div style={{height: "100%", marginTop: 20, marginRight: 20}}>
 					<Panel header="Manifest compilation error" bsStyle="danger">
@@ -131,19 +138,26 @@ export default connect(state => {
 					</Panel>
 				</div>;
 			}
+			let containerCount = containers.length;
+			let containerCountName = "all";
+			if(filteredContainerCount !== containers.length) {
+				containerCount = filteredContainerCount  + "/" + containerCount;
+				containerCountName = filteredContainerCount;
+			}
+			let buttonStyle = {width: "100px"};
 			return <div style={{height: "100%"}}>
 				<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 					<div style={{flex: "1 1 auto", width: "50%", height: "100%", display:"flex", flexDirection: "column"}}>
 						<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
-							<h2>Containers <span className="text-muted">({containers.length})</span></h2>
+							<h2>Containers <span className="text-muted">({containerCount})</span></h2>
 							<ButtonGroup>
 								<Button onClick={actions.loadContainerStates}>Refresh</Button>
-								<RedeployButton disabled={!safetyArmed} title="Redeploy all"
-												onExecute={(deploymentMode) => actions.redeployContainers( allContainerNames, deploymentMode)}/>
-								<Button bsStyle="success" onClick={() => actions.startContainers(allContainerNames)}
-										disabled={!safetyArmed}>Start all</Button>
-								<Button bsStyle="danger" onClick={() => actions.stopContainers(allContainerNames)}
-										disabled={!safetyArmed}>Stop all</Button>
+								<RedeployButton style={buttonStyle} disabled={!safetyArmed} title={"Redeploy " + containerCountName}
+												onExecute={(deploymentMode) => actions.redeployContainers( filteredContainerNames, deploymentMode)}/>
+								<Button bsStyle="success" onClick={() => actions.startContainers(filteredContainerNames)}
+										disabled={!safetyArmed} style={buttonStyle} >Start {containerCountName}</Button>
+								<Button bsStyle="danger" onClick={() => actions.stopContainers(filteredContainerNames)}
+										disabled={!safetyArmed} style={buttonStyle}>Stop {containerCountName}</Button>
 								<span className={containerFilterError?"has-warning":""}>
 								<input
 									style={{display: "inline-block", width: "160px", marginLeft: "5px"}}

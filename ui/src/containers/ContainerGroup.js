@@ -84,15 +84,22 @@ export default connect(state => {
 		let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
 		var group = this.props.group;
 		let containers = group.containers;
+		let containerCountName = "all";
+		if(group.totalCount !== containers.length) {
+			containerCountName = containers.length;
+		}
+
+		let buttonStyle = {width: "100px"}
+
 		let titleComponent = null;
 		if (group.title) {
 			titleComponent = <h4>{group.title} <span className="text-muted">({containers.length})</span><span className="pull-right"><ButtonGroup bsSize='small'>
-				<RedeployButton disabled={!safetyArmed} size="small" title="Redeploy all"
-								onExecute={(deploymentMode) => actions.redeployContainers(group.containerNames, deploymentMode)}/>
+				<RedeployButton disabled={!safetyArmed} size="small" title={"Redeploy " + containerCountName}
+								onExecute={(deploymentMode) => actions.redeployContainers(group.containerNames, deploymentMode)} style={buttonStyle}/>
 				<Button bsStyle="success" onClick={() => actions.startContainers(group.containerNames)}
-						disabled={!safetyArmed}>Start all</Button>
+						disabled={!safetyArmed} style={buttonStyle}>Start {containerCountName}</Button>
 				<Button bsStyle="danger" onClick={() => actions.stopContainers(group.containerNames)}
-						disabled={!safetyArmed}>Stop all</Button>
+						disabled={!safetyArmed} style={buttonStyle}>Stop {containerCountName}</Button>
 			</ButtonGroup>
 			</span>
 			</h4>;

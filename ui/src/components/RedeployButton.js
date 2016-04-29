@@ -20,7 +20,7 @@ export default connect(state => {
 		let baseStyle = defaultFromBase ? {fontWeight: "bold"} : null;
 
 		return <SplitButton bsStyle={this.props.bsStyle||"primary"} bsSize={this.props.size}
-							onClick={this.onExecute.bind(this, defaultDeploymentMode)}
+							onClick={this.onExecute.bind(this, defaultDeploymentMode)} style={this.props.style}
 							title={this.props.title || "Redeploy"} id="redeploy" disabled={this.props.disabled}>
 			{config.canDeployFromRootImage?<MenuItem onSelect={this.onExecute.bind(this, "fromRootImage")}><span
 				style={rootStyle}>From Root Image</span></MenuItem>:null}
