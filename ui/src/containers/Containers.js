@@ -104,13 +104,25 @@ export default connect(state => {
 					</Table>
 				</div>;
 			}
+			let containerFilterError = null;
+			let containerFilterRegex = null;
+			try {
+				containerFilterRegex = new RegExp(containerFilter, "ig");
+			} catch(error) {
+				console.log(error);
+				containerFilterError = ""+error;
+			}
+
+
 			_.forEach(groups, group => {
 				group.containers = _.sortBy(group.containers, "name");
-				if(containerFilter !== "") {
-					group.containers = _.filter(group.containers, (container) => container.name.includes(containerFilter));
+				if(containerFilterRegex !== null) {
+					group.containers = _.filter(group.containers, (container) => containerFilterRegex.test(container.name));
 				}
 				group.containerNames = _.map(group.containers, (container) => container.name);
 			});
+
+
 			groups = _.filter(groups, (group) => group.containers.length > 0);
 			if (this.props.manifestError) {
 				return <div style={{height: "100%", marginTop: 20, marginRight: 20}}>
@@ -132,14 +144,17 @@ export default connect(state => {
 										disabled={!safetyArmed}>Start all</Button>
 								<Button bsStyle="danger" onClick={() => actions.stopContainers(allContainerNames)}
 										disabled={!safetyArmed}>Stop all</Button>
+								<span className={containerFilterError?"has-warning":""}>
 								<input
 									style={{display: "inline-block", width: "160px", marginLeft: "5px"}}
 									type="text"
 									placeholder="Filter containers"
+									title={containerFilterError}
 									value={containerFilter}
 									onChange={this.onChangeContainerFilter}
 									className="form-control"
 								/>
+									</span>
 							</ButtonGroup>
 								<span className="pull-right">Grouping:&nbsp;&nbsp;&nbsp;
 									<DropdownButton bsStyle="default" title={containerGrouping.title}
@@ -169,6 +184,8 @@ export default connect(state => {
 	}
 	)
 );
+
+
 
 
 
