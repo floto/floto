@@ -107,7 +107,7 @@ export default connect(state => {
 			let containerFilterError = null;
 			let containerFilterRegex = null;
 			try {
-				containerFilterRegex = new RegExp(containerFilter, "ig");
+				containerFilterRegex = new RegExp(containerFilter, "i");
 			} catch(error) {
 				console.log(error);
 				containerFilterError = ""+error;
