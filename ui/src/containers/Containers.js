@@ -116,6 +116,7 @@ export default connect(state => {
 
 			let filteredContainerCount = 0;
 			let filteredContainerNames = [];
+			let changedContainerNames = [];
 			_.forEach(groups, group => {
 				group.containers = _.sortBy(group.containers, "name");
 				group.totalCount = group.containers.length;
@@ -123,6 +124,13 @@ export default connect(state => {
 					group.containers = _.filter(group.containers, (container) => containerFilterRegex.test(container.name));
 				}
 				group.containerNames = _.map(group.containers, (container) => container.name);
+				group.changedContainerNames = [];
+				_.forEach(group.containers, (container) => {
+					if(container.state.needsRedeploy) {
+						changedContainerNames.push(container.name);
+						group.changedContainerNames.push(container.name);
+					}
+				});
 				filteredContainerNames = filteredContainerNames.concat(group.containerNames);
 				filteredContainerCount += group.containers.length;
 			});
@@ -149,10 +157,23 @@ export default connect(state => {
 				<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
 					<div style={{flex: "1 1 auto", width: "50%", height: "100%", display:"flex", flexDirection: "column"}}>
 						<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
-							<h2>Containers <span className="text-muted">({containerCount})</span></h2>
+							<h2>Containers <span className="text-muted">({containerCount})</span>
+																<span className="pull-right"><small>Grouping:&nbsp;&nbsp;&nbsp;</small>
+									<DropdownButton bsStyle="default" title={containerGrouping.title}
+													id="container-grouping"
+													disabled={!safetyArmed} onSelect={this.onChangeContainerGrouping}>
+										{_.map(containerGroupings, (grouping, key) =>
+											<MenuItem key={key} eventKey={key}><span
+												style={{fontWeight: key === containerGroupingKey ? "bold": "normal"}}>{grouping.title}</span></MenuItem>)}
+									</DropdownButton>
+								</span>
+
+							</h2>
 							<ButtonGroup>
 								<Button onClick={actions.loadContainerStates}>Refresh</Button>
-								<RedeployButton style={buttonStyle} disabled={!safetyArmed} title={"Redeploy " + containerCountName}
+								<RedeployButton style={{width: "150px"}} disabled={!safetyArmed || changedContainerNames.length < 1} title={"Redeploy " + changedContainerNames.length + " changed"}
+												onExecute={(deploymentMode) => actions.redeployContainers( changedContainerNames, deploymentMode)}/>
+								<RedeployButton style={buttonStyle} disabled={!safetyArmed || filteredContainerNames.length < 1} title={"Redeploy " + containerCountName}
 												onExecute={(deploymentMode) => actions.redeployContainers( filteredContainerNames, deploymentMode)}/>
 								<Button bsStyle="success" onClick={() => actions.startContainers(filteredContainerNames)}
 										disabled={!safetyArmed} style={buttonStyle} >Start {containerCountName}</Button>
@@ -170,15 +191,6 @@ export default connect(state => {
 								/>
 									</span>
 							</ButtonGroup>
-								<span className="pull-right">Grouping:&nbsp;&nbsp;&nbsp;
-									<DropdownButton bsStyle="default" title={containerGrouping.title}
-													id="container-grouping"
-													disabled={!safetyArmed} onSelect={this.onChangeContainerGrouping}>
-										{_.map(containerGroupings, (grouping, key) =>
-											<MenuItem key={key} eventKey={key}><span
-												style={{fontWeight: key === containerGroupingKey ? "bold": "normal"}}>{grouping.title}</span></MenuItem>)}
-									</DropdownButton>
-								</span>
 						</div>
 						<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
 							{unmanagedContainersComponent}

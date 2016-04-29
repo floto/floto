@@ -85,16 +85,20 @@ export default connect(state => {
 		var group = this.props.group;
 		let containers = group.containers;
 		let containerCountName = "all";
+		let containerTitleCount = containers.length;
 		if(group.totalCount !== containers.length) {
 			containerCountName = containers.length;
+			containerTitleCount = containers.length + "/" + group.totalCount;
 		}
-
-		let buttonStyle = {width: "100px"}
+		let changedContainerNames = group.changedContainerNames;
+		let buttonStyle = {width: "100px"};
 
 		let titleComponent = null;
 		if (group.title) {
-			titleComponent = <h4>{group.title} <span className="text-muted">({containers.length})</span><span className="pull-right"><ButtonGroup bsSize='small'>
-				<RedeployButton disabled={!safetyArmed} size="small" title={"Redeploy " + containerCountName}
+			titleComponent = <h4>{group.title} <span className="text-muted">({containerTitleCount})</span><span className="pull-right"><ButtonGroup bsSize='small'>
+				<RedeployButton disabled={!safetyArmed || changedContainerNames.length < 1} size="small" title={"Redeploy " + changedContainerNames.length + " changed"}
+								onExecute={(deploymentMode) => actions.redeployContainers(changedContainerNames, deploymentMode)} style={{width: "140px"}}/>
+				<RedeployButton disabled={!safetyArmed || group.containerNames.length < 1} size="small" title={"Redeploy " + containerCountName}
 								onExecute={(deploymentMode) => actions.redeployContainers(group.containerNames, deploymentMode)} style={buttonStyle}/>
 				<Button bsStyle="success" onClick={() => actions.startContainers(group.containerNames)}
 						disabled={!safetyArmed} style={buttonStyle}>Start {containerCountName}</Button>
