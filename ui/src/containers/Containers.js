@@ -161,7 +161,7 @@ export default connect(state => {
 																<span className="pull-right"><small>Grouping:&nbsp;&nbsp;&nbsp;</small>
 									<DropdownButton bsStyle="default" title={containerGrouping.title}
 													id="container-grouping"
-													disabled={!safetyArmed} onSelect={this.onChangeContainerGrouping}>
+													onSelect={this.onChangeContainerGrouping}>
 										{_.map(containerGroupings, (grouping, key) =>
 											<MenuItem key={key} eventKey={key}><span
 												style={{fontWeight: key === containerGroupingKey ? "bold": "normal"}}>{grouping.title}</span></MenuItem>)}
