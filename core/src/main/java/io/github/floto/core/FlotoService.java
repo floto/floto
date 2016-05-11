@@ -220,6 +220,7 @@ public class FlotoService implements Closeable {
 				flotoDsl.setGlobal("httpProxy", httpProxyUrl);
 				flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
 				flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
+				flotoDsl.setGlobal("developmentMode", commonParameters.developmentMode);
 			} catch (Exception e) {
 				throw Throwables.propagate(e);
 			}

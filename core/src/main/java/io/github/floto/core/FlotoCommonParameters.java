@@ -33,4 +33,9 @@ public class FlotoCommonParameters {
 	@Parameter(names = {"--allow-dirty-patches"}, description = "Allow patch maker to create dirty patches (with uncommitted changes)")
 	public boolean dirtyPatchesAllowed = false;
 
+	@Parameter(names = {"--dev", "--development-mode"}, description = "Development Mode")
+	public boolean developmentMode = false;
+
+
+
 }
