@@ -305,7 +305,7 @@ public class PatchService {
 		Path confDirectory = repository.getWorkTree().toPath();
 		Path rootDefinitionPath = flotoService.getRootDefinitionFile().toPath();
 
-		patchDescription.rootDefinitionFile = confDirectory.relativize(rootDefinitionPath).toString();
+		patchDescription.rootDefinitionFile = confDirectory.relativize(rootDefinitionPath).toString().replace("\\", "/");
 		patchDescription.requiredImageIds.addAll(allRequiredImageIds);
 
 		patchDescription.containedImageIds.addAll(allRequiredImageIds);
@@ -515,6 +515,9 @@ public class PatchService {
 			try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(patchFile))) {
 				ZipEntry nextEntry;
 				while ((nextEntry = zipInputStream.getNextEntry()) != null) {
+					if(nextEntry.isDirectory()) {
+						continue;
+					}
 					log.trace("File: " + nextEntry.getName());
 
 					FileUtils.copyInputStreamToFile(new CloseShieldInputStream(zipInputStream), new File(tempDir, nextEntry.getName()));
