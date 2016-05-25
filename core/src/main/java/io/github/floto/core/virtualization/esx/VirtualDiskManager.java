@@ -21,7 +21,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		return this.vm;
 	}
 
-	public VirtualDeviceConfigSpec createHardDisk(Disk vmDiskDesc, VirtualDiskType type, VirtualDiskMode mode, int unitNumber) throws Exception {
+	public VirtualDeviceConfigSpec createHardDisk(Disk vmDiskDesc, VirtualDiskType type, VirtualDiskMode mode, int ctrlKey) throws Exception {
 		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_data" + vmDiskDesc.slot + ".vmdk";
 
 		VirtualDiskFlatVer2BackingInfo diskfileBacking = new VirtualDiskFlatVer2BackingInfo();
@@ -31,8 +31,8 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 
 		VirtualDeviceConfigSpec diskSpec = new VirtualDeviceConfigSpec();
 		VirtualDisk disk = new VirtualDisk();
-		disk.setControllerKey(0);
-		disk.setUnitNumber(unitNumber);
+		disk.setControllerKey(ctrlKey);
+		disk.setUnitNumber(vmDiskDesc.slot);
 		disk.setBacking(diskfileBacking);
 		disk.setCapacityInKB(1024l * 1024l * vmDiskDesc.sizeInGB);
 		diskSpec.setOperation(VirtualDeviceConfigSpecOperation.add);
@@ -42,7 +42,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		return diskSpec;
 	}
 
-	public VirtualDeviceConfigSpec addVirtualDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int unitNumber) throws Exception {
+	public VirtualDeviceConfigSpec addVirtualDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int ctrlKey) throws Exception {
 		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_data" + vmDiskDesc.slot + ".vmdk";
 
 		VirtualDiskFlatVer2BackingInfo diskfileBacking = new VirtualDiskFlatVer2BackingInfo();
@@ -50,8 +50,8 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 		diskfileBacking.setDiskMode(diskMode.toString());
 
 		VirtualDisk disk = new VirtualDisk();
-		disk.setControllerKey(0);
-		disk.setUnitNumber(unitNumber);
+		disk.setControllerKey(ctrlKey);
+		disk.setUnitNumber(vmDiskDesc.slot);
 		disk.setBacking(diskfileBacking);
 
 		VirtualDeviceConfigSpec diskSpec = new VirtualDeviceConfigSpec();

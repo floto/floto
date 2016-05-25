@@ -202,11 +202,11 @@ public class VirtualMachineManager {
     }
 
 	public void reconfigureVm(VmDescription vmDesc) throws Exception {
-        log.info("Reconfigure vm " + vmDesc.vmName);
+        log.info("Reconfigure vm " + getShortVmName(vmDesc.vmName));
 
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
-
         VirtualMachine vm = getVm(vmDesc.vmName);
+
 
 		// search for the desired Network on the esx
         Network network = null;
@@ -255,25 +255,6 @@ public class VirtualMachineManager {
 		newScsiConfSpec.setDevice(scsiCtrl);
 		vDevConfSpecList.add(newScsiConfSpec);
 
-		//create or reattach data disk(s)
-		VirtualDiskManager vdm =  new VirtualDiskManager(vm);
-		for (VmDescription.Disk disk : vmDesc.disks) {
-			String fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
-			try {
-				ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
-				Folder rootFolder = si.getRootFolder();
-				Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
-				EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
-				log.info(fileName + " exists - will add it to virtual machine.");
-				VirtualDeviceConfigSpec diskDevConfSpec = vdm.addVirtualDisk(disk, VirtualDiskMode.independent_persistent, disk.slot);
-				vDevConfSpecList.add(diskDevConfSpec);
-			} catch (Exception e) {
-				log.info(fileName + " does not exist - will create new virtual disk.");
-				VirtualDeviceConfigSpec diskDevConfSpec = vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, disk.slot);
-				vDevConfSpecList.add(diskDevConfSpec);
-			}
-		}
-
 		// reconfigure vCPU and vRAM
 		VirtualMachineConfigSpec vmcs = new VirtualMachineConfigSpec();
 		vmcs.setNumCPUs(vmDesc.numberOfCores);
@@ -286,6 +267,49 @@ public class VirtualMachineManager {
 
         Task task = vm.reconfigVM_Task(vmcs);
         EsxUtils.waitForTask(task, "Reconfigure vm " + vm.getName());
+
+		// add data disks
+		VirtualDevice[] vds = vm.getConfig().getHardware().getDevice();
+		int ctrlKey = 0;
+		for(int k=0;k<vds.length;k++) {
+			if(vds[k].getDeviceInfo().getLabel().equalsIgnoreCase("SCSI Controller 0")) {
+				ctrlKey = vds[k].getKey();
+			}
+		}
+
+		for (VmDescription.Disk disk : vmDesc.disks) {
+			addDataDisk(disk, vmDesc, ctrlKey);
+		}
+	}
+
+	public void addDataDisk(VmDescription.Disk disk, VmDescription vmDesc, int ctrlKey) throws Exception {
+		VirtualMachine vm = getVm(vmDesc.vmName);
+		String fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
+		List<VirtualDeviceConfigSpec> vDevConfSpecList = new ArrayList<>();
+		VirtualDiskManager vdm =  new VirtualDiskManager(vm);
+
+		try {
+			ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
+			Folder rootFolder = si.getRootFolder();
+			Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
+			EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
+			log.info(fileName + " exists - will add it to virtual machine.");
+			VirtualDeviceConfigSpec diskDevConfSpec = vdm.addVirtualDisk(disk, VirtualDiskMode.independent_persistent, ctrlKey);
+			vDevConfSpecList.add(diskDevConfSpec);
+		} catch (Exception e) {
+			log.info(fileName + " does not exist - will create new virtual disk.");
+			VirtualDeviceConfigSpec diskDevConfSpec = vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, ctrlKey);
+			vDevConfSpecList.add(diskDevConfSpec);
+		}
+
+		VirtualMachineConfigSpec vmcs = new VirtualMachineConfigSpec();
+
+		VirtualDeviceConfigSpec[] vDevConfSpecArray = {};
+		vDevConfSpecArray = vDevConfSpecList.toArray(vDevConfSpecArray);
+		vmcs.setDeviceChange(vDevConfSpecArray);
+
+		Task task = vm.reconfigVM_Task(vmcs);
+		EsxUtils.waitForTask(task, "Reconfigure VM " + vm.getName() + ", add vmdk " + fileName);
 	}
 
 	public void deployTemplate(URL vmUrl, String templateVmName) throws Exception {

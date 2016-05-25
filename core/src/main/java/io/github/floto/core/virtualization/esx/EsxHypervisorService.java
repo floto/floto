@@ -64,7 +64,7 @@ public class EsxHypervisorService implements HypervisorService {
 					VirtualDiskFlatVer2BackingInfo fileBacking = ((VirtualDiskFlatVer2BackingInfo)vDisk.getBacking());
 					if (fileBacking.getDiskMode().equals(VirtualDiskMode.independent_persistent.toString())) {
 						Task task = vdm.removeDevice(vd, purgeData);
-						EsxUtils.waitForTask(task, "Remove virtual data disk " + fileBacking.fileName + " from " + vmname);
+						EsxUtils.waitForTask(task, "Remove virtual data disk " + fileBacking.fileName + " from " + vm.getName());
 					}
 				}
 			}
