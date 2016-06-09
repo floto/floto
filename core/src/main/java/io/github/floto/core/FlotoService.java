@@ -1546,10 +1546,16 @@ public class FlotoService implements Closeable {
 
 	public URL getTemplateUrl(Host host) throws Exception {
 		URL url = new URL(host.vmConfiguration.ovaUrl);
-		File overrideVmTemplate = new File("/floto/vmtemplates/vmtemplate.ova");
-		if (overrideVmTemplate.exists()) {
+
+		String fileName = url.toString().substring(
+			url.toString().lastIndexOf('/') + 1,
+			url.toString().length());
+
+		File overrideLocalVmTemplate = new File("/floto/vmtemplates/" + fileName);
+
+		if (overrideLocalVmTemplate.exists()) {
 			// Use override vm template
-			url = overrideVmTemplate.toURI().toURL();
+			url = overrideLocalVmTemplate.toURI().toURL();
 		}
 		return url;
 	}
