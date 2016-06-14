@@ -1391,6 +1391,7 @@ public class FlotoService implements Closeable {
 				containerMap.put((String) container.get("name"), container);
 			}
 			root.put("containers", containerMap);
+			root.put("include_as_base64", new FreemarkerIncludeAsBase64Method(rootPath));
 
 			template.process(root, writer);
 			return new String(baos.toByteArray());
