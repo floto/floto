@@ -52,6 +52,9 @@ public class VirtualMachineManager {
 
 		Folder nextFolder = null;
 		for (String folderName:folders){
+			if(folderName.isEmpty()) {
+				continue;
+			}
 			ManagedEntity[] me = currentFolder.getChildEntity();
 
 			for (ManagedEntity m: me) {
@@ -80,7 +83,11 @@ public class VirtualMachineManager {
 	}
 
 	public String getVmFolder(String vmName) {
-		return vmName.substring(0, vmName.lastIndexOf("/"));
+		int index = vmName.lastIndexOf("/");
+		if(index < 0) {
+			return "";
+		}
+		return vmName.substring(0, index);
 	}
 
 	private String getShortVmName(String vmName) {
