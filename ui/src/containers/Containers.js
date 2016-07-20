@@ -87,7 +87,7 @@ export default connect(state => {
 			groups = _.sortBy(groups, "title");
 			let unmanagedContainersComponent = null;
 			let selectedContainer = this.props.selectedContainer || {};
-			if (containerGroupingKey === "none" && unmanagedContainers && unmanagedContainers.length > 1) {
+			if (containerGroupingKey === "none" && unmanagedContainers && unmanagedContainers.length > 0) {
 				groups[0].title = "Managed containers";
 				unmanagedContainersComponent = <div>
 					<h4>Unmanaged Containers<span className="text-muted"> ({unmanagedContainers.length})</span></h4>
