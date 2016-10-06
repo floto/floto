@@ -1,5 +1,7 @@
 package io.github.floto.core.jobs;
 
+import java.io.File;
+
 import io.github.floto.core.virtualization.HypervisorService;
 
 public class HypervisorHostManipulator implements HostManipulator {
@@ -23,4 +25,10 @@ public class HypervisorHostManipulator implements HostManipulator {
         hypervisorService.runInVm(vmName, command);
 
     }
+
+	@Override
+	public void copyToVm(File file, String destination) {
+		throw new UnsupportedOperationException("copy To VM not supported before determineIp was called");
+	}
+
 }

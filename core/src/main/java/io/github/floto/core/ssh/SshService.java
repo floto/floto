@@ -1,12 +1,15 @@
 package io.github.floto.core.ssh;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
 
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.SSHClient;
@@ -63,8 +66,8 @@ public class SshService {
             return null;
         });
     }
-
-    public void scp(String host, String contents, String destination) {
+    
+    public void scp(String host, String contents, String destination) {    	
         withClient(host, (client) -> {
             try {
                 client.newSCPFileTransfer().upload(new InMemorySourceFile() {
@@ -90,6 +93,32 @@ public class SshService {
         });
     }
 
+    public void scp(String host, File file, String destination) {    	
+        withClient(host, (client) -> {
+            try {
+                client.newSCPFileTransfer().upload(new InMemorySourceFile() {
+                    @Override
+                    public String getName() {
+                        return "foo";
+                    }
+
+                    @Override
+                    public long getLength() {
+                        return file.length();
+                    }
+
+                    @Override
+                    public InputStream getInputStream() throws IOException {
+                    	
+                        return new FileInputStream(file);
+                    }
+                }, destination);
+            } catch (Exception e) {
+                throw Throwables.propagate(e);
+            }
+            return null;
+        });
+    }
     private <T> T withSession(String host, Function<Session, T> function) {
         try (final SSHClient client = new SSHClient(sshConfig)) {
             client.addHostKeyVerifier(new PromiscuousVerifier());
