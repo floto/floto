@@ -132,7 +132,7 @@ public class VirtualMachineManager {
 
     public void cloneVm(String templateVmName, VmDescription vmDesc,
 			boolean linked) throws Exception {
-        log.info("Clone vm " + templateVmName + " -> " + vmDesc);
+        log.info("Clone vm " + templateVmName + " -> " + vmDesc.vmName);
 
         Folder folder = findOrCreateFolder(getVmFolder(templateVmName));
         HostSystem host = EsxConnectionManager.getHost(esxDesc);
