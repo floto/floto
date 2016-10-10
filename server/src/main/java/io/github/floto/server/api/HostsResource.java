@@ -105,7 +105,6 @@ public class HostsResource {
 	@Path("_state")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getState() {
-		log.info("getState");
 		Map<String, Object> result = new HashMap<>();
 		result.put("states", hostService.getHostStates());
 		return result;

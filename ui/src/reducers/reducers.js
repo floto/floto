@@ -177,14 +177,7 @@ function mergeContainerStates(containerStates = {}, manifest = {}) {
 function mergeHostStates(hostStates = {}, manifest = {}) {
 	let hosts = manifest.hosts || [];
 	hosts = hosts.map(function (host) {
-		host.state = {status: "unknown"};
-		if (!hostStates[host.name]) {
-			host.state = {
-				status: "unknown"
-			};
-			return;
-		}
-		host.state = hostStates[host.name];
+		host.state = hostStates[host.name] || "unknown";
 		return host;
 	});
 	return {hosts};
