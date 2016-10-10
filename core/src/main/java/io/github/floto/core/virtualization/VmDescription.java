@@ -13,9 +13,9 @@ public class VmDescription {
 
 	public static class Disk {
 		public long sizeInGB;
-		public String path;
+		public String path = "[]";
 		public String datastore;
-		public boolean thinProvisioned;
+		public boolean thinProvisioned = true;
 		public int slot;
 		public String mountpoint;
 		public VmDescription vmDescription;
