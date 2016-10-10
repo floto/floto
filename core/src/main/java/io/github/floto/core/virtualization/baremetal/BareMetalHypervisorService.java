@@ -59,6 +59,11 @@ public class BareMetalHypervisorService implements HypervisorService {
         throw new UnsupportedOperationException("Not supported on bare metal systems");
     }
 
+	@Override
+	public void runInVm(String vmname, String cmd, int timeout) {
+		throw new UnsupportedOperationException("Not supported on bare metal systems");
+	}
+
     @Override
     public void copyFileFromGuest(String vmName, String source, File destination) {
         throw new UnsupportedOperationException("Not supported on bare metal systems");

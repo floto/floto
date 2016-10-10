@@ -46,6 +46,14 @@
 		});
 	};
 
+	global.runWithTimeout = function runWithTimeout(what, timeout) {
+		currentSteps.push({
+			type: "RUN",
+			line: what,
+			timeout: timeout
+		});
+	};
+
 	global.env = function env(key, value) {
 		currentSteps.push({
 			type: "ENV",

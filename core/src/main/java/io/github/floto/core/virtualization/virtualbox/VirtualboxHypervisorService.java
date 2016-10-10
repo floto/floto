@@ -481,6 +481,12 @@ public class VirtualboxHypervisorService implements HypervisorService {
 	}
 
 	@Override
+	public void runInVm(String vmname, String cmd, int timeout) {
+		log.warn(VirtualboxHypervisorService.class.getSimpleName() + " doesn't support timeout parameter.");
+		runInVm(vmname, cmd);
+	}
+
+	@Override
 	public void copyFileFromGuest(final String vmName, final String source,
 			final File destination) {
 		try {

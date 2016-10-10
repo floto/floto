@@ -218,7 +218,12 @@ public class  WorkstationHypervisorService implements HypervisorService {
         }
     }
 
-    @Override
+	@Override
+	public void runInVm(String vmname, String cmd, int timeout) {
+		runInVm(vmname, cmd);
+	}
+
+	@Override
     public void copyFileFromGuest(String vmName, String source, File target) {
         vmrun.run("-gu", "user", "-gp", "user", "CopyFileFromGuestToHost", getVmxPath(vmName), source, target.getAbsolutePath());
     }

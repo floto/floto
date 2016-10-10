@@ -371,4 +371,9 @@ public class EsxHypervisorService implements HypervisorService {
 
     }
 
+	@Override
+	public void runInVm(String vmname, String cmd, int timeout) {
+		log.warn(EsxHypervisorService.class.getSimpleName() + " doesn't support timeout parameter.");
+		runInVm(vmname, cmd);
+	}
 }

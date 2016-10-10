@@ -55,7 +55,11 @@ public class HostStepRunner {
                     if (flotoService.isUseProxy()) {
                         line = "http_proxy='" + flotoService.getHttpProxyUrl() + "' " + line;
                     }
-                    hostManipulator.run(line);
+					if (step.path("timeout") == null || step.path("timeout").intValue() == 0) {
+                    	hostManipulator.run(line);
+					} else {
+						hostManipulator.run(line, step.path("timeout").intValue());
+					}
                     break;
                 case "DETERMINE_IP":
                     String command = step.path("command").asText();

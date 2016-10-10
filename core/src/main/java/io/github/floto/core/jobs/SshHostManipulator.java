@@ -16,13 +16,18 @@ public class SshHostManipulator implements HostManipulator {
 
     @Override
     public void run(String command) {
-        // http://stackoverflow.com/questions/1250079/escaping-single-quotes-within-single-quoted-strings
-        String quotedCommand = command.replaceAll("'", "'\"'\"'");
-        String sudoCommand = "sudo bash -c '" + quotedCommand + "'";
-        sshService.execute(host, sudoCommand);
+		run(command, SshService.defaultTimeOut);
     }
 
-    @Override
+	@Override
+	public void run(String command, int timeout) {
+		// http://stackoverflow.com/questions/1250079/escaping-single-quotes-within-single-quoted-strings
+		String quotedCommand = command.replaceAll("'", "'\"'\"'");
+		String sudoCommand = "sudo bash -c '" + quotedCommand + "'";
+		sshService.execute(host, sudoCommand, timeout);
+	}
+
+	@Override
     public void writeToVm(String content, String destination) {
         sshService.scp(host, content, "/tmp/tmpfile");
         int lastSlash = destination.lastIndexOf("/");

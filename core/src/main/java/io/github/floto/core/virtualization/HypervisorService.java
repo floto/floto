@@ -29,6 +29,8 @@ public interface HypervisorService {
 	
 	public void runInVm(String vmname, String cmd);
 
+	public void runInVm(String vmname, String cmd, int timeout);
+
 	void copyFileFromGuest(String vmName, String source, File destination);
 
 	default public void setHostOnlyIpVBoxWin(String vmname, String proxy) {};

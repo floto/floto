@@ -26,6 +26,7 @@ import com.google.common.base.Throwables;
 
 public class SshService {
     static private Logger log = LoggerFactory.getLogger(SshService.class);
+	public static final int defaultTimeOut=10;
     static {
         // Disable JCE policy
         // http://stackoverflow.com/questions/3425766/how-would-i-use-maven-to-install-the-jce-unlimited-strength-policy-files
@@ -41,14 +42,19 @@ public class SshService {
 
     private final DefaultConfig sshConfig = new DefaultConfig();
 
-    public void execute(String host, String command) {
+	public void execute(String host, String command) {
+		execute(host, command, defaultTimeOut);
+	}
+
+	public void execute(String host, String command, int timeout){
+		log.info("execute(" + host + "," + command + ", timeout: " + timeout + " min.)");
         withSession(host, (session) -> {
             try {
                 final Session.Command cmd = session.exec(command);
                 try {
-                    cmd.join(10, TimeUnit.MINUTES);
-                } catch (ConnectionException ignored) {
-
+                    cmd.join(timeout, TimeUnit.MINUTES);
+                } catch (ConnectionException e) {
+					log.warn("failed to set timeout '" + timeout + "' minutes.", e);
                 }
                 Integer exitStatus = cmd.getExitStatus();
                 if (exitStatus == null) {
@@ -65,9 +71,11 @@ public class SshService {
             }
             return null;
         });
-    }
+	}
+
     
-    public void scp(String host, String contents, String destination) {    	
+    public void scp(String host, String contents, String destination) {
+		log.info("scp(" + host + ", " + destination + ", " + contents + ")");
         withClient(host, (client) -> {
             try {
                 client.newSCPFileTransfer().upload(new InMemorySourceFile() {
@@ -93,7 +101,8 @@ public class SshService {
         });
     }
 
-    public void scp(String host, File file, String destination) {    	
+    public void scp(String host, File file, String destination) {
+		log.info("scp(" + host + ", " + destination + ", " + file.getName() + ")");
         withClient(host, (client) -> {
             try {
                 client.newSCPFileTransfer().upload(new InMemorySourceFile() {
