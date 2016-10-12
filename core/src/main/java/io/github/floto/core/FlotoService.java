@@ -142,6 +142,10 @@ public class FlotoService implements Closeable {
 			commonParameters.patchMode = "create";
 		}
 
+		if (commonParameters.vmrunRetry) {
+			log.info("--vmrun-retry ist set.");
+			System.setProperty("vmrunRetry", "true");
+		}
 
 		// default
 		this.flotoHome = new File(System.getProperty("user.home") + "/.floto");

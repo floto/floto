@@ -36,6 +36,7 @@ public class FlotoCommonParameters {
 	@Parameter(names = {"--dev", "--development-mode"}, description = "Development Mode")
 	public boolean developmentMode = false;
 
-
+	@Parameter(names = {"--vmrun-retry"}, description = "Retry vmrun calls 3 times if they fail. (for some special cases)")
+	public boolean vmrunRetry = false;
 
 }

@@ -207,12 +207,46 @@ public class  WorkstationHypervisorService implements HypervisorService {
         }
     }
 
+	private void sleep(long ms){
+		try {
+			Thread.sleep(ms);
+		} catch (InterruptedException e) {
+			log.debug("interrupted");
+		}
+	}
+
+    private void run(String vmName, String cmd){
+		vmrun.run("-gu", "user", "-gp", "user", "runScriptInGuest", getVmxPath(vmName), "/bin/bash", "sudo bash -c \"" + cmd + "\"");
+	}
+
     @Override
     public void runInVm(String vmName, String cmd) {
         // TODO: quote escape cmd
         // TODO: log and get output
-        try {
-            vmrun.run("-gu", "user", "-gp", "user", "runScriptInGuest", getVmxPath(vmName), "/bin/bash", "sudo bash -c \"" + cmd + "\"");
+
+		int defaultRetries = 3;
+
+		// if System Property vmrun = retry, on fail try to execute 3 times.
+		int tries = System.getProperty("vmrunRetry") != null && System.getProperty("vmrunRetry").equalsIgnoreCase("true")? defaultRetries : 1;
+
+		if (tries != 1){
+			log.info("--vmrun-retry ist set, max: " + tries +" tries for vmrun.");
+		}
+
+		try {
+			for (int i=1; i<=tries; i++) {
+				try {
+					run(vmName, cmd);
+					break;
+				} catch (Exception e1) {
+					if (i == tries) {
+						throw e1;
+					} else {
+						log.info("vmrun failed, " + (tries - i) + " tries left.");
+						sleep(1000); // short pause before next try
+					}
+				}
+			}
         } catch (Throwable throwable) {
             throw new RuntimeException("Unable to run command " + cmd, throwable);
         }
@@ -220,6 +254,7 @@ public class  WorkstationHypervisorService implements HypervisorService {
 
 	@Override
 	public void runInVm(String vmname, String cmd, int timeout) {
+		log.warn(WorkstationHypervisorService.class.getSimpleName() + " doesn't support timeout parameter.");
 		runInVm(vmname, cmd);
 	}
 
