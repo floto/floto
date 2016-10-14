@@ -50,6 +50,7 @@ public class HostStepRunner {
                 case "ADD_FILE":
                 	String target = step.path("destination").asText();
                 	hostManipulator.copyToVm(new File(step.path("file").asText()), target);
+					break;
                 case "RUN":
                     String line = step.path("line").asText();
                     if (flotoService.isUseProxy()) {
