@@ -10,25 +10,35 @@ export default connect(state => {
 	};
 })(React.createClass({
 	render() {
+		let fileTargets;
 		let container = this.props.container;
 		if (!container) {
 			return null;
 		}
-		let fileTargets = [
-			{name: "Logfile", file: "log"},
-			{name: "Buildlog", file: "buildlog"},
-			{name: "Image", file: "dockerfile%2Fimage"},
-			{name: "Container", file: "dockerfile%2Fcontainer"}
-		];
+
+		if(!container.uncontrolled) {
+
+			fileTargets = [
+				{name: "Logfile", file: "log"},
+				{name: "Buildlog", file: "buildlog"},
+				{name: "Image", file: "dockerfile%2Fimage"},
+				{name: "Container", file: "dockerfile%2Fcontainer"}
+			];
+		}else {
+			fileTargets = [
+				{name: "Logfile", file: "log"},
+			];
+		}
 		let templates = this.props.templateMap[`container:${container.name}`];
-		_.forEach(templates, (template) => {
-			fileTargets.push({
+		if(!container.uncontrolled) {
+			_.forEach(templates, (template) => {
+				fileTargets.push({
 				name: template.name,
 				file: encodeURIComponent("template/" + template.destination),
 				destination: template.destination
 			});
 		});
-
+		}
 		let selectedFileName = this.props.selectedFile && this.props.selectedFile.fileName || this.props.selectedFileError && this.props.selectedFileError.fileName;
 		if(selectedFileName) {
 			// normalize filename

@@ -39,11 +39,16 @@ export default connect(state => {
 		let safetyArmed = this.safetyArmed;
 		let className = null;
 		let unmanaged = container.unmanaged;
+		let uncontrolledSafetyArmed = true;
 		if(container.unmanaged) {
 			className = "warning";
 		}
 		if (this.props.selectedContainer === container) {
 			className = "info";
+		}
+		if(container.uncontrolled){
+			uncontrolledSafetyArmed = false;
+			container.state.needsRedeploy = false;
 		}
 		var containerState = container.state;
         let status = containerState.status;
@@ -53,7 +58,7 @@ export default connect(state => {
 				   onClick={this.navigateToContainer.bind(this, container.name)}>
 			<td><Label bsStyle={labelStyle}>{status || "unknown" }</Label></td>
 			<td>
-				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed} size="xs"
+				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed || !uncontrolledSafetyArmed} size="xs"
 														  bsStyle={containerState.needsRedeploy?"primary": "default"}
 														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>

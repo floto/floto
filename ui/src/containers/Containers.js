@@ -115,7 +115,9 @@ export default connect(state => {
 
 
 			let filteredContainerCount = 0;
+			let controlledContainerCount = 0;
 			let filteredContainerNames = [];
+			let controlledContainerNames = [];
 			let changedContainerNames = [];
 			_.forEach(groups, group => {
 				group.containers = _.sortBy(group.containers, "name");
@@ -126,15 +128,18 @@ export default connect(state => {
 				group.containerNames = _.map(group.containers, (container) => container.name);
 				group.changedContainerNames = [];
 				_.forEach(group.containers, (container) => {
-					if(container.state.needsRedeploy) {
-						changedContainerNames.push(container.name);
-						group.changedContainerNames.push(container.name);
+					if (!container.uncontrolled) {
+						controlledContainerNames.push(container.name);
+						controlledContainerCount++;
+						if (container.state.needsRedeploy) {
+							changedContainerNames.push(container.name);
+							group.changedContainerNames.push(container.name);
+						}
 					}
 				});
-				filteredContainerNames = filteredContainerNames.concat(group.containerNames);
-				filteredContainerCount += group.containers.length;
+			filteredContainerNames = filteredContainerNames.concat(group.containerNames);
+			filteredContainerCount += group.containers.length;
 			});
-
 
 			groups = _.filter(groups, (group) => group.containers.length > 0);
 
@@ -148,10 +153,15 @@ export default connect(state => {
 			}
 			let containerCount = containers.length;
 			let containerCountName = "all";
+			let controlledCountName = "all";
 			if(filteredContainerCount !== containers.length) {
-				containerCount = filteredContainerCount  + "/" + containerCount;
-				containerCountName = filteredContainerCount;
+                containerCount = filteredContainerCount  + "/" + containerCount;
+                containerCountName = filteredContainerCount;
+            }
+			if(controlledContainerCount !== filteredContainerCount) {
+				controlledCountName = controlledContainerCount;
 			}
+
 			let buttonStyle = {width: "100px"};
 			return <div style={{height: "100%"}}>
 				<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
@@ -173,8 +183,8 @@ export default connect(state => {
 								<Button onClick={actions.loadContainerStates}>Refresh</Button>
 								<RedeployButton style={{width: "150px"}} disabled={!safetyArmed || changedContainerNames.length < 1} title={"Redeploy " + changedContainerNames.length + " changed"}
 												onExecute={(deploymentMode) => actions.redeployContainers( changedContainerNames, deploymentMode)}/>
-								<RedeployButton style={buttonStyle} disabled={!safetyArmed || filteredContainerNames.length < 1} title={"Redeploy " + containerCountName}
-												onExecute={(deploymentMode) => actions.redeployContainers( filteredContainerNames, deploymentMode)}/>
+								<RedeployButton style={buttonStyle} disabled={!safetyArmed || controlledContainerNames.length < 1} title={"Redeploy " + controlledCountName}
+												onExecute={(deploymentMode) => actions.redeployContainers( controlledContainerNames, deploymentMode)}/>
 								<Button bsStyle="success" onClick={() => actions.startContainers(filteredContainerNames)}
 										disabled={!safetyArmed} style={buttonStyle} >Start {containerCountName}</Button>
 								<Button bsStyle="danger" onClick={() => actions.stopContainers(filteredContainerNames)}
