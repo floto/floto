@@ -41,7 +41,9 @@ public class TemplateUtil {
             Map<String, Object> config = new HashMap<String, Object>(globalConfig);
             config.putAll(localConfig);
             config.put("jsonify", new FreemarkerJsonifyMethod());
-            cfg.setTemplateExceptionHandler(TemplateExceptionHandler.DEBUG_HANDLER);
+			config.put("include_as_base64", new FreemarkerIncludeAsBase64Method(rootPath.toPath()));
+
+			cfg.setTemplateExceptionHandler(TemplateExceptionHandler.DEBUG_HANDLER);
 			Path relativePath = rootPath.toPath().relativize(templateFile.toPath());
 			Template templateFunc = cfg.getTemplate(relativePath.toString().replaceAll("\\\\", "/"));
             StringWriter stringWriter = new StringWriter();
