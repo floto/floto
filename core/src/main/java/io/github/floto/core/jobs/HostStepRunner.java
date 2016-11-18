@@ -44,7 +44,7 @@ public class HostStepRunner {
             switch (stepType) {
                 case "ADD_TEMPLATE":
                     String destination = step.path("destination").asText();
-                    String templated = new TemplateUtil().getTemplate(step, globalConfig);
+                    String templated = flotoService.createTemplateUtil().getTemplate(step, globalConfig);
                     hostManipulator.writeToVm(templated, destination);
                     break;
                 case "ADD_FILE":

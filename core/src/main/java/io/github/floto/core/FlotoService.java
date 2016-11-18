@@ -276,9 +276,9 @@ public class FlotoService implements Closeable {
 				log.info("Compiled manifest");
 
 				log.info("Generating container hashes");
+				this.manifestString = manifestString;
 				generateContainerHashes(manifest);
 				validateTemplates();
-				this.manifestString = manifestString;
 				validateDocuments();
 			} catch (Throwable compilationError) {
 				this.manifestCompilationError = compilationError;
@@ -330,7 +330,7 @@ public class FlotoService implements Closeable {
 
 				String type = step.path("type").asText();
 				if ("ADD_TEMPLATE".equals(type)) {
-					String template = new TemplateUtil().getTemplate(step, globalConfig);
+					String template = createTemplateUtil().getTemplate(step, globalConfig);
 					md.update(template.getBytes(Charsets.UTF_8));
 				} else if ("ADD_FILE".equals(type)) {
 					File file = new File(step.path("file").asText());
@@ -675,8 +675,10 @@ public class FlotoService implements Closeable {
 		try {
 			ObjectMapper mapper = new ObjectMapper();
 			Map<String, Object> siteMap = mapper.reader(Map.class).readValue(manifest.site);
+			Map<String, Object> manifestMap = mapper.reader(Map.class).readValue(manifestString);
 			HashMap<String, Object> globalConfig = new HashMap<>();
 			globalConfig.put("site", siteMap);
+			globalConfig.put("manifest", manifestMap);
 			return globalConfig;
 		} catch (IOException e) {
 			throw Throwables.propagate(e);
@@ -840,7 +842,7 @@ public class FlotoService implements Closeable {
 							if (source.startsWith("/")) {
 								source = source.substring(1);
 							}
-							String templated = new TemplateUtil().getTemplate(step, globalConfig);
+							String templated = createTemplateUtil().getTemplate(step, globalConfig);
 							TarEntry templateTarEntry = new TarEntry(source);
 							byte[] templateBytes = templated.getBytes(Charsets.UTF_8);
 							templateTarEntry.setSize(templateBytes.length);
@@ -1339,7 +1341,7 @@ public class FlotoService implements Closeable {
 			throw new IllegalArgumentException("Template path not found: " + path);
 		}
 		Map<String, Object> globalConfig = createGlobalConfig(manifest);
-		return new TemplateUtil().getTemplate(templateStep, globalConfig);
+		return createTemplateUtil().getTemplate(templateStep, globalConfig);
 	}
 
 	public String getDocumentString(String documentId) {
@@ -1434,7 +1436,7 @@ public class FlotoService implements Closeable {
 			throw new IllegalArgumentException("Template path not found: " + path);
 		}
 		Map<String, Object> globalConfig = createGlobalConfig(manifest);
-		return new TemplateUtil().getTemplate(templateStep, globalConfig);
+		return createTemplateUtil().getTemplate(templateStep, globalConfig);
 	}
 
 	@Override
@@ -1464,7 +1466,7 @@ public class FlotoService implements Closeable {
 						String type = step.path("type").asText();
 						if ("ADD_TEMPLATE".equals(type)) {
 							try {
-								new TemplateUtil().getTemplate(step, globalConfig);
+								createTemplateUtil().getTemplate(step, globalConfig);
 							} catch (Throwable throwable) {
 								String template = step.path("template").asText();
 								log.warn("Unable to generate template " + template, throwable);
@@ -1477,6 +1479,10 @@ public class FlotoService implements Closeable {
 			Throwables.propagate(e);
 		}
 		log.info("Templates validated");
+	}
+
+	public TemplateUtil createTemplateUtil() {
+		return new TemplateUtil(rootDefinitionFile.toPath().getRoot().toFile());
 	}
 
 	public boolean isUseProxy() {

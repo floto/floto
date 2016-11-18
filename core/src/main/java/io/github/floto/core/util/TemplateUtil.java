@@ -12,11 +12,18 @@ import freemarker.template.TemplateExceptionHandler;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TemplateUtil {
-    public String getTemplate(JsonNode step, Map<String, Object> globalConfig) {
+	private File rootPath;
+
+	public TemplateUtil(File rootPath) {
+		this.rootPath = rootPath;
+	}
+
+	public String getTemplate(JsonNode step, Map<String, Object> globalConfig) {
         try {
             String template = step.path("template").asText();
             File templateFile = new File(template);
@@ -27,7 +34,7 @@ public class TemplateUtil {
 			cfg.setLogTemplateExceptions(false);
             cfg.setNumberFormat("0.######");
             cfg.setObjectWrapper(new DefaultObjectWrapper());
-            cfg.setDirectoryForTemplateLoading(templateFile.getParentFile());
+			cfg.setDirectoryForTemplateLoading(rootPath);
             cfg.setDefaultEncoding("UTF-8");
             ObjectMapper mapper = new ObjectMapper();
             Map<String, Object> localConfig = mapper.reader(Map.class).readValue(step.path("config"));
@@ -35,7 +42,8 @@ public class TemplateUtil {
             config.putAll(localConfig);
             config.put("jsonify", new FreemarkerJsonifyMethod());
             cfg.setTemplateExceptionHandler(TemplateExceptionHandler.DEBUG_HANDLER);
-            Template templateFunc = cfg.getTemplate(templateFile.getName());
+			Path relativePath = rootPath.toPath().relativize(templateFile.toPath());
+			Template templateFunc = cfg.getTemplate(relativePath.toString().replaceAll("\\\\", "/"));
             StringWriter stringWriter = new StringWriter();
 			templateFunc.process(config, stringWriter);
             String templated = stringWriter.toString();
