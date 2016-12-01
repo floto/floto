@@ -54,7 +54,7 @@ public class SshService {
                 try {
                     cmd.join(timeout, TimeUnit.MINUTES);
                 } catch (ConnectionException e) {
-					log.warn("failed to set timeout '" + timeout + "' minutes.", e);
+					log.warn("fail! ", e);
                 }
                 Integer exitStatus = cmd.getExitStatus();
                 if (exitStatus == null) {
