@@ -1,5 +1,5 @@
 require('expose?jQuery!expose?$!jquery');
-require("script!../../lib/pnotify/pnotify.custom.min.js");
+require("script!../../lib/pnotify/pnotify.custom.js");
 
 PNotify.prototype.options.styling = "bootstrap3";
 PNotify.prototype.options.history.menu = true;

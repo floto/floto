@@ -24,7 +24,7 @@ import Root from "./app/Root";
 
  */
 require("bootstrap/dist/css/bootstrap.css");
-require("../lib/pnotify/pnotify.custom.min.css");
+require("../lib/pnotify/pnotify.custom.css");
 require("./style/style.css");
 
 
