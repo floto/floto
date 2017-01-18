@@ -58,7 +58,6 @@ public class DeployerBuilder {
             TaskService taskService = new TaskService();
             flotoService = new FlotoService(parameters, taskService);
             flotoService.compileManifest().getResultFuture().get();
-            flotoService.validateTemplates();
 
             flotoService.enableBuildOutputDump(true);
 
