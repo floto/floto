@@ -1350,7 +1350,21 @@ return init(root);
                         }
                     })
                     .append($("<div />", {"class": "ui-pnotify-history-header", "text": options.labels.redisplay}))
-                    .append($("<button />", {
+					.append($("<button />", {
+						"class": "ui-pnotify-history-last "+notice.styles.hi_btn,
+						"text": options.labels.last,
+						"mouseenter": function(){
+							$(this).addClass(notice.styles.hi_btnhov);
+						},
+						"mouseleave": function(){
+							$(this).removeClass(notice.styles.hi_btnhov);
+						},
+						"click": function(){
+							$(this).trigger("pnotify.history-last");
+							return false;
+						}
+					}))
+					.append($("<button />", {
                             "class": "ui-pnotify-history-all "+notice.styles.hi_btn,
                             "text": options.labels.all,
                             "mouseenter": function(){
@@ -1364,20 +1378,20 @@ return init(root);
                                 return false;
                             }
                     }))
-                    .append($("<button />", {
-                            "class": "ui-pnotify-history-last "+notice.styles.hi_btn,
-                            "text": options.labels.last,
-                            "mouseenter": function(){
-                                $(this).addClass(notice.styles.hi_btnhov);
-                            },
-                            "mouseleave": function(){
-                                $(this).removeClass(notice.styles.hi_btnhov);
-                            },
-                            "click": function(){
-                                $(this).trigger("pnotify.history-last");
-                                return false;
-                            }
-                    }))
+					.append($("<button />", {
+						"class": "ui-pnotify-history-all "+notice.styles.hi_btn,
+						"text": "Hide",
+						"mouseenter": function(){
+							$(this).addClass(notice.styles.hi_btnhov);
+						},
+						"mouseleave": function(){
+							$(this).removeClass(notice.styles.hi_btnhov);
+						},
+						"click": function(){
+							PNotify.removeAll();
+							return false;
+						}
+					}))
                     .appendTo("body");
 
                     // Make a handle so the user can pull down the history tab.
