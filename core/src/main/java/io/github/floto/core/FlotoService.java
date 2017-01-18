@@ -235,7 +235,9 @@ public class FlotoService implements Closeable {
 	}
 
 	private void generateContainerHashes(Manifest manifest) {
+		log.info("Generating container hashes");
 		FileHashCache fileHashCache = new FileHashCache();
+		Map<String, Object> globalConfig = createGlobalConfig(manifest);
 		HashSet<Image> activeImages = new HashSet<Image>();
 		manifest.containers.forEach(container ->
 		{
@@ -247,13 +249,14 @@ public class FlotoService implements Closeable {
 				image.buildHash = activePatch.imageMap.get(image.name);
 			});
 		} else {
-			activeImages.forEach(image -> image.buildHash = generateBuildHash(fileHashCache, image.buildSteps));
+			activeImages.forEach(image -> image.buildHash = generateBuildHash(globalConfig, fileHashCache, image.buildSteps));
 		}
-		manifest.containers.forEach(container ->
+		manifest.containers.stream().parallel().forEach(container ->
 		{
 			Image image = findImage(container.image, manifest);
-			container.buildHash = generateBuildHash(fileHashCache, container.configureSteps, image.buildHash);
+			container.buildHash = generateBuildHash(globalConfig, fileHashCache, container.configureSteps, image.buildHash);
 		});
+		log.info("Generated container hashes");
 	}
 
 	public TaskInfo<Void> compileManifest() {
@@ -275,7 +278,6 @@ public class FlotoService implements Closeable {
 				manifest.containers.forEach(container -> container.projectRevision = projectRevision);
 				log.info("Compiled manifest");
 
-				log.info("Generating container hashes");
 				this.manifestString = manifestString;
 				generateContainerHashes(manifest);
 				validateTemplates();
@@ -318,8 +320,9 @@ public class FlotoService implements Closeable {
 		messageDigest.update(fileHashCache.getHash(file));
 	}
 
-	private String generateBuildHash(FileHashCache fileHashCache, List<JsonNode> buildSteps, String... additionalInputs) {
-		Map<String, Object> globalConfig = createGlobalConfig(manifest);
+	private String generateBuildHash(Map<String, Object> globalConfig, FileHashCache fileHashCache, List<JsonNode> buildSteps, String... additionalInputs) {
+		long startTime = System.currentTimeMillis();
+
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA");
 			for (String additionalInput : additionalInputs) {
@@ -1451,17 +1454,16 @@ public class FlotoService implements Closeable {
 				@Override
 				public Void execute() throws Exception {
 					// Image and container templates are validated during buildHash generation
-
+					Map<String, Object> globalConfig = createGlobalConfig(manifest);
 
 					for (Host host : manifest.hosts) {
-						verifyTemplates(host.postDeploySteps);
-						verifyTemplates(host.reconfigureSteps);
+						verifyTemplates(host.postDeploySteps, globalConfig);
+						verifyTemplates(host.reconfigureSteps, globalConfig);
 					}
 					return null;
 				}
 
-				private void verifyTemplates(Iterable<JsonNode> steps) {
-					Map<String, Object> globalConfig = createGlobalConfig(manifest);
+				private void verifyTemplates(Iterable<JsonNode> steps, Map<String, Object> globalConfig) {
 					for (JsonNode step : steps) {
 						String type = step.path("type").asText();
 						if ("ADD_TEMPLATE".equals(type)) {
