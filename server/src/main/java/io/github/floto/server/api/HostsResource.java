@@ -1,6 +1,8 @@
 package io.github.floto.server.api;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.*;
@@ -8,6 +10,7 @@ import javax.ws.rs.core.MediaType;
 
 import com.google.common.base.Joiner;
 import io.github.floto.core.FlotoService;
+import io.github.floto.dsl.model.Container;
 import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import org.slf4j.Logger;
@@ -36,6 +39,20 @@ public class HostsResource {
             for (String host : hostsRequest.hosts) {
                 log.info("Redeploying: {}", host);
                 hostService.redeployVm(host);
+
+				// auto deploy container for that host in patch apply mode
+				if (flotoService.getCommonParameters().patchMode.equals("apply")) {
+					List<String> containers = new ArrayList<String>();
+					for (Container container : flotoService.getManifest().containers) {
+						if (container.host.equalsIgnoreCase(host)) {
+							containers.add(container.name);
+						}
+					}
+					if (containers.size() > 0) {
+						Thread.sleep(5000);
+						flotoService.redeployContainers(containers, FlotoService.DeploymentMode.fromBaseImage).getResultFuture();
+					}
+				}
             }
             return null;
         });
