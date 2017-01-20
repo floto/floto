@@ -1,7 +1,6 @@
 import { connect } from 'react-redux';
-
 import { Navigation } from 'react-router';
-
+import DebounceInput from 'react-debounce-input';
 
 import ContainerGroup from "./ContainerGroup.js";
 
@@ -190,16 +189,17 @@ export default connect(state => {
 								<Button bsStyle="danger" onClick={() => actions.stopContainers(filteredContainerNames)}
 										disabled={!safetyArmed} style={buttonStyle}>Stop {containerCountName}</Button>
 								<span className={containerFilterError?"has-warning":""}>
-								<input
+								<DebounceInput
 									style={{display: "inline-block", width: "160px", marginLeft: "5px"}}
 									type="text"
 									placeholder="Filter containers"
 									title={containerFilterError}
 									value={containerFilter}
+									debounceTimeout={1500}
 									onChange={this.onChangeContainerFilter}
 									className="form-control"
 								/>
-									</span>
+								</span>
 							</ButtonGroup>
 						</div>
 						<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
