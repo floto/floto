@@ -180,7 +180,7 @@ public class EsxHypervisorService implements HypervisorService {
             return;
         }
         try {
-            int SHUTDOWN_GRACE_PERIOD = 60;
+            int SHUTDOWN_GRACE_PERIOD = 300;
             VirtualMachine vm = vmManager.getVm(vmname);
 
             if (vm != null) {
@@ -193,40 +193,45 @@ public class EsxHypervisorService implements HypervisorService {
                         }
                         Thread.sleep(1000);
                     }
-                    log.warn("VM {} did not shutdown after {} seconds, terminating forcefully", vmname, SHUTDOWN_GRACE_PERIOD);
+//                    log.warn("VM {} did not shutdown after {} seconds, terminating forcefully", vmname, SHUTDOWN_GRACE_PERIOD);
+                    throw new RuntimeException("VM "+vmname+" did not shutdown after "+SHUTDOWN_GRACE_PERIOD+" seconds.");
                 } catch(Throwable throwable) {
-                    log.warn("Error stopping VM {}", throwable);
+//                    log.warn("Error stopping VM {}", throwable);
+					Throwables.propagate(throwable);
                 }
             }
-            vm = vmManager.getVm(vmname);
-            if (vm != null) {
-                try {
-                    Task task = vm.powerOffVM_Task();
-                    EsxUtils.waitForTask(task, "Power off " + vmname);
-				} catch (Throwable throwable) {
-					log.info("Machine failed to poweroff on first try: "+ throwable.getMessage());
-					// Maybe machine is off already?
-					Thread.sleep(1000);
-					if (!isVmRunning(vmname)) {
-						// Something went wrong during poweroff (usually the
-						// machine is already off), but it is off now, so all is
-						// good
-						return;
-					}
-					// Still not off, try harder
-                    try {
-                        Task task = vm.powerOffVM_Task();
-                        EsxUtils.waitForTask(task, "Power off " + vmname);
-                    } catch (InvalidPowerState invalidPowerState) {
-                        log.warn("Machine failed to poweroff on second try: "+ invalidPowerState.getMessage());
-                        // ESX seems to be really inconsistent here, this code is usually reached when ESX won't power
-                        // off the machine, because it already _is_ off, while the PowerState queried by isVmRunning
-                        // insists it is ON.
-                        // We assume (i.e. hope) that the machine is off (one way or another) and we can proceed.
-                        // If that assumption is wrong, the next step should fail anyway if the machine is still running
-                    }
-                }
-            }
+
+// disable poweroff, since some
+
+//            vm = vmManager.getVm(vmname);
+//            if (vm != null) {
+//                try {
+//                    Task task = vm.powerOffVM_Task();
+//                    EsxUtils.waitForTask(task, "Power off " + vmname);
+//				} catch (Throwable throwable) {
+//					log.info("Machine failed to poweroff on first try: "+ throwable.getMessage());
+//					// Maybe machine is off already?
+//					Thread.sleep(1000);
+//					if (!isVmRunning(vmname)) {
+//						// Something went wrong during poweroff (usually the
+//						// machine is already off), but it is off now, so all is
+//						// good
+//						return;
+//					}
+//					// Still not off, try harder
+//                    try {
+//                        Task task = vm.powerOffVM_Task();
+//                        EsxUtils.waitForTask(task, "Power off " + vmname);
+//                    } catch (InvalidPowerState invalidPowerState) {
+//                        log.warn("Machine failed to poweroff on second try: "+ invalidPowerState.getMessage());
+//                        // ESX seems to be really inconsistent here, this code is usually reached when ESX won't power
+//                        // off the machine, because it already _is_ off, while the PowerState queried by isVmRunning
+//                        // insists it is ON.
+//                        // We assume (i.e. hope) that the machine is off (one way or another) and we can proceed.
+//                        // If that assumption is wrong, the next step should fail anyway if the machine is still running
+//                    }
+//                }
+//            }
 
         } catch (InvalidPowerState ignored) {
         } catch (Throwable t) {
