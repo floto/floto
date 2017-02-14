@@ -1187,6 +1187,8 @@ public class FlotoService implements Closeable {
 		HashMap<String, ContainerState> states = new HashMap<>();
 		Manifest manifest = this.manifest;
 		for (Host host : manifest.hosts) {
+			if (manifest.countContainer(host.name)<1) continue;
+
 			WebTarget dockerTarget = createDockerTarget(host);
 			try {
 				JsonNode response = dockerTarget.path("/containers/json").queryParam("all", true).request().buildGet().submit(JsonNode.class).get();

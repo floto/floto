@@ -23,7 +23,11 @@ public class Manifest {
         }
         throw new IllegalArgumentException("Unknown host: " + hostName);
     }
-    
+
+    public long countContainer(String hostName){
+		return containers.stream().filter(c -> c.host.equals(hostName)).count();
+	}
+
     public Container findContainer(String containerName) {
     	return containers.stream().filter(c -> c.name.equals(containerName)).findFirst().orElse(null);
     }
