@@ -20,7 +20,7 @@ export default React.createClass({
 	render() {
 		return <div>
 			<Button bsStyle="primary" onClick={this.uploadFile}>{this.props.title}</Button>
-			<form style={{display: "none"}} ref="form"><input ref="fileUpload" type="file" accept={this.props.extension}
+			<form style={{display: "none"}} ref="form"><input ref="fileUpload" type="file"
 																 onChange={this.onFileSelected}/></form>
 		</div>;
 	}
