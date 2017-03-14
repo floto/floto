@@ -222,16 +222,18 @@ public class FlotoService implements Closeable {
 				httpProxyUrl = "http://" + ownAddress + ":" + commonParameters.proxyPort + "/";
 				log.info("Proxy URL: {}", httpProxyUrl);
 				flotoDsl.setGlobal("httpProxy", httpProxyUrl);
-				flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
-				flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
-				flotoDsl.setGlobal("developmentMode", commonParameters.developmentMode);
 			} catch (Exception e) {
 				throw Throwables.propagate(e);
 			}
 
-			this.imageRegistry = new ImageRegistry(new File(flotoHome, "images"));
 
 		}
+
+		flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
+		flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
+		flotoDsl.setGlobal("developmentMode", commonParameters.developmentMode);
+
+		this.imageRegistry = new ImageRegistry(new File(flotoHome, "images"));
 	}
 
 	private void generateContainerHashes(Manifest manifest) {
