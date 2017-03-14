@@ -66,10 +66,14 @@ public class  WorkstationHypervisorService implements HypervisorService {
 
         ovftool.run(ovaCacheFile.toString(), getVmxPath(vmDescription.vmName));
 
-        //workaround for windows ovftool - it creates unnecessary subdirectory
-        //so move the files one level up        
-        File dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName);
-        if (dir.isDirectory()) {
+        //workaround for ovftool - if it creates unnecessary subdirectory depends on OS, so move the files one level up​
+		File dir = null;
+		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+			dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName);
+		} else if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0) {
+			dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName + ".vmwarevm");
+		}
+        if (dir!= null && dir.isDirectory()) {
             File[] files = dir.listFiles();
             for (File file: files){
 
