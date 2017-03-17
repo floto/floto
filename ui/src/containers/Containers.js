@@ -195,7 +195,7 @@ export default connect(state => {
 									placeholder="Filter containers"
 									title={containerFilterError}
 									value={containerFilter}
-									debounceTimeout={1500}
+									debounceTimeout={(containers.length > 500)? 500 : 0}
 									onChange={this.onChangeContainerFilter}
 									className="form-control"
 								/>
