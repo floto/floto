@@ -39,4 +39,7 @@ public class FlotoCommonParameters {
 	@Parameter(names = {"--vmrun-retry"}, description = "Retry vmrun calls 3 times if they fail. (for some special cases)")
 	public boolean vmrunRetry = false;
 
+	@Parameter(names = "--anyport", description = "Use any free HTTP Port")
+	public String anyport = "false";
+
 }

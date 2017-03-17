@@ -136,7 +136,9 @@ public class FlotoService implements Closeable {
 
 	public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
 		this.commonParameters = commonParameters;
-
+		if (commonParameters.anyport.equalsIgnoreCase("true")) {
+			commonParameters.proxyPort = 0;
+		}
 		this.patchMakerMode = commonParameters.patchMaker;
 		if (commonParameters.patchMaker) {
 			commonParameters.patchMode = "create";
@@ -219,7 +221,7 @@ public class FlotoService implements Closeable {
 					}
 				}
 				log.info("Using proxy address: {}", ownAddress);
-				httpProxyUrl = "http://" + ownAddress + ":" + commonParameters.proxyPort + "/";
+				httpProxyUrl = "http://" + ownAddress + ":" + proxy.getPort() + "/";
 				log.info("Proxy URL: {}", httpProxyUrl);
 				flotoDsl.setGlobal("httpProxy", httpProxyUrl);
 			} catch (Exception e) {

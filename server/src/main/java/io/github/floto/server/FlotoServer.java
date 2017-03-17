@@ -28,6 +28,7 @@ import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -80,6 +81,9 @@ public class FlotoServer {
             return;
         }
         jCommander.parse(args);
+        if (parameters.anyport.equalsIgnoreCase("true")) {
+        	parameters.port = 0;
+		}
 
 		Server server = new Server(parameters.port);
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -199,7 +203,7 @@ public class FlotoServer {
             server.start();
 			log.info("Floto Server started on port {}", parameters.port);
             if(parameters.developmentMode) {
-                log.info("Open your browser to http://localhost:{}/", parameters.port);
+                log.info("Open your browser to http://localhost:{}/", ((ServerConnector)server.getConnectors()[0]).getLocalPort());
             }
 			server.join();
 		} catch (Exception e) {

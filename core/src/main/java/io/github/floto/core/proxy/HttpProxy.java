@@ -8,6 +8,7 @@ import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.impl.client.cache.FileResourceFactory;
 import org.eclipse.jetty.proxy.ConnectHandler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerCollection;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -59,8 +60,11 @@ public class HttpProxy implements Closeable {
         } catch (Exception e) {
             Throwables.propagate(e);
         }
-
     }
+
+    public int getPort(){
+		return ((ServerConnector)server.getConnectors()[0]).getLocalPort();
+	}
 
     private Servlet createProxyServlet() {
         if(cachingEnabled) {
