@@ -133,7 +133,7 @@ public class FlotoServer {
         TaskService taskService = new TaskService();
         FlotoService flotoService = new FlotoService(parameters, taskService);
         HostService hostService = new HostService(flotoService);
-        PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry());
+        PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry(), hostService);
         FlotoSettings flotoSettings = flotoService.getSettings();
 		try {
             TaskInfo<Void> compileTask = null;

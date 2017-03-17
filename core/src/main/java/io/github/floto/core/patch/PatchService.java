@@ -1,13 +1,13 @@
 package io.github.floto.core.patch;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
 import com.google.common.base.Throwables;
 import com.google.inject.util.Types;
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.HostService;
 import io.github.floto.core.registry.DockerImageDescription;
 import io.github.floto.core.registry.ImageRegistry;
 import io.github.floto.dsl.model.DocumentDefinition;
@@ -22,9 +22,7 @@ import jersey.repackaged.com.google.common.collect.Lists;
 import org.apache.commons.exec.LogOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFilterUtils;
-import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.input.ReaderInputStream;
@@ -32,7 +30,6 @@ import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.StatusCommand;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -48,7 +45,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.*;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -67,13 +63,14 @@ public class PatchService {
 	private TaskService taskService;
 	private ImageRegistry imageRegistry;
 	private PatchInfo activePatch = null;
+	HostService hostService = null;
 
-
-	public PatchService(File patchesDirectory, FlotoService flotoService, TaskService taskService, ImageRegistry imageRegistry) {
+	public PatchService(File patchesDirectory, FlotoService flotoService, TaskService taskService, ImageRegistry imageRegistry, HostService hostService) {
 		this.patchesDirectory = patchesDirectory;
 		this.flotoService = flotoService;
 		this.taskService = taskService;
 		this.imageRegistry = imageRegistry;
+		this.hostService = hostService;
 
 		try {
 			FileUtils.forceMkdir(patchesDirectory);
@@ -101,6 +98,7 @@ public class PatchService {
 			taskName = "Create incremental patch " + patchCreationParams.name + " from " + patchCreationParams.parentPatchId;
 		}
 		return taskService.startTask(taskName, () -> {
+			hostService.deployIfNeededAndStart("patch-maker");
 			createPatchInternal(patchCreationParams);
 			return null;
 		});

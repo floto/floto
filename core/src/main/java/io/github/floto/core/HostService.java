@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
+import io.github.floto.util.task.TaskService;
+import org.apache.commons.exec.ExecuteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +29,7 @@ public class HostService {
 
 	public HostService(FlotoService flotoService) {
 		this.flotoService = flotoService;
+
 	}
 
 	public Map<String, String> getHostStates() {
@@ -142,5 +145,22 @@ public class HostService {
 		});
 	}
 
+	public void deployIfNeededAndStart(String vmName){
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
+			@Override
+			public Object execute() throws Exception {
+				Host host = flotoService.getManifest().findHost(vmName);
+				if (!hypervisorService.isVmRunning(host.vmConfiguration.vmName)) {
+					try {
+						startVm(vmName);
+					} catch (Exception e) {
+						log.info("failed to start "+ vmName + ", redeploy it.");
+						redeployVm(vmName);
+					}
+				}
+				return null;
+			}
+		});
+	}
 
 }
