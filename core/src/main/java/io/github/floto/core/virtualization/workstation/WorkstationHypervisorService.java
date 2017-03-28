@@ -1,11 +1,8 @@
 package io.github.floto.core.virtualization.workstation;
 
 import com.google.common.base.Throwables;
-
 import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.core.virtualization.VmDescription;
-
-import io.github.floto.dsl.model.Host;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.codehaus.plexus.util.FileUtils;
 import org.slf4j.Logger;
@@ -67,13 +64,13 @@ public class  WorkstationHypervisorService implements HypervisorService {
         ovftool.run(ovaCacheFile.toString(), getVmxPath(vmDescription.vmName));
 
         //workaround for ovftool - if it creates unnecessary subdirectory depends on OS, so move the files one level up​
-		File dir = null;
-		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-			dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName);
-		} else if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0) {
+		File dir;
+		if (System.getProperty("os.name").toLowerCase().indexOf("mac") >= 0) {
 			dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName + ".vmwarevm");
+		} else {
+			dir = new File(vmDirectory, vmDescription.vmName + "/" + vmDescription.vmName);
 		}
-        if (dir!= null && dir.isDirectory()) {
+        if (dir.isDirectory()) {
             File[] files = dir.listFiles();
             for (File file: files){
 
