@@ -19,7 +19,7 @@ public class RedeployVmJob extends HypervisorJob<Void> {
 	static CopyOnWriteArrayList<String> deployVmList = new CopyOnWriteArrayList<>();
 
     public RedeployVmJob(FlotoService flotoService, String vmName) {
-        super(flotoService.getManifest(), vmName);
+        super(flotoService.getManifest(), vmName, flotoService.getFlotoHome());
         this.flotoService = flotoService;
     }
 

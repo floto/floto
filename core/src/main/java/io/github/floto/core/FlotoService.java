@@ -1,38 +1,65 @@
 package io.github.floto.core;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
-import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Sets;
-import com.google.inject.util.Types;
-import freemarker.template.*;
-import io.github.floto.core.jobs.HostJob;
-import io.github.floto.core.jobs.ManifestJob;
-import io.github.floto.core.patch.PatchDescription;
-import io.github.floto.core.patch.PatchInfo;
-import io.github.floto.core.proxy.HttpProxy;
-import io.github.floto.core.registry.DockerImageDescription;
-import io.github.floto.core.registry.ImageRegistry;
-import io.github.floto.core.ssh.SshService;
-import io.github.floto.core.util.*;
-import io.github.floto.dsl.FlotoDsl;
-import io.github.floto.dsl.model.*;
-import io.github.floto.util.VersionUtil;
-import io.github.floto.util.task.TaskInfo;
-import io.github.floto.util.task.TaskService;
-import jersey.repackaged.com.google.common.collect.Lists;
-import jersey.repackaged.com.google.common.collect.Maps;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.filefilter.*;
+import org.apache.commons.io.filefilter.AndFileFilter;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.NotFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.tools.tar.TarEntry;
@@ -45,28 +72,52 @@ import org.glassfish.jersey.client.JerseyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.*;
-import java.net.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.security.MessageDigest;
-import java.time.Instant;
-import java.time.Period;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.function.Consumer;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
+import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
+import com.google.inject.util.Types;
+
+import freemarker.template.Configuration;
+import freemarker.template.DefaultObjectWrapper;
+import freemarker.template.Template;
+import freemarker.template.TemplateExceptionHandler;
+import freemarker.template.Version;
+import io.github.floto.core.jobs.HostJob;
+import io.github.floto.core.jobs.ManifestJob;
+import io.github.floto.core.patch.PatchDescription;
+import io.github.floto.core.patch.PatchInfo;
+import io.github.floto.core.proxy.HttpProxy;
+import io.github.floto.core.registry.DockerImageDescription;
+import io.github.floto.core.registry.ImageRegistry;
+import io.github.floto.core.ssh.SshService;
+import io.github.floto.core.util.DockerfileHelper;
+import io.github.floto.core.util.ErrorClientResponseFilter;
+import io.github.floto.core.util.FileHashCache;
+import io.github.floto.core.util.FreemarkerIncludeAsBase64Method;
+import io.github.floto.core.util.MavenHelper;
+import io.github.floto.core.util.TemplateUtil;
+import io.github.floto.dsl.FlotoDsl;
+import io.github.floto.dsl.model.Container;
+import io.github.floto.dsl.model.DocumentDefinition;
+import io.github.floto.dsl.model.Host;
+import io.github.floto.dsl.model.Image;
+import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.VersionUtil;
+import io.github.floto.util.task.TaskInfo;
+import io.github.floto.util.task.TaskService;
+import jersey.repackaged.com.google.common.collect.Lists;
+import jersey.repackaged.com.google.common.collect.Maps;
 
 public class FlotoService implements Closeable {
 	private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -134,7 +185,7 @@ public class FlotoService implements Closeable {
 		this.patchMakerMode = false;
 	}
 
-	public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService) {
+	public FlotoService(FlotoCommonParameters commonParameters, TaskService taskService, File flotoHome) {
 		this.commonParameters = commonParameters;
 		if (commonParameters.anyport.equalsIgnoreCase("true")) {
 			commonParameters.proxyPort = 0;
@@ -150,22 +201,7 @@ public class FlotoService implements Closeable {
 		}
 
 		// default
-		this.flotoHome = new File(System.getProperty("user.home") + "/.floto");
-		// override through environment variable
-		String envFlotoHome = System.getenv("FLOTO_HOME");
-		if (envFlotoHome != null) {
-			this.flotoHome = new File(envFlotoHome);
-		}
-		// override through command line
-		if (commonParameters.flotoHome != null) {
-			this.flotoHome = new File(commonParameters.flotoHome);
-		}
-		log.info("Using floto home: {}", this.flotoHome);
-		try {
-			FileUtils.forceMkdir(this.flotoHome);
-		} catch (IOException e) {
-			throw new IllegalStateException("Could not create floto home " + this.flotoHome, e);
-		}
+		this.flotoHome = flotoHome;
 		loadSettings();
 
 		this.taskService = taskService;
@@ -1586,7 +1622,7 @@ public class FlotoService implements Closeable {
 	public File getFlotoHome() {
 		return flotoHome;
 	}
-
+	
 	public Throwable getManifestCompilationError() {
 		return manifestCompilationError;
 	}

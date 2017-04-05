@@ -1,5 +1,16 @@
 package io.github.floto.core;
 
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Throwables;
+
 import io.github.floto.core.jobs.ExportVmJob;
 import io.github.floto.core.jobs.HostStepRunner;
 import io.github.floto.core.jobs.HypervisorJob;
@@ -10,26 +21,16 @@ import io.github.floto.core.virtualization.HypervisorService;
 import io.github.floto.dsl.model.Host;
 import io.github.floto.dsl.model.Manifest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-
-import io.github.floto.util.task.TaskService;
-import org.apache.commons.exec.ExecuteException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Throwables;
-
 public class HostService {
 	private Logger log = LoggerFactory.getLogger(HostService.class);
 	private JobRunner jobRunner = new JobRunner();
 	private FlotoService flotoService;
+	
+	private File vmDirectory;
 
 	public HostService(FlotoService flotoService) {
 		this.flotoService = flotoService;
-
+		this.vmDirectory = new File(flotoService.getFlotoHome(), "vm");
 	}
 
 	public Map<String, String> getHostStates() {
@@ -102,7 +103,7 @@ public class HostService {
 	}
 
 	private <T> T runHypervisorTask(String vmName, BiFunction<HypervisorService, String, T> method) {
-		return runTask(new HypervisorJob<T>(flotoService.getManifest(), vmName) {
+		return runTask(new HypervisorJob<T>(flotoService.getManifest(), vmName, vmDirectory) {
 			@Override
 			public T execute() throws Exception {
 				try {
@@ -116,7 +117,7 @@ public class HostService {
 	}
 
 	private void runHypervisorTask(String vmName, BiConsumer<HypervisorService, String> method) {
-		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, vmDirectory) {
 			@Override
 			public Object execute() throws Exception {
 				try {
@@ -132,7 +133,7 @@ public class HostService {
 
 
 	private void reconfigure(String vmName) {
-		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, vmDirectory) {
 			@Override
 			public Object execute() throws Exception {
 				Host host = flotoService.getManifest().findHost(vmName);
@@ -146,7 +147,7 @@ public class HostService {
 	}
 
 	public void deployIfNeededAndStart(String vmName){
-		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName) {
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, vmDirectory) {
 			@Override
 			public Object execute() throws Exception {
 				Host host = flotoService.getManifest().findHost(vmName);

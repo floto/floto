@@ -50,27 +50,21 @@ public class VirtualboxHypervisorService implements HypervisorService {
 	private File vmDirectory;
 	private final ExternalProgram vBoxManage = ExternalProgram.create("VBoxManage", "Oracle/VirtualBox");
 
-	public VirtualboxHypervisorService(
-			final VirtualboxHypervisorDescription description) {
-	}
-
 	private final PercentEscaper escaper;
 
-	{
+	public VirtualboxHypervisorService(
+			final VirtualboxHypervisorDescription description, File flotoHome) {
 		try {
-			cacheDirectory = new File(System.getProperty("user.home")
-					+ "/.floto/virtualbox/cache");
+			cacheDirectory = new File(flotoHome, "virtualbox/cache");
 			FileUtils.forceMkdir(cacheDirectory);
 
-			vmDirectory = new File(System.getProperty("user.home")
-					+ "/.floto/virtualbox/vms");
+			vmDirectory = new File(flotoHome, "virtualbox/vms");
 			FileUtils.forceMkdir(vmDirectory);
 		} catch (final IOException e) {
 			Throwables.propagate(e);
 		}
 
 		escaper = new PercentEscaper(".-_", false);
-
 	}
 
 	@Override

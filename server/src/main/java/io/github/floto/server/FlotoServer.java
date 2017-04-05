@@ -17,6 +17,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import io.github.floto.core.FlotoService;
 import io.github.floto.core.FlotoSettings;
 import io.github.floto.core.HostService;
+import io.github.floto.core.ParameterReader;
 import io.github.floto.core.patch.PatchService;
 import io.github.floto.server.api.*;
 import io.github.floto.server.api.websocket.handler.SubscribeToContainerLogHandler;
@@ -134,8 +135,9 @@ public class FlotoServer {
         provider.setMapper(mapper);
         resourceConfig.register(provider);
 
-        TaskService taskService = new TaskService();
-        FlotoService flotoService = new FlotoService(parameters, taskService);
+        File flotoHome = ParameterReader.getFlotoHome(parameters);
+        TaskService taskService = new TaskService(flotoHome);
+        FlotoService flotoService = new FlotoService(parameters, taskService, flotoHome);
         HostService hostService = new HostService(flotoService);
         PatchService patchService = new PatchService(new File(flotoService.getFlotoHome(), "patches"), flotoService, taskService, flotoService.getImageRegistry(), hostService);
         FlotoSettings flotoSettings = flotoService.getSettings();

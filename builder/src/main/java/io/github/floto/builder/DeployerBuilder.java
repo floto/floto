@@ -1,13 +1,6 @@
 package io.github.floto.builder;
 
-import io.github.floto.core.FlotoService;
-import io.github.floto.core.jobs.ExportVmJob;
-import io.github.floto.core.jobs.RedeployVmJob;
-import io.github.floto.dsl.model.Container;
-import io.github.floto.dsl.model.Host;
-import io.github.floto.dsl.model.Manifest;
-import io.github.floto.util.task.TaskService;
-
+import java.io.File;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +14,15 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
+
+import io.github.floto.core.FlotoService;
+import io.github.floto.core.ParameterReader;
+import io.github.floto.core.jobs.ExportVmJob;
+import io.github.floto.core.jobs.RedeployVmJob;
+import io.github.floto.dsl.model.Container;
+import io.github.floto.dsl.model.Host;
+import io.github.floto.dsl.model.Manifest;
+import io.github.floto.util.task.TaskService;
 
 public class DeployerBuilder {
 	
@@ -55,8 +57,9 @@ public class DeployerBuilder {
             log.info("Starting Floto Builder");
             Stopwatch stopwatch = Stopwatch.createStarted();
 
-            TaskService taskService = new TaskService();
-            flotoService = new FlotoService(parameters, taskService);
+            File flotoHome = ParameterReader.getFlotoHome(parameters);
+            TaskService taskService = new TaskService(flotoHome);
+            flotoService = new FlotoService(parameters, taskService, flotoHome);
             flotoService.compileManifest().getResultFuture().get();
 
             flotoService.enableBuildOutputDump(true);

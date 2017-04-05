@@ -2,8 +2,10 @@ package io.github.floto.builder;
 
 import com.beust.jcommander.JCommander;
 import com.google.common.base.Stopwatch;
+import com.vmware.vim25.FloatOption;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.ParameterReader;
 import io.github.floto.core.FlotoService.DeploymentMode;
 import io.github.floto.core.jobs.ExportVmJob;
 import io.github.floto.core.jobs.RedeployVmJob;
@@ -63,8 +65,9 @@ public class FlotoBuilder {
             log.info("Starting Floto Builder");
             Stopwatch stopwatch = Stopwatch.createStarted();
 
-            TaskService taskService = new TaskService();
-            flotoService = new FlotoService(parameters, taskService);
+            File flotoHome = ParameterReader.getFlotoHome(parameters);
+            TaskService taskService = new TaskService(flotoHome);
+            flotoService = new FlotoService(parameters, taskService, flotoHome);
 			TaskInfo<Void> taskInfo = flotoService.compileManifest();
 			taskInfo.getResultFuture().get();
 			if(taskInfo.getNumberOfWarnings() > 0) {

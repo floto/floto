@@ -1,25 +1,28 @@
 package io.github.floto.util.task;
 
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.function.BiConsumer;
+
+import org.slf4j.LoggerFactory;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.pattern.RootCauseFirstThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.apache.commons.io.input.Tailer;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.function.BiConsumer;
 
 public class TaskService {
     private Executor executor = Executors.newFixedThreadPool(8, new ThreadFactoryBuilder().setDaemon(true).build());
@@ -29,9 +32,9 @@ public class TaskService {
 
     private List<BiConsumer<TaskInfo, Throwable>> taskCompletionListeners = new ArrayList<>();
 
-    public TaskService() {
+    public TaskService(File flotoHome) {
         initLogging();
-        taskPersistence = new TaskPersistence();
+        taskPersistence = new TaskPersistence(flotoHome);
     }
 
     private void initLogging() {

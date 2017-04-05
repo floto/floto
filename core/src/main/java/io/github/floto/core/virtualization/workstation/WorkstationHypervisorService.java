@@ -25,20 +25,18 @@ public class  WorkstationHypervisorService implements HypervisorService {
     private File vmDirectory;
     private File cacheDirectory;
 
-    {
+    public WorkstationHypervisorService(File flotoHome) {
+        this.vmDirectory = new File(flotoHome, "vm");
+
         vmrun.setTimeout(Duration.ofMinutes(1));
         ovftool.setTimeout(Duration.ofHours(1));
 
-        cacheDirectory = new File(System.getProperty("user.home") + "/.floto/cache/vm");
+        cacheDirectory = new File(flotoHome, "cache/vm");
         try {
             FileUtils.forceMkdir(cacheDirectory);
         } catch (IOException e) {
             Throwables.propagate(e);
         }
-    }
-
-    public WorkstationHypervisorService(File vmDirectory) {
-        this.vmDirectory = vmDirectory;
     }
 
     @Override

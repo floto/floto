@@ -13,7 +13,7 @@ public class ExportVmJob extends HypervisorJob<Void> {
 	private FlotoService flotoService;
 
 	public ExportVmJob(FlotoService flotoService, String vmName) {
-		super(flotoService.getManifest(), vmName);
+		super(flotoService.getManifest(), vmName, flotoService.getFlotoHome());
 		this.flotoService = flotoService;
 	}
 

@@ -41,9 +41,9 @@ public class TaskPersistence {
         }
     });
 
-    public TaskPersistence() {
+    public TaskPersistence(File flotoHome) {
         try {
-            tasksDirectory = new File(System.getProperty("user.home") + "/.floto/tasks");
+            this.tasksDirectory = new File(flotoHome, "tasks");
             FileUtils.forceMkdir(tasksDirectory);
             File[] directories = tasksDirectory.listFiles((FileFilter) FileFilterUtils.directoryFileFilter());
             long maximumTaskId = 0;
