@@ -1,6 +1,5 @@
 package io.github.floto.core;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -26,11 +25,8 @@ public class HostService {
 	private JobRunner jobRunner = new JobRunner();
 	private FlotoService flotoService;
 	
-	private File vmDirectory;
-
 	public HostService(FlotoService flotoService) {
 		this.flotoService = flotoService;
-		this.vmDirectory = new File(flotoService.getFlotoHome(), "vm");
 	}
 
 	public Map<String, String> getHostStates() {
@@ -103,7 +99,7 @@ public class HostService {
 	}
 
 	private <T> T runHypervisorTask(String vmName, BiFunction<HypervisorService, String, T> method) {
-		return runTask(new HypervisorJob<T>(flotoService.getManifest(), vmName, vmDirectory) {
+		return runTask(new HypervisorJob<T>(flotoService.getManifest(), vmName, flotoService.getFlotoHome()) {
 			@Override
 			public T execute() throws Exception {
 				try {
@@ -117,7 +113,7 @@ public class HostService {
 	}
 
 	private void runHypervisorTask(String vmName, BiConsumer<HypervisorService, String> method) {
-		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, vmDirectory) {
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, flotoService.getFlotoHome()) {
 			@Override
 			public Object execute() throws Exception {
 				try {
@@ -133,7 +129,7 @@ public class HostService {
 
 
 	private void reconfigure(String vmName) {
-		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, vmDirectory) {
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, flotoService.getFlotoHome()) {
 			@Override
 			public Object execute() throws Exception {
 				Host host = flotoService.getManifest().findHost(vmName);
@@ -147,7 +143,7 @@ public class HostService {
 	}
 
 	public void deployIfNeededAndStart(String vmName){
-		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, vmDirectory) {
+		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, flotoService.getFlotoHome()) {
 			@Override
 			public Object execute() throws Exception {
 				Host host = flotoService.getManifest().findHost(vmName);
