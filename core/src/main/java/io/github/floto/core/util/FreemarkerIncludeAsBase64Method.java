@@ -26,8 +26,8 @@ public class FreemarkerIncludeAsBase64Method implements TemplateDirectiveModel {
 		Template template = environment.getCurrentTemplate();
 		Path templatePath = rootPath.resolve(template.getName());
 		File file = templatePath.getParent().resolve(path).toFile();
-		OutputStream base64OutputStream = new CloseShieldOutputStream(new Base64OutputStream(new WriterOutputStream(environment.getOut(), "UTF-8")));
+		OutputStream base64OutputStream = new Base64OutputStream(new CloseShieldOutputStream(new WriterOutputStream(environment.getOut(), "UTF-8")));
 		FileUtils.copyFile(file, base64OutputStream);
-		base64OutputStream.flush();
+		base64OutputStream.close();
 	}
 }
