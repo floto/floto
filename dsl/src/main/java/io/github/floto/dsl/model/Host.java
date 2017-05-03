@@ -13,4 +13,5 @@ public class Host {
     public String dockerUrl;
     public List<JsonNode> postDeploySteps = new ArrayList<>();
     public List<JsonNode> reconfigureSteps = new ArrayList<>();
+    public boolean externalVm = false;
 }

@@ -65,27 +65,33 @@ export default connect(state => {
 				let safetyArmed = this.safetyArmed;
 				let actions = this.context.actions;
 				let rowClassName = null;
+				let externalVm = false;
 				if(host === this.selectedHost) {
 					rowClassName = "info";
 				}
+				if(host.externalVm){
+					externalVm = true;
+				}
+				
 				let labelStyle = labelStyleMapping[host.state] || "default";
 				return <tr key={host.name} onClick={this.navigateToHost.bind(this, host.name)} className={rowClassName}>
 					<td><Label bsStyle={labelStyle}>{host.state || "unknown" }</Label></td>
-					<td><Button bsStyle="primary" bsSize="xs" disabled={!safetyArmed}
+					<td><Button bsStyle="primary" bsSize="xs" disabled={!safetyArmed || externalVm}
 								onClick={actions.redeployHosts.bind(null, [host.name])}>Redeploy</Button>
 					</td>
-					<td><Button bsStyle="success" bsSize="xs" disabled={!safetyArmed}
+					<td><Button bsStyle="success" bsSize="xs" disabled={!safetyArmed || externalVm}
 								onClick={actions.startHosts.bind(null, [host.name])}>Start</Button>
 					</td>
-					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}
+					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed || externalVm}
 								onClick={actions.stopHosts.bind(null, [host.name])}>Stop</Button>
 					</td>
-					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed}
+					<td><Button bsStyle="danger" bsSize="xs" disabled={!safetyArmed || externalVm}
 								onClick={actions.destroyHosts.bind(null, [host.name])}>Destroy</Button>
 					</td>
 					<td style={{width: "100%"}}>{host.name}
 						{host.vmConfiguration.hypervisor.esxHost ? <span
-							className="text-muted">@{host.vmConfiguration.hypervisor.esxHost}</span> : null}</td>
+							className="text-muted">@{host.vmConfiguration.hypervisor.esxHost}</span> : null}
+						{externalVm ? <span className="text-muted"> (unmanaged)</span> : null}</td>
 				</tr>;
 			},
 
@@ -119,11 +125,17 @@ export default connect(state => {
 				hosts = _.filter(hosts, (host) => host.name != "patch-maker");
 				if (patchMaker != null) hosts.splice(0, 0, patchMaker);
 
-				let hostNames = _.pluck(hosts, "name");
+				let controlledVmNames = [];
 
+				_.forEach(hosts, (host) => {
+					if (!host.externalVm) {
+						controlledVmNames.push(host.name);
+					}
+				});
+				
 				let hostsCountName = "all";
-				if(hosts.length != allHosts.length) {
-					hostsCountName = hosts.length;
+				if(controlledVmNames.length != allHosts.length) {
+					hostsCountName = controlledVmNames.length;
 				}
 
 				let buttonStyle = {width: "100px"};
@@ -144,11 +156,11 @@ export default connect(state => {
 								</h2>
 								<ButtonGroup>
 									<Button onClick={actions.loadHostStates}>Refresh</Button>
-									<Button bsStyle="primary" onClick={() => actions.redeployHosts(hostNames)}
+									<Button bsStyle="primary" onClick={() => actions.redeployHosts(controlledVmNames)}
 											disabled={!safetyArmed}>{"Redeploy "+hostsCountName+" hosts"}</Button>
-									<Button bsStyle="success" onClick={() => actions.startHosts(hostNames)}
+									<Button bsStyle="success" onClick={() => actions.startHosts(controlledVmNames)}
 											disabled={!safetyArmed} style={buttonStyle} >Start {hostsCountName}</Button>
-									<Button bsStyle="danger" onClick={() => actions.stopHosts(hostNames.slice().reverse())}
+									<Button bsStyle="danger" onClick={() => actions.stopHosts(controlledVmNames.slice().reverse())}
 											disabled={!safetyArmed} style={buttonStyle}>Stop {hostsCountName}</Button>
 									<span className={hostFilterError?"has-warning":""}>
 									<DebounceInput

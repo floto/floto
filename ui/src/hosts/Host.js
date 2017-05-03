@@ -14,18 +14,21 @@ export default connect(state => {
 		if (!host) {
 			return null;
 		}
-		let fileTargets = [
-			{name: "PostDeploy", file: "script%2FpostDeploy"},
-			{name: "Reconfigure", file: "script%2Freconfigure"}
-		];
-		let templates = this.props.templateMap[`host:${host.name}`];
-		_.forEach(templates, (template) => {
-			fileTargets.push({
-				name: template.name,
-				file: encodeURIComponent("template/" + template.destination),
-				destination: template.destination
+		let fileTargets = [];
+		if(host.externalVm != null && host.externalVm == false){
+			fileTargets = [
+				{name: "PostDeploy", file: "script%2FpostDeploy"},
+				{name: "Reconfigure", file: "script%2Freconfigure"}
+			];
+			let templates = this.props.templateMap[`host:${host.name}`];
+			_.forEach(templates, (template) => {
+				fileTargets.push({
+					name: template.name,
+					file: encodeURIComponent("template/" + template.destination),
+					destination: template.destination
+				});
 			});
-		});
+		}
 
 		let selectedFileName = this.props.selectedFile && this.props.selectedFile.fileName || this.props.selectedFileError && this.props.selectedFileError.fileName;
 		if(selectedFileName) {
