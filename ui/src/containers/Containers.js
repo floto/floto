@@ -140,11 +140,11 @@ export default connect(state => {
 							group.changedContainerNames.push(container.name);
 						}
 					}
-					if(container.startable == null || container.startable != false){
+					if(container.startable == null || container.startable == true){
 						startableContainerNames.push(container.name);
 						groupStartableContainerNames.push(container.name);
 					}
-					if(container.stoppable == null || container.stoppable != false){
+					if(container.stoppable == null || container.stoppable == true){
 						stoppableContainerNames.push(container.name);
 						groupStoppableContainerNames.push(container.name);
 					}

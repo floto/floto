@@ -40,9 +40,9 @@ export default connect(state => {
 		let className = null;
 		let unmanaged = container.unmanaged;
 		let externalContainer = false;
-		let startable = true;
-		let stoppable = true;
-		let purgeable = true;
+		let startable = false;
+		let stoppable = false;
+		let purgeable = false;
 		if(container.unmanaged) {
 			className = "warning";
 		}
@@ -53,14 +53,14 @@ export default connect(state => {
 			externalContainer = true;
 			container.state.needsRedeploy = false;
 		}
-		if(container.stoppable != null || container.stoppable == false){
-			stoppable = false;
+		if(container.stoppable == null || container.stoppable == true){
+			stoppable = true;
 		}
-		if(container.startable != null || container.startable == false){
-			startable = false;
+		if(container.startable == null || container.startable == true){
+			startable = true;
 		}
-		if(container.purgeable != null || container.purgeable == false){
-			purgeable = false;
+		if(container.purgeable == null || container.purgeable == true){
+			purgeable = true;
 		}
 		var containerState = container.state;
         let status = containerState.status;
