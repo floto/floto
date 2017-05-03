@@ -11,7 +11,10 @@ public class Container {
 	public JsonNode config;
 	public List<JsonNode> configureSteps;
     public boolean priviledged = false;
-    public boolean uncontrolled = false;
+    public boolean externalContainer = false;
+    public boolean startable = true;
+    public boolean stoppable = true;
+    public boolean purgeable = true;
 	public String projectRevision;
 
 	public String buildHash;

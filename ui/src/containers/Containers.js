@@ -112,30 +112,47 @@ export default connect(state => {
 				containerFilterError = ""+error;
 			}
 
-
 			let filteredContainerCount = 0;
-			let controlledContainerCount = 0;
 			let filteredContainerNames = [];
 			let controlledContainerNames = [];
 			let changedContainerNames = [];
+			let startableContainerNames = [];
+			let stoppableContainerNames = [];
+			
 			_.forEach(groups, group => {
+				
+				let groupControlledContainerNames = [];
+				let groupStartableContainerNames = [];
+				let groupStoppableContainerNames = [];
+				
 				group.containers = _.sortBy(group.containers, "name");
 				group.totalCount = group.containers.length;
 				if(containerFilterRegex !== null) {
 					group.containers = _.filter(group.containers, (container) => containerFilterRegex.test(container.name));
 				}
-				group.containerNames = _.map(group.containers, (container) => container.name);
 				group.changedContainerNames = [];
 				_.forEach(group.containers, (container) => {
-					if (!container.uncontrolled) {
+					if (!container.externalContainer) {
 						controlledContainerNames.push(container.name);
-						controlledContainerCount++;
+						groupControlledContainerNames.push(container.name);
 						if (container.state.needsRedeploy) {
 							changedContainerNames.push(container.name);
 							group.changedContainerNames.push(container.name);
 						}
 					}
+					if(container.startable == null || container.startable != false){
+						startableContainerNames.push(container.name);
+						groupStartableContainerNames.push(container.name);
+					}
+					if(container.stoppable == null || container.stoppable != false){
+						stoppableContainerNames.push(container.name);
+						groupStoppableContainerNames.push(container.name);
+					}
 				});
+				group.containerNames = _.map(group.containers, (container) => container.name);
+				group.controlledContainerNames = groupControlledContainerNames;
+				group.startableContainerNames = groupStartableContainerNames;
+				group.stoppableContainerNames = groupStoppableContainerNames;
 			filteredContainerNames = filteredContainerNames.concat(group.containerNames);
 			filteredContainerCount += group.containers.length;
 			});
@@ -153,12 +170,20 @@ export default connect(state => {
 			let containerCount = containers.length;
 			let containerCountName = "all";
 			let controlledCountName = "all";
+			let startableCountName = "all";
+			let stoppableCountName = "all";
 			if(filteredContainerCount !== containers.length) {
                 containerCount = filteredContainerCount  + "/" + containerCount;
                 containerCountName = filteredContainerCount;
             }
-			if(controlledContainerCount !== filteredContainerCount) {
-				controlledCountName = controlledContainerCount;
+			if(controlledContainerNames.length !== filteredContainerCount) {
+				controlledCountName = controlledContainerNames.length;
+			}
+			if(startableContainerNames.length !== filteredContainerCount) {
+				startableCountName = startableContainerNames.length;
+			}
+			if(stoppableContainerNames.length !== filteredContainerCount) {
+				stoppableCountName = stoppableContainerNames.length;
 			}
 
 			let buttonStyle = {width: "100px"};
@@ -184,10 +209,10 @@ export default connect(state => {
 												onExecute={(deploymentMode) => actions.redeployContainers( changedContainerNames, deploymentMode)}/>
 								<RedeployButton style={buttonStyle} disabled={!safetyArmed || controlledContainerNames.length < 1} title={"Redeploy " + controlledCountName}
 												onExecute={(deploymentMode) => actions.redeployContainers( controlledContainerNames, deploymentMode)}/>
-								<Button bsStyle="success" onClick={() => actions.startContainers(filteredContainerNames)}
-										disabled={!safetyArmed} style={buttonStyle} >Start {containerCountName}</Button>
-								<Button bsStyle="danger" onClick={() => actions.stopContainers(filteredContainerNames)}
-										disabled={!safetyArmed} style={buttonStyle}>Stop {containerCountName}</Button>
+								<Button bsStyle="success" onClick={() => actions.startContainers(startableContainerNames)}
+										disabled={!safetyArmed || startableContainerNames.length < 1} style={buttonStyle} >Start {startableCountName}</Button>
+								<Button bsStyle="danger" onClick={() => actions.stopContainers(stoppableContainerNames)}
+										disabled={!safetyArmed || stoppableContainerNames.length < 1} style={buttonStyle}>Stop {stoppableCountName}</Button>
 								<span className={containerFilterError?"has-warning":""}>
 								<DebounceInput
 									style={{display: "inline-block", width: "160px", marginLeft: "5px"}}

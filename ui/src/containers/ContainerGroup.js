@@ -39,16 +39,28 @@ export default connect(state => {
 		let safetyArmed = this.safetyArmed;
 		let className = null;
 		let unmanaged = container.unmanaged;
-		let uncontrolledSafetyArmed = true;
+		let externalContainer = false;
+		let startable = true;
+		let stoppable = true;
+		let purgeable = true;
 		if(container.unmanaged) {
 			className = "warning";
 		}
 		if (this.props.selectedContainer === container) {
 			className = "info";
 		}
-		if(container.uncontrolled){
-			uncontrolledSafetyArmed = false;
+		if(container.externalContainer){
+			externalContainer = true;
 			container.state.needsRedeploy = false;
+		}
+		if(container.stoppable != null || container.stoppable == false){
+			stoppable = false;
+		}
+		if(container.startable != null || container.startable == false){
+			startable = false;
+		}
+		if(container.purgeable != null || container.purgeable == false){
+			purgeable = false;
 		}
 		var containerState = container.state;
         let status = containerState.status;
@@ -58,22 +70,22 @@ export default connect(state => {
 				   onClick={this.navigateToContainer.bind(this, container.name)}>
 			<td><Label bsStyle={labelStyle}>{status || "unknown" }</Label></td>
 			<td>
-				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed || !uncontrolledSafetyArmed} size="xs"
+				<div style={{width: 100}}><RedeployButton disabled={!safetyArmed || externalContainer} size="xs"
 														  bsStyle={containerState.needsRedeploy?"primary": "default"}
 														  onExecute={(deploymentMode) => actions.redeployContainers([container.name], deploymentMode)}/>
 				</div>
 			</td>
 			<td><div style={{width: 50}}>
 				{status === "running"?<Button bsStyle="success" bsSize="xs" onClick={actions.restartContainers.bind(null, [container.name])}
-						disabled={!safetyArmed}>Restart</Button>:
+						disabled={!(safetyArmed && startable)}>Restart</Button>:
 				<Button bsStyle="success" bsSize="xs" onClick={actions.startContainers.bind(null, [container.name])}
-						disabled={!safetyArmed}>Start</Button>}
+						disabled={!(safetyArmed && startable)}>Start</Button>}
 				</div>
 			</td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.stopContainers.bind(null, [container.name])}
-						disabled={!safetyArmed}>Stop</Button></td>
+						disabled={!(safetyArmed && stoppable)}>Stop</Button></td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.purgeContainerData.bind(null, [container.name])}
-						disabled={!safetyArmed}>Purge
+						disabled={!(safetyArmed && purgeable)}>Purge
 				Data</Button></td>
 			<td style={{whiteSpace: "nowrap"}}><div style={{width: 70}}>{config.webUrl ?
 				<a href={container.config.webUrl}><Icon name="globe"/>&nbsp;&nbsp;{config.webTitle || "Web UI"}</a> : null}</div></td>
@@ -89,26 +101,38 @@ export default connect(state => {
 		let safetyArmed = this.safetyArmed = this.props.clientState.safetyArmed;
 		var group = this.props.group;
 		let containers = group.containers;
-		let containerCountName = "all";
+		let controlledContainerNames = group.controlledContainerNames;
+		let startableContainerNames = group.startableContainerNames;
+		let stoppableContainerNames = group.stoppableContainerNames;
+		let controlledContainerCountName = "all";
+		let startableContainerCountName = "all";
+		let stoppableContainerCountName = "all";
 		let containerTitleCount = containers.length;
-		if(group.totalCount !== containers.length) {
-			containerCountName = containers.length;
+		if(group.totalCount !== controlledContainerNames.length) {
+			controlledContainerCountName = controlledContainerNames.length;
 			containerTitleCount = containers.length + "/" + group.totalCount;
+		}
+		if(group.totalCount !== startableContainerNames.length){
+			startableContainerCountName = startableContainerNames.length;
+		}
+		if(group.totalCount !== stoppableContainerNames.length){
+			stoppableContainerCountName = stoppableContainerNames.length;
 		}
 		let changedContainerNames = group.changedContainerNames;
 		let buttonStyle = {width: "100px"};
 
 		let titleComponent = null;
 		if (group.title) {
+			
 			titleComponent = <h4>{group.title} <span className="text-muted">({containerTitleCount})</span><span className="pull-right"><ButtonGroup bsSize='small'>
 				<RedeployButton disabled={!safetyArmed || changedContainerNames.length < 1} size="small" title={"Redeploy " + changedContainerNames.length + " changed"}
 								onExecute={(deploymentMode) => actions.redeployContainers(changedContainerNames, deploymentMode)} style={{width: "140px"}}/>
-				<RedeployButton disabled={!safetyArmed || group.containerNames.length < 1} size="small" title={"Redeploy " + containerCountName}
-								onExecute={(deploymentMode) => actions.redeployContainers(group.containerNames, deploymentMode)} style={buttonStyle}/>
-				<Button bsStyle="success" onClick={() => actions.startContainers(group.containerNames)}
-						disabled={!safetyArmed} style={buttonStyle}>Start {containerCountName}</Button>
-				<Button bsStyle="danger" onClick={() => actions.stopContainers(group.containerNames)}
-						disabled={!safetyArmed} style={buttonStyle}>Stop {containerCountName}</Button>
+				<RedeployButton disabled={!safetyArmed || controlledContainerNames.length < 1} size="small" title={"Redeploy " + controlledContainerCountName}
+								onExecute={(deploymentMode) => actions.redeployContainers(controlledContainerNames, deploymentMode)} style={buttonStyle}/>
+				<Button bsStyle="success" onClick={() => actions.startContainers(startableContainerNames)}
+						disabled={!safetyArmed || startableContainerNames.length < 1} style={buttonStyle}>Start {startableContainerCountName}</Button>
+				<Button bsStyle="danger" onClick={() => actions.stopContainers(stoppableContainerNames)}
+						disabled={!safetyArmed || stoppableContainerNames.length < 1} style={buttonStyle}>Stop {stoppableContainerCountName}</Button>
 			</ButtonGroup>
 			</span>
 			</h4>;

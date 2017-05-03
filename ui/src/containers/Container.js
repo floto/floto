@@ -16,7 +16,7 @@ export default connect(state => {
 			return null;
 		}
 
-		if(!container.uncontrolled) {
+		if(!container.externalContainer) {
 
 			fileTargets = [
 				{name: "Logfile", file: "log"},
@@ -30,7 +30,7 @@ export default connect(state => {
 			];
 		}
 		let templates = this.props.templateMap[`container:${container.name}`];
-		if(!container.uncontrolled) {
+		if(!container.externalContainer) {
 			_.forEach(templates, (template) => {
 				fileTargets.push({
 				name: template.name,
