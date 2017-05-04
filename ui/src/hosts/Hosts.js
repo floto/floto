@@ -138,55 +138,64 @@ export default connect(state => {
 					hostsCountName = controlledVmNames.length;
 				}
 
+				var Resize         = require('react-resize-layout').Resize;
+				var ResizeHorizon  = require('react-resize-layout').ResizeHorizon;
+
 				let buttonStyle = {width: "100px"};
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
-						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
-							<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
-								<h2>Hosts <span className="text-muted">({hosts.length})</span>
-								<span className="pull-right"><small>Sort by:&nbsp;&nbsp;&nbsp;</small>
-									<DropdownButton bsStyle="default" title={hostSortType.title}
-													id="hosts-sort"
-													onSelect={this.onChangeHostsSort}>
-										{_.map(hostSortTypes, (sortType, key) =>
-											<MenuItem key={key} eventKey={key}><span
-												style={{fontWeight: key === hostSortKey ? "bold": "normal"}}>{sortType.title}</span></MenuItem>)}
-									</DropdownButton>
-								</span>
-								</h2>
-								<ButtonGroup>
-									<Button onClick={actions.loadHostStates}>Refresh</Button>
-									<Button bsStyle="primary" onClick={() => actions.redeployHosts(controlledVmNames)}
-											disabled={!safetyArmed}>{"Redeploy "+hostsCountName+" hosts"}</Button>
-									<Button bsStyle="success" onClick={() => actions.startHosts(controlledVmNames)}
-											disabled={!safetyArmed} style={buttonStyle} >Start {hostsCountName}</Button>
-									<Button bsStyle="danger" onClick={() => actions.stopHosts(controlledVmNames.slice().reverse())}
-											disabled={!safetyArmed} style={buttonStyle}>Stop {hostsCountName}</Button>
-									<span className={hostFilterError?"has-warning":""}>
-									<DebounceInput
-										style={{display: "inline-block", width: "160px", marginLeft: "5px"}}
-										type="text"
-										placeholder="Filter hosts"
-										title={hostFilterError}
-										value={hostFilter}
-										debounceTimeout={(allHosts.length > 500)? 500 : 0}
-										onChange={this.onChangeHostFilter}
-										className="form-control"
-									/>
-									</span>
-								</ButtonGroup>
-							</div>
-							<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
-								<Table bordered striped hover condensed style={{cursor: "pointer"}}>
-									<tbody>
-									{hosts.map(this.renderHost)}
-									</tbody>
-								</Table>
-							</div>
-						</div>
-						<div key={selectedHost.name} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
-							{this.props.children}
-						</div>
+						<Resize handleWidth="3px" handleColor="#CCC">
+							<ResizeHorizon width="850px" minWidth="300px">
+								<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
+									<div style={{flex: "0 0 auto", marginBottom: "10px", marginRight: "10px"}}>
+										<h2>Hosts <span className="text-muted">({hosts.length})</span>
+										<span className="pull-right"><small>Sort by:&nbsp;&nbsp;&nbsp;</small>
+											<DropdownButton bsStyle="default" title={hostSortType.title}
+															id="hosts-sort"
+															onSelect={this.onChangeHostsSort}>
+												{_.map(hostSortTypes, (sortType, key) =>
+													<MenuItem key={key} eventKey={key}><span
+														style={{fontWeight: key === hostSortKey ? "bold": "normal"}}>{sortType.title}</span></MenuItem>)}
+											</DropdownButton>
+										</span>
+										</h2>
+										<ButtonGroup>
+											<Button onClick={actions.loadHostStates}>Refresh</Button>
+											<Button bsStyle="primary" onClick={() => actions.redeployHosts(controlledVmNames)}
+													disabled={!safetyArmed}>{"Redeploy "+hostsCountName+" hosts"}</Button>
+											<Button bsStyle="success" onClick={() => actions.startHosts(controlledVmNames)}
+													disabled={!safetyArmed} style={buttonStyle} >Start {hostsCountName}</Button>
+											<Button bsStyle="danger" onClick={() => actions.stopHosts(controlledVmNames.slice().reverse())}
+													disabled={!safetyArmed} style={buttonStyle}>Stop {hostsCountName}</Button>
+											<span className={hostFilterError?"has-warning":""}>
+											<DebounceInput
+												style={{display: "inline-block", width: "160px", marginLeft: "5px"}}
+												type="text"
+												placeholder="Filter hosts"
+												title={hostFilterError}
+												value={hostFilter}
+												debounceTimeout={(allHosts.length > 500)? 500 : 0}
+												onChange={this.onChangeHostFilter}
+												className="form-control"
+											/>
+											</span>
+										</ButtonGroup>
+									</div>
+									<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
+										<Table bordered striped hover condensed style={{cursor: "pointer"}}>
+											<tbody>
+											{hosts.map(this.renderHost)}
+											</tbody>
+										</Table>
+									</div>
+								</div>
+							</ResizeHorizon>
+							<ResizeHorizon minWidth="300px">
+								<div key={selectedHost.name} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
+									{this.props.children}
+								</div>
+							</ResizeHorizon>
+						</Resize>
 					</div>
 				</div>;
 
