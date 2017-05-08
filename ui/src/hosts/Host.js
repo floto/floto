@@ -15,7 +15,8 @@ export default connect(state => {
 			return null;
 		}
 		let fileTargets = [];
-		if(host.externalVm != null && host.externalVm == false){
+		let externalVm = (host.externalVm !== null && host.externalVm === true) ? true : false;
+		if(!externalVm){
 			fileTargets = [
 				{name: "PostDeploy", file: "script%2FpostDeploy"},
 				{name: "Reconfigure", file: "script%2Freconfigure"}
@@ -56,9 +57,11 @@ export default connect(state => {
 						})}
 					</ul>
 				</div>
-				<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", height: "calc(100vh - 116px)", overflow: "hidden"}}>
+				{!externalVm && 
+					<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", height: "calc(100vh - 116px)", overflow: "hidden"}}>
 					{this.props.children}
-				</div>
+					</div>
+				}
 			</div>
 
 		</div>;
