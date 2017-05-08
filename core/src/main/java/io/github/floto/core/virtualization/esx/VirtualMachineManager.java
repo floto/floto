@@ -291,7 +291,7 @@ public class VirtualMachineManager {
 
 	public void addDataDisk(VmDescription.Disk disk, VmDescription vmDesc, int ctrlKey) throws Exception {
 		VirtualMachine vm = getVm(vmDesc.vmName);
-		String fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk";
+		String fileName = "[" + disk.datastore + "] " + vm.getName() + "/" + vm.getName() + "_" + (disk.slot+1) + ".vmdk"; //_data
 		List<VirtualDeviceConfigSpec> vDevConfSpecList = new ArrayList<>();
 		VirtualDiskManager vdm =  new VirtualDiskManager(vm);
 
@@ -301,11 +301,11 @@ public class VirtualMachineManager {
 			Datacenter dc = (Datacenter) new InventoryNavigator(rootFolder).searchManagedEntities("Datacenter")[0];
 			EsxConnectionManager.getConnection(esxDesc).getVirtualDiskManager().queryVirtualDiskFragmentation(fileName, dc);
 			log.info(fileName + " exists - will add it to virtual machine.");
-			VirtualDeviceConfigSpec diskDevConfSpec = vdm.addVirtualDisk(disk, VirtualDiskMode.independent_persistent, ctrlKey);
+			VirtualDeviceConfigSpec diskDevConfSpec = vdm.addVirtualDisk(disk, VirtualDiskMode.persistent, ctrlKey);
 			vDevConfSpecList.add(diskDevConfSpec);
 		} catch (Exception e) {
 			log.info(fileName + " does not exist - will create new virtual disk.");
-			VirtualDeviceConfigSpec diskDevConfSpec = vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.independent_persistent, ctrlKey);
+			VirtualDeviceConfigSpec diskDevConfSpec = vdm.createHardDisk(disk, VirtualDiskType.thin, VirtualDiskMode.persistent, ctrlKey);
 			vDevConfSpecList.add(diskDevConfSpec);
 		}
 
