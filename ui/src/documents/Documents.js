@@ -1,8 +1,7 @@
 import { connect } from 'react-redux';
 
 import { Navigation } from 'react-router';
-var Icon = require('react-fa');
-
+import { Icon } from 'react-fa';
 
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup, Panel} from "react-bootstrap";
 

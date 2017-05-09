@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
-var Icon = require('react-fa');
+import { Icon } from 'react-fa';
 
 import FileUploadComponent from "../components/FileUploadComponent.js";
 
