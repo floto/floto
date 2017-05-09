@@ -1,10 +1,8 @@
 import { createStore, combineReducers, compose, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
-import { Redirect, Router, Route, useRouterHistory } from 'react-router';
+import { Redirect, Router, Route } from 'react-router';
 import createHashHistory from 'history/lib/createHashHistory';
-import createRouterHistory from 'react-router/lib/createRouterHistory';
 
-import NavigationBar from "./NavigationBar.js";
 import Application from "./Application";
 
 import Containers from "../containers/Containers";
@@ -56,9 +54,7 @@ if (module.hot) {
 	});
 }
 
-let history = useRouterHistory(createHashHistory)({
-	queryKey: false
-});
+let history = createHashHistory();
 
 let routes = <Router history={history}>
 		<Redirect from="/" to="/containers"/>
