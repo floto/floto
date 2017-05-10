@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -51,6 +52,7 @@ import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 
+import com.fasterxml.jackson.databind.*;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -61,6 +63,7 @@ import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.tools.tar.TarEntry;
 import org.apache.tools.tar.TarOutputStream;
@@ -74,11 +77,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JSR310Module;
@@ -118,6 +116,7 @@ import io.github.floto.util.task.TaskInfo;
 import io.github.floto.util.task.TaskService;
 import jersey.repackaged.com.google.common.collect.Lists;
 import jersey.repackaged.com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class FlotoService implements Closeable {
 	private Logger log = LoggerFactory.getLogger(FlotoService.class);
@@ -136,7 +135,7 @@ public class FlotoService implements Closeable {
 	private String httpProxyUrl;
 	private HttpProxy proxy;
 	private FlotoSettings settings = new FlotoSettings();
-
+	private HostService hostService;
 	private Map<String, String> urlImageIdMap = new HashMap<>();
 	private Map<String, String> externalHostIpMap = new HashMap<>();
 	Set<String> DEPLOYMENT_CONTAINER_NAMES = Sets.newHashSet("floto");
@@ -258,7 +257,7 @@ public class FlotoService implements Closeable {
 				}
 				log.info("Using proxy address: {}", ownAddress);
 				httpProxyUrl = "http://" + ownAddress + ":" + proxy.getPort() + "/";
-				log.info("Proxy URL: {}", httpProxyUrl);
+				log.info("Proxy URL: '{}'", httpProxyUrl);
 				flotoDsl.setGlobal("httpProxy", httpProxyUrl);
 			} catch (Exception e) {
 				throw Throwables.propagate(e);
@@ -276,6 +275,10 @@ public class FlotoService implements Closeable {
 		this.imageRegistry = new ImageRegistry(new File(flotoHome, "images"));
 	}
 
+	public void setHostService(HostService hostService){
+		this.hostService = hostService;
+	}
+
 	private void generateContainerHashes(Manifest manifest) {
 		log.info("Generating container hashes");
 		FileHashCache fileHashCache = new FileHashCache();
@@ -285,18 +288,28 @@ public class FlotoService implements Closeable {
 		{
 			activeImages.add(findImage(container.image, manifest));
 		});
+//		String[] images2debug = {"floto"};
+		String[] images2debug = {};
+		if (images2debug.length > 0) System.out.println("images:");
 		if (activePatch != null) {
 			// use patch image hash
 			activeImages.forEach(image -> {
 				image.buildHash = activePatch.imageMap.get(image.name);
 			});
 		} else {
-			activeImages.forEach(image -> image.buildHash = generateBuildHash(globalConfig, fileHashCache, image.buildSteps));
+			activeImages.forEach(image -> {
+				image.buildHash = generateBuildHash(globalConfig, fileHashCache, image.buildSteps, ArrayUtils.contains( images2debug, image.name ));
+				if (ArrayUtils.contains(images2debug, image.name)) System.out.println("---> image-hash:" +image.buildHash + " ("+image.name+")");
+			});
 		}
-		manifest.containers.stream().parallel().forEach(container ->
+		if (images2debug.length > 0) System.out.println("container:");
+//		manifest.containers.stream().parallel().forEach(container ->
+		manifest.containers.forEach(container ->
 		{
 			Image image = findImage(container.image, manifest);
-			container.buildHash = generateBuildHash(globalConfig, fileHashCache, container.configureSteps, image.buildHash);
+			container.buildHash = generateBuildHash(globalConfig, fileHashCache, container.configureSteps, ArrayUtils.contains( images2debug, container.name ), image.buildHash);
+			if (ArrayUtils.contains(images2debug, container.name)) System.out.println("---> image-hash:" +image.buildHash + " ("+image.name+"), \t container-hash:" + container.buildHash + " ("+container.name+")");
+
 		});
 		log.info("Generated container hashes");
 	}
@@ -324,6 +337,7 @@ public class FlotoService implements Closeable {
 				generateContainerHashes(manifest);
 				validateTemplates();
 				validateDocuments();
+//				FileUtils.write(new File("manifest.txt"), manifestString);
 			} catch (Throwable compilationError) {
 				this.manifestCompilationError = compilationError;
 				throw compilationError;
@@ -358,31 +372,69 @@ public class FlotoService implements Closeable {
 
 	}
 
-	private void digestFile(FileHashCache fileHashCache, MessageDigest messageDigest, File file) {
+	private void digestFile(FileHashCache fileHashCache, MessageDigest messageDigest, File file, boolean verbose) {
 		messageDigest.update(fileHashCache.getHash(file));
+		try {
+			if (verbose) System.out.println(Hex.encodeHexString(MessageDigest.getInstance("MD5").digest(fileHashCache.getHash(file))) + " -> " + file.getName());
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 	}
 
-	private String generateBuildHash(Map<String, Object> globalConfig, FileHashCache fileHashCache, List<JsonNode> buildSteps, String... additionalInputs) {
-		long startTime = System.currentTimeMillis();
+	/**
+	 * replaces given json path which contains a filesystem path by a normalized filesystem relative path
+	 * And updates the MessageDigest with a cloned step json object, with replaced path.
+	 * @param md current MessageDiggest
+	 * @param step json object of a build step
+	 * @param path json path
+	 */
+	private void hashStep(ObjectMapper stepMapper, MessageDigest md, JsonNode step, String path, boolean verbose){
+		Path templatePath = (new File(step.path(path).asText())).toPath();
+		String relativeTemplatePath = rootDefinitionFile.toPath().getParent().relativize(templatePath).toString().replaceAll("\\\\","/");
 
+		String stepString;
 		try {
-			MessageDigest md = MessageDigest.getInstance("SHA");
+			stepString = stepMapper.writeValueAsString(((ObjectNode)step.deepCopy()).put(path, relativeTemplatePath));
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+		try {
+			if (verbose) System.out.println(Hex.encodeHexString(MessageDigest.getInstance("MD5").digest(stepString.getBytes())) + " -> " + stepString);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		md.update(stepString.getBytes(Charsets.UTF_8));
+
+//		md.update(((ObjectNode)step.deepCopy()).put(path, relativeTemplatePath).toString().getBytes(Charsets.UTF_8));
+	}
+
+	private String generateBuildHash(Map<String, Object> globalConfig, FileHashCache fileHashCache, List<JsonNode> buildSteps, boolean debug, String... additionalInputs) {
+		ObjectMapper stepMapper = new ObjectMapper().configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
 			for (String additionalInput : additionalInputs) {
 				md.update(additionalInput.getBytes(Charsets.UTF_8));
 			}
 			buildSteps.forEach(step -> {
-				md.update(step.toString().getBytes(Charsets.UTF_8));
-
 				String type = step.path("type").asText();
+//				if (verbose) System.out.println(StringEscapeUtils.unescapeJava(step.toString()));
+
 				if ("ADD_TEMPLATE".equals(type)) {
+					hashStep(stepMapper, md, step, "template", debug);
 					String template = createTemplateUtil().getTemplate(step, globalConfig);
 					md.update(template.getBytes(Charsets.UTF_8));
+					try {
+						if (debug) System.out.println(Hex.encodeHexString(MessageDigest.getInstance("MD5").digest(template.getBytes(Charsets.UTF_8))) + " -> " + step.path("template").asText());
+					} catch (NoSuchAlgorithmException e) {
+						e.printStackTrace();
+					}
 				} else if ("ADD_FILE".equals(type)) {
+					hashStep(stepMapper, md, step, "file", debug);
 					File file = new File(step.path("file").asText());
-					digestFile(fileHashCache, md, file);
+					digestFile(fileHashCache, md, file, debug);
 				} else if ("COPY_DIRECTORY".equals(type)) {
+					hashStep(stepMapper, md, step, "source", debug);
 					JsonNode options = step.path("options");
-					JsonNode newName = options.path("newName");
 
 					String source = step.path("source").asText();
 					JsonNode excludeDirectories = options.path("excludeDirectories");
@@ -392,18 +444,24 @@ public class FlotoService implements Closeable {
 					List<File> files = new ArrayList<File>(getCopyDirectoryFiles(excludeDirectories, excludeFiles, sourceFile));
 					Collections.sort(files);
 					for (File file : files) {
-						md.update(sourceFile.toURI().relativize(file.toURI()).getPath().toString().getBytes(Charsets.UTF_8));
-						digestFile(fileHashCache, md, file);
+//						md.update(sourceFile.toURI().relativize(file.toURI()).getPath().getBytes(Charsets.UTF_8));
+//						System.out.println(sourceFile.toURI().relativize(file.toURI()).getPath());
+						digestFile(fileHashCache, md, file, debug);
+//						if (debug) {
+//							System.out.println("file: " + file + ", " + Hex.encodeHexString(md.digest()));
+//						}
 					}
 				} else if ("ADD_MAVEN".equals(type)) {
+					md.update(step.toString().getBytes(Charsets.UTF_8));
 					String coordinates = step.path("coordinates").asText();
 					if (coordinates.endsWith("-SNAPSHOT")) {
 						// We assume that non-SNAPSHOT artifacts are immutable
 						JsonNode repositories = manifest.site.findPath("maven").findPath("repositories");
 						File artifactFile = new MavenHelper(repositories).resolveMavenDependency(coordinates);
-						digestFile(fileHashCache, md, artifactFile);
+						digestFile(fileHashCache, md, artifactFile, debug);
 					}
 				} else if ("COPY_FILES".equals(type)) {
+					md.update(step.toString().getBytes(Charsets.UTF_8));
 					JsonNode fileList = step.path("fileList");
 					List<String> files = new ArrayList<String>();
 					Iterator<Map.Entry<String, JsonNode>> iterator = fileList.fields();
@@ -412,12 +470,27 @@ public class FlotoService implements Closeable {
 					}
 					for (String filename : files) {
 						File file = new File(filename);
-						md.update(file.toURI().relativize(file.toURI()).getPath().toString().getBytes(Charsets.UTF_8));
-						digestFile(fileHashCache, md, file);
+						md.update(file.toURI().relativize(file.toURI()).getPath().getBytes(Charsets.UTF_8));
+						digestFile(fileHashCache, md, file, debug);
+//						if (debug) {
+//							System.out.println("file: " + file + ", " + Hex.encodeHexString(md.digest()));
+//						}
+					}
+				} else {
+					md.update(step.toString().getBytes(Charsets.UTF_8));
+					try {
+						if (debug) System.out.println(Hex.encodeHexString(MessageDigest.getInstance("MD5").digest(step.toString().getBytes())) + " -> " + step.toString());
+					} catch (NoSuchAlgorithmException e) {
+						e.printStackTrace();
 					}
 				}
 
+//				String digest = Hex.encodeHexString(md.digest());
+//				if (verbose) {
+//					System.out.println(digest + " step:" + step);
+//				}
 			});
+//			System.out.println("digestLength: " + md.getDigestLength());
 			return Hex.encodeHexString(md.digest());
 		} catch (Throwable e) {
 			log.warn("Unable to generate buildHash", e);
@@ -456,6 +529,7 @@ public class FlotoService implements Closeable {
 					try {
 						Image image = this.findImage(container.image, this.manifest);
 						Host host = this.findHost(container.host, this.manifest);
+						hostService.reconfigure(host.name);
 						if (DeploymentMode.fromRootImage.equals(deploymentMode)) {
 							this.redeployFromRootImage(host, container, buildLogStream);
 						} else if (DeploymentMode.fromBaseImage.equals(deploymentMode)) {
@@ -488,6 +562,7 @@ public class FlotoService implements Closeable {
 
 	public TaskInfo<Void> redeployDeployerContainer(Host host, Container container,
 													boolean createContainer, boolean startContainer) {
+		hostService.reconfigure(host.name);
 		File buildLogDirectory = new File(flotoHome, "buildLog");
 		List<String> images2Delete = Lists.newArrayList();
 		try {
@@ -858,8 +933,8 @@ public class FlotoService implements Closeable {
 		WebTarget buildTarget = dockerTarget.path("build");
 		Map<String, String> buildArgs = new HashMap<>();
 		if (useProxy) {
-			buildArgs.put("http_proxy", httpProxyUrl);
-			buildArgs.put("https_proxy", httpProxyUrl);
+			buildArgs.put("http_proxy", getHttpProxyStaticNameUrl());
+			buildArgs.put("https_proxy", getHttpProxyStaticNameUrl());
 		}
 		String buildArgsString = null;
 		try {
@@ -1539,6 +1614,10 @@ public class FlotoService implements Closeable {
 		return httpProxyUrl;
 	}
 
+	public String getHttpProxyStaticNameUrl(){
+		return "http://proxy-host.docker.site:" + proxy.getPort() + "/";
+	}
+
 	public String getHostScript(String hostName, String type) {
 		try {
 			return new HostJob<String>(manifest, hostName) {
@@ -1624,7 +1703,7 @@ public class FlotoService implements Closeable {
 	public File getFlotoHome() {
 		return flotoHome;
 	}
-	
+
 	public Throwable getManifestCompilationError() {
 		return manifestCompilationError;
 	}
