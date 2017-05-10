@@ -21,6 +21,7 @@ import org.eclipse.aether.transport.http.HttpTransporterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.ProcessingException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,7 +74,17 @@ public class MavenHelper {
             return artifactResult.getArtifact().getFile();
         } catch (ArtifactResolutionException e) {
             throw new RuntimeException(e);
-        }
+        } catch (ProcessingException pe ){
+        	log.warn("Failed to get artifact from remote repositories, using local repo. " + pe.getLocalizedMessage());
+			try {
+				ArtifactResult artifactResult = system.resolveArtifact(session, (new ArtifactRequest().setArtifact(artifact)));
+				InstallRequest ins = new InstallRequest();
+				ins.addArtifact(artifactResult.getArtifact());
+				return artifactResult.getArtifact().getFile();
+			} catch (ArtifactResolutionException e) {
+				throw new RuntimeException(e);
+			}
+		}
     }
 
     private RepositorySystem newRepositorySystem() {
