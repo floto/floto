@@ -127,6 +127,14 @@
 		});
 	};
 	
+	global.getTemplate = function getTemplate(templateName, config) {
+		if (!config) {
+			config = {};
+		}
+		var template = templateUtil.getTemplate(templateName, config, {});
+		return template;
+	};
+
 	global.addFile = function addFile(file, destination) {
 		currentSteps.push({
 			type: "ADD_FILE",

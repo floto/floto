@@ -268,8 +268,10 @@ public class FlotoService implements Closeable {
 		}
 
 		flotoDsl.setGlobal("flotoVersion", VersionUtil.version);
+		flotoDsl.setGlobal("flotoHome", flotoHome);
 		flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
 		flotoDsl.setGlobal("developmentMode", commonParameters.developmentMode);
+		flotoDsl.setGlobal("templateUtil", createTemplateUtil());
 
 		this.imageRegistry = new ImageRegistry(new File(flotoHome, "images"));
 	}
