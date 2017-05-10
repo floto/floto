@@ -1,9 +1,0 @@
-<div ng-controller="FileController">
-    <div floto-fill-height scroll-glue>
-        <div ng-if="file.loading" class="alert alert-info" role="alert">Loading...</div>
-        <div ng-if="file.error" class="alert alert-danger" role="alert">{{file.error}}</div>
-<pre ng-if="file.content">
-{{file.content}}
-</pre>
-    </div>
-</div>
