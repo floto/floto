@@ -24,9 +24,10 @@ public class HostService {
 	private Logger log = LoggerFactory.getLogger(HostService.class);
 	private JobRunner jobRunner = new JobRunner();
 	private FlotoService flotoService;
-	
+
 	public HostService(FlotoService flotoService) {
 		this.flotoService = flotoService;
+		flotoService.setHostService(this);
 	}
 
 	public Map<String, String> getHostStates() {
@@ -69,6 +70,19 @@ public class HostService {
 					});
 				} catch (Throwable t) {
 					log.error("Configuring hosts", t);
+				}
+			}
+		}.start();
+	}
+
+	public void reconfigureVm(String vmName) {
+		new Thread("Host reconfiguration") {
+			@Override
+			public void run() {
+				try {
+					reconfigure(vmName);
+				} catch (Throwable t) {
+					log.error("Configuring host", t);
 				}
 			}
 		}.start();
@@ -128,7 +142,7 @@ public class HostService {
 	}
 
 
-	private void reconfigure(String vmName) {
+	public void reconfigure(String vmName) {
 		runTask(new HypervisorJob<Object>(flotoService.getManifest(), vmName, flotoService.getFlotoHome()) {
 			@Override
 			public Object execute() throws Exception {
