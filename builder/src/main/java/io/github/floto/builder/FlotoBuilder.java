@@ -5,6 +5,7 @@ import com.google.common.base.Stopwatch;
 import com.vmware.vim25.FloatOption;
 
 import io.github.floto.core.FlotoService;
+import io.github.floto.core.HostService;
 import io.github.floto.core.ParameterReader;
 import io.github.floto.core.FlotoService.DeploymentMode;
 import io.github.floto.core.jobs.ExportVmJob;
@@ -68,6 +69,7 @@ public class FlotoBuilder {
             File flotoHome = ParameterReader.getFlotoHome(parameters);
             TaskService taskService = new TaskService(flotoHome);
             flotoService = new FlotoService(parameters, taskService, flotoHome);
+			new HostService(flotoService);
 			TaskInfo<Void> taskInfo = flotoService.compileManifest();
 			taskInfo.getResultFuture().get();
 			if(taskInfo.getNumberOfWarnings() > 0) {
