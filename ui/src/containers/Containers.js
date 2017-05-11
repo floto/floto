@@ -9,6 +9,8 @@ import { Icon } from 'react-fa';
 
 import RedeployButton from "../components/RedeployButton.js";
 
+import HorizontalResizeLayout from "../layout/ResizeLayout.js"
+
 let containerGroupings = {
 	none: {title: "None", groupFn: (containers) => [{containers: containers, id: "all"}]},
 	host: {
@@ -191,65 +193,58 @@ export default connect(state => {
 
 			let buttonStyle = {width: "100px"};
 			return <div style={{height: "100%"}}>
-				<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
-					<Resize handleWidth="3px" handleColor="#CCC">
-						<ResizeHorizon width="850px" minWidth="300px">
-							<div style={{flex: "1 1 auto", width: "100%", height: "100%", display:"flex", flexDirection: "column"}}>
-								<div style={{flex: "0 0 auto", marginBottom: "10px", marginRight: "10px"}}>
-									<h2>Containers <span className="text-muted">({containerCount})</span>
-																		<span className="pull-right"><small>Grouping:&nbsp;&nbsp;&nbsp;</small>
-											<DropdownButton bsStyle="default" title={containerGrouping.title}
-															id="container-grouping"
-															onSelect={this.onChangeContainerGrouping}>
-												{_.map(containerGroupings, (grouping, key) =>
-													<MenuItem key={key} eventKey={key}><span
-														style={{fontWeight: key === containerGroupingKey ? "bold": "normal"}}>{grouping.title}</span></MenuItem>)}
-											</DropdownButton>
-										</span>
+				<HorizontalResizeLayout>
+					<div style={{flex: "1 1 auto", width: "100%", height: "100%", display:"flex", flexDirection: "column"}}>
+						<div style={{flex: "0 0 auto", marginBottom: "10px"}}>
+							<h2>Containers <span className="text-muted">({containerCount})</span>
+								<span className="pull-right"><small>Grouping:&nbsp;&nbsp;&nbsp;</small>
+									<DropdownButton bsStyle="default" title={containerGrouping.title}
+													id="container-grouping"
+													onSelect={this.onChangeContainerGrouping}>
+										{_.map(containerGroupings, (grouping, key) =>
+											<MenuItem key={key} eventKey={key}><span
+												style={{fontWeight: key === containerGroupingKey ? "bold": "normal"}}>{grouping.title}</span></MenuItem>)}
+									</DropdownButton>
+								</span>
 
-									</h2>
-									<ButtonGroup>
-										<Button onClick={actions.loadContainerStates}>Refresh</Button>
-										<RedeployButton style={{width: "150px"}} disabled={!safetyArmed || changedContainerNames.length < 1} title={"Redeploy " + changedContainerNames.length + " changed"}
-														onExecute={(deploymentMode) => actions.redeployContainers( changedContainerNames, deploymentMode)}/>
-										<RedeployButton style={buttonStyle} disabled={!safetyArmed || controlledContainerNames.length < 1} title={"Redeploy " + controlledCountName}
-														onExecute={(deploymentMode) => actions.redeployContainers( controlledContainerNames, deploymentMode)}/>
-										<Button bsStyle="success" onClick={() => actions.startContainers(startableContainerNames)}
-												disabled={!safetyArmed || startableContainerNames.length < 1} style={buttonStyle} >Start {startableCountName}</Button>
-										<Button bsStyle="danger" onClick={() => actions.stopContainers(stoppableContainerNames)}
-												disabled={!safetyArmed || stoppableContainerNames.length < 1} style={buttonStyle}>Stop {stoppableCountName}</Button>
-										<span className={containerFilterError?"has-warning":""}>
-										<DebounceInput
-											style={{display: "inline-block", width: "160px", marginLeft: "5px"}}
-											type="text"
-											placeholder="Filter containers"
-											title={containerFilterError}
-											value={containerFilter}
-											debounceTimeout={(containers.length > 500)? 500 : 0}
-											onChange={this.onChangeContainerFilter}
-											className="form-control"
-										/>
-										</span>
-									</ButtonGroup>
-								</div>
-								<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
-									{unmanagedContainersComponent}
-									{groups.map((group) =>
-										<ContainerGroup key={group.title || group.id} group={group}
-														location={this.props.location}/>)}
-								</div>
-							</div>
-						</ResizeHorizon>
-						<ResizeHorizon minWidth="300px">
-							<div key={selectedContainer.name}
-								 style={{flex: "1 1 auto", width: "100%", paddingLeft: 20, height: "100%"}}>
-								{this.props.children}
-							</div>
-						</ResizeHorizon>
-					</Resize>
-				</div>
+							</h2>
+							<ButtonGroup>
+								<Button onClick={actions.loadContainerStates}>Refresh</Button>
+								<RedeployButton style={{width: "150px"}} disabled={!safetyArmed || changedContainerNames.length < 1} title={"Redeploy " + changedContainerNames.length + " changed"}
+												onExecute={(deploymentMode) => actions.redeployContainers( changedContainerNames, deploymentMode)}/>
+								<RedeployButton style={buttonStyle} disabled={!safetyArmed || controlledContainerNames.length < 1} title={"Redeploy " + controlledCountName}
+												onExecute={(deploymentMode) => actions.redeployContainers( controlledContainerNames, deploymentMode)}/>
+								<Button bsStyle="success" onClick={() => actions.startContainers(startableContainerNames)}
+										disabled={!safetyArmed || startableContainerNames.length < 1} style={buttonStyle} >Start {startableCountName}</Button>
+								<Button bsStyle="danger" onClick={() => actions.stopContainers(stoppableContainerNames)}
+										disabled={!safetyArmed || stoppableContainerNames.length < 1} style={buttonStyle}>Stop {stoppableCountName}</Button>
+								<span className={containerFilterError?"has-warning":""}>
+								<DebounceInput
+									style={{display: "inline-block", width: "160px", marginLeft: "5px"}}
+									type="text"
+									placeholder="Filter containers"
+									title={containerFilterError}
+									value={containerFilter}
+									debounceTimeout={(containers.length > 500)? 500 : 0}
+									onChange={this.onChangeContainerFilter}
+									className="form-control"
+								/>
+								</span>
+							</ButtonGroup>
+						</div>
+						<div style={{flex: "1 1 auto", overflowY: "scroll"}}>
+							{unmanagedContainersComponent}
+							{groups.map((group) =>
+								<ContainerGroup key={group.title || group.id} group={group}
+												location={this.props.location}/>)}
+						</div>
+					</div>
+					<div key={selectedContainer.name}
+						 style={{flex: "1 1 auto", width: "100%", paddingLeft: 20, height: "100%"}}>
+						{this.props.children}
+					</div>
+				</HorizontalResizeLayout>
 			</div>;
-
 		}
 	}
 	)
