@@ -211,7 +211,7 @@ public class FlotoService implements Closeable {
 		this.useProxy = !commonParameters.noProxy;
 		if (this.useProxy) {
 			proxy = new HttpProxy(commonParameters.proxyPort);
-			proxy.setCacheDirectory(new File(flotoHome, "cache/http"));
+			proxy.setCacheDirectory(new File(flotoHome, "cache/http5"));
 			proxy.start();
 			try {
 				String ownAddress = commonParameters.proxyUrl;

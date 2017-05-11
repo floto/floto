@@ -1,12 +1,13 @@
 package io.github.floto.core.proxy;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.client5.http.impl.cache.CachingHttpClientBuilder;
+import org.apache.hc.client5.http.impl.sync.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.sync.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.sync.HttpClientBuilder;
+import org.apache.hc.client5.http.sync.methods.HttpGet;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,13 +36,13 @@ public class ProxyServlet extends HttpServlet {
         HOP_BY_HOP_HEADERS.add("Upgrade");
     }
 
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
 
     public ProxyServlet(HttpClientBuilder httpClientBuilder) {
         httpClientBuilder.disableCookieManagement();
         httpClientBuilder.disableRedirectHandling();
-        httpClientBuilder.setMaxConnPerRoute(100);
-        httpClientBuilder.setMaxConnTotal(1000);
+//        httpClientBuilder.setMaxConnPerRoute(100);
+//        httpClientBuilder.setMaxConnTotal(1000);
         this.httpClient = httpClientBuilder.build();
 
     }
@@ -62,8 +63,8 @@ public class ProxyServlet extends HttpServlet {
                 proxyRequest.setHeader(new BasicHeader(headerName, value));
             }
         }
-        HttpResponse proxyResponse = httpClient.execute(proxyRequest);
-        resp.setStatus(proxyResponse.getStatusLine().getStatusCode());
+        CloseableHttpResponse proxyResponse = httpClient.execute(proxyRequest);
+        resp.setStatus(proxyResponse.getCode());
         for (Header header : proxyResponse.getAllHeaders()) {
             if (HOP_BY_HOP_HEADERS.contains(header.getName())) {
                 continue;

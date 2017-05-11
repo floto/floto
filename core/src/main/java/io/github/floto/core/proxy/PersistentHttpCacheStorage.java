@@ -1,10 +1,10 @@
 package io.github.floto.core.proxy;
 
 import com.google.common.base.Throwables;
-import org.apache.http.client.cache.HttpCacheEntry;
-import org.apache.http.client.cache.HttpCacheStorage;
-import org.apache.http.client.cache.HttpCacheUpdateCallback;
-import org.apache.http.client.cache.HttpCacheUpdateException;
+import org.apache.hc.client5.http.cache.HttpCacheEntry;
+import org.apache.hc.client5.http.cache.HttpCacheStorage;
+import org.apache.hc.client5.http.cache.HttpCacheUpdateCallback;
+import org.apache.hc.client5.http.cache.HttpCacheUpdateException;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;

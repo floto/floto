@@ -2,10 +2,10 @@ package io.github.floto.core.proxy;
 
 import com.google.common.base.Throwables;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.client.cache.Resource;
-import org.apache.http.impl.client.cache.CacheConfig;
-import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
-import org.apache.http.impl.client.cache.FileResourceFactory;
+import org.apache.hc.client5.http.cache.Resource;
+import org.apache.hc.client5.http.impl.cache.CacheConfig;
+import org.apache.hc.client5.http.impl.cache.CachingHttpClientBuilder;
+import org.apache.hc.client5.http.impl.cache.FileResourceFactory;
 import org.eclipse.jetty.proxy.ConnectHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;

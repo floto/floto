@@ -1,12 +1,11 @@
 package io.github.floto.core.proxy;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.cache.Resource;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
-import org.apache.http.impl.client.cache.FileResourceFactory;
+import org.apache.hc.client5.http.cache.Resource;
+import org.apache.hc.client5.http.impl.cache.CachingHttpClientBuilder;
+import org.apache.hc.client5.http.impl.cache.FileResourceFactory;
+import org.apache.hc.client5.http.impl.sync.CloseableHttpClient;
+import org.apache.hc.client5.http.sync.methods.HttpGet;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
