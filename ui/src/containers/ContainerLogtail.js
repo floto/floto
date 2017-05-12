@@ -1,9 +1,6 @@
-var VirtualList = require('react-virtual-list');
-
+import VirtualList from 'react-virtual-list';
 import { connect } from 'react-redux';
-
 import { Navigation } from 'react-router';
-
 import websocketService from "../util/websocketService.js";
 
 let handlers = {};
@@ -22,8 +19,10 @@ let MessageLine = React.createClass({
 
 	render() {
 		let message = this.props.message;
-		return <div className={message.className}><span
-			className="log-timestamp">{message.timestamp}  </span>{message.log}</div>;
+		return <div className={message.className}>
+			<span className="log-timestamp">{message.timestamp}   </span>
+			{message.log}
+		</div>;
 	}
 });
 
@@ -96,8 +95,10 @@ export default connect(state => {
 		this.setState({autoScroll});
 	},
 
-	renderMessage(message) {
-		return <MessageLine key={message.key} message={message}/>;
+	renderAllMessages(virtual, itemHeight) {
+		return <div style={virtual.style}>
+			{virtual.items.map((message) => <MessageLine key={message.key} message={message}/>)}
+		</div>;
 	},
 
 	onScroll() {
@@ -111,10 +112,15 @@ export default connect(state => {
 	},
 
 	render() {
+		console.log( this.state.messages);
+
 		let logClassname = "log-output";
 		if (!this.state.showTimestamps) {
 			logClassname += " log-hide-timestamps";
 		}
+
+		const LogtailList = VirtualList()(this.renderAllMessages);
+
 		return <div style={{height: "100%", width: "100%"}}>
 			<div style={{height: "20px", padding: "2px 5px"}}>
 				<label>
@@ -128,9 +134,11 @@ export default connect(state => {
 				</span>
 			</div>
 			<div ref="container" onScroll={this.onScroll} style={{height: "calc(100% - 30px)", width: "100%", overflowY: "scroll"}} className={logClassname}>
-				<VirtualList items={this.state.messages} renderItem={this.renderMessage} itemHeight={12}
-							 style={{height: "100px"}} container={this.state.container}/>
+				<LogtailList items={this.state.messages}
+							 itemHeight={12}
+							 container={this.state.container}/>
 			</div>
+
 		</div>;
 	}
 }));
