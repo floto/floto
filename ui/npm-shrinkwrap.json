@@ -2101,6 +2101,11 @@
       "from": "lodash.deburr@>=3.0.0 <4.0.0",
       "resolved": "https://registry.npmjs.org/lodash.deburr/-/lodash.deburr-3.1.0.tgz"
     },
+    "lodash.debounce": {
+	  "version": "4.0.8",
+	  "from": "lodash.debounce@>=4.0.8 <5.0.0",
+	  "resolved": "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz"
+	},
     "lodash.escape": {
       "version": "3.1.0",
       "from": "lodash.escape@>=3.0.0 <4.0.0",
