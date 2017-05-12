@@ -5,7 +5,6 @@ import DebounceInput from 'react-debounce-input';
 import ContainerGroup from "./ContainerGroup.js";
 
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup, Panel, Input} from "react-bootstrap";
-var Icon = require('react-fa');
 
 import RedeployButton from "../components/RedeployButton.js";
 

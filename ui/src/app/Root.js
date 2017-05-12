@@ -1,10 +1,9 @@
 import { createStore, combineReducers, compose, applyMiddleware } from 'redux';
 import { Provider } from 'react-redux';
 import { Redirect, Router, Route, useRouterHistory } from 'react-router';
+import React from 'react';
 import createHashHistory from 'history/lib/createHashHistory';
-import createRouterHistory from 'react-router/lib/createRouterHistory';
 
-import NavigationBar from "./NavigationBar.js";
 import Application from "./Application";
 
 import Containers from "../containers/Containers";
@@ -135,16 +134,19 @@ let routes = <Router history={history}>
 		</Route>
 	</Router>;
 
-export default React.createClass({
+class Root extends React.Component {
 
-	childContextTypes: {
-		actions: React.PropTypes.object.isRequired
-	},
+	constructor( props ) {
+		super( props );
 
-	getChildContext: function () {
-		return {actions: storeActions};
-	},
+		this.constructor.childContextTypes = {
+			actions: React.PropTypes.object.isRequired
+		}
+	}
 
+	getChildContext() {
+		return { actions: storeActions };
+	}
 
 	render() {
 		return <div style={{}}>
@@ -153,7 +155,10 @@ export default React.createClass({
 			</Provider>
 		</div>;
 	}
-});
+}
+
+export default Root;
+
 window.addEventListener("load", function () {
 	actions.refreshManifest(store);
 	actions.getFlotoInfo(store);

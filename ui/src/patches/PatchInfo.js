@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 import TimeAgo from "react-timeago";
-var Icon = require('react-fa');
+import Icon from 'react-fa';
 
 import {formatBytes} from "../util/formatting.js";
 

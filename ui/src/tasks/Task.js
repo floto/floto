@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import Tasklog from "./Tasklog.js";
 import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
-var Icon = require('react-fa');
+import Icon from 'react-fa';
 
 
 export default connect(state => {

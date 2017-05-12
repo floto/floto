@@ -1,16 +1,18 @@
 import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
 import {NavItemLink} from 'react-router-bootstrap';
-import {Link} from 'react-router';
 import { connect } from 'react-redux';
-
-var Icon = require('react-fa');
+import Icon from 'react-fa';
 
 import Switch from "../components/Switch.js";
+
 
 
 export default connect(state => {
 	return {serverState: state.serverState, clientState: state.clientState, site: state.manifest.site};
 })(React.createClass({
+
+	displayName: "NavigationBar",
+
 	contextTypes: {
 		actions: React.PropTypes.object.isRequired,
 		router: React.PropTypes.object

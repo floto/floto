@@ -2,8 +2,8 @@ require('expose?jQuery!expose?$!jquery');
 require("script!bootstrap-switch");
 require("bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css");
 
+class Switch extends React.Component {
 
-export default React.createClass({
 	componentDidMount() {
 		var domNode = ReactDOM.findDOMNode(this);
 		$(domNode).bootstrapSwitch({
@@ -16,21 +16,21 @@ export default React.createClass({
 				this.props.onChange(state);
 			}
 		});
-	},
+	}
 
 	onChange() {
 		// handled by bootstrapSwitch;
-	},
+	}
 
 	componentDidUpdate() {
 		var domNode = ReactDOM.findDOMNode(this);
 		$(domNode).bootstrapSwitch('state', this.props.checked, true);
-	},
+	}
 
 	render() {
 		return <input type="checkbox" name="my-checkbox" checked onChange={this.onChange}/>;
 	}
-});
+}
 
 
-
+export default Switch;

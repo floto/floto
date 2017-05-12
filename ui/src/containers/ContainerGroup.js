@@ -1,6 +1,6 @@
 import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 import { connect } from 'react-redux';
-var Icon = require('react-fa');
+import Icon from 'react-fa';
 
 import RedeployButton from "../components/RedeployButton.js";
 
