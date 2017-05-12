@@ -189,7 +189,7 @@ export default connect(state => {
 			let buttonStyle = {width: "100px"};
 			return <div style={{height: "100%"}}>
 				<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
-					<div style={{flex: "1 1 auto", width: "100%", height: "100%", display:"flex", flexDirection: "column"}}>
+					<div style={{flex: "1 1 auto", width: "50%", height: "100%", display:"flex", flexDirection: "column"}}>
 						<div style={{flex: "0 0 auto", marginBottom: "10px", marginRight: "10px"}}>
 							<h2>Containers <span className="text-muted">({containerCount})</span>
 																<span className="pull-right"><small>Grouping:&nbsp;&nbsp;&nbsp;</small>
@@ -235,7 +235,7 @@ export default connect(state => {
 						</div>
 					</div>
 					<div key={selectedContainer.name}
-						 style={{flex: "1 1 auto", width: "100%", paddingLeft: 20, height: "100%"}}>
+						 style={{flex: "1 1 auto", width: "50%", paddingLeft: 20, height: "100%"}}>
 						{this.props.children}
 					</div>
 				</div>
