@@ -36,3 +36,4 @@ node_modules/react-redux/
 node_modules/react-visibility-sensor/
 node_modules/setimmediate/
 node_modules/whatwg-fetch/
+/ui/node_modules
