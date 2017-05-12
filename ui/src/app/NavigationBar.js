@@ -2,37 +2,29 @@ import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} fro
 import {NavItemLink} from 'react-router-bootstrap';
 import { connect } from 'react-redux';
 import Icon from 'react-fa';
+import React from 'react';
 
 import Switch from "../components/Switch.js";
 
+class NavigationBar extends React.Component {
 
-
-export default connect(state => {
-	return {serverState: state.serverState, clientState: state.clientState, site: state.manifest.site};
-})(React.createClass({
-
-	displayName: "NavigationBar",
-
-	contextTypes: {
-		actions: React.PropTypes.object.isRequired,
-		router: React.PropTypes.object
-	},
+	constructor( props ) {
+		super( props );
+	}
 
 	componentDidMount() {
 		this.unlistenToHistory = this.context.router.listen(() => {
 			this.forceUpdate();
 		});
-	},
-
+	}
 
 	recompileManifest() {
 		this.context.actions.recompileManifest();
-	},
+	}
 
 	onChangeSafety(safetyArmed) {
 		this.context.actions.changeSafety(safetyArmed);
-	},
-
+	}
 
 	render() {
 		let isActive = this.context.router.isActive;
@@ -84,12 +76,21 @@ export default connect(state => {
 					 style={{textAlign: "center", paddingTop: "10px", paddingRight: "20px", height: "20px"}}>
 				<span style={{color: site.siteColor}}>{siteName}{site.environment ?
 					<span ng-if="site.environment"> ({site.environment})</span> : null}</span><br />
-				<span style={{fontSize: "80%", position: "relative", top: "-4px"}}
-					  className="text-muted">{site.projectRevision}</span>
+					<span style={{fontSize: "80%", position: "relative", top: "-4px"}}
+						  className="text-muted">{site.projectRevision}</span>
 				</div>
 			</Navbar.Collapse>
 		</Navbar>;
 	}
-}));
+}
+
+NavigationBar.contextTypes = {
+	actions: React.PropTypes.object.isRequired,
+	router: React.PropTypes.object
+}
+
+export default connect(state => {
+	return {serverState: state.serverState, clientState: state.clientState, site: state.manifest.site};
+})(NavigationBar);
 
 
