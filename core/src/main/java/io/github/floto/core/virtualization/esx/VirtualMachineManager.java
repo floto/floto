@@ -320,7 +320,7 @@ public class VirtualMachineManager {
 	}
 
 	public void deployTemplate(URL vmUrl, String templateVmName) throws Exception {
-        log.info("Deploy template " + vmUrl + " to " + esxDesc);
+        log.info("Deploy template " + vmUrl + " to " + esxDesc.esxHost);
 
         ServiceInstance si = EsxConnectionManager.getConnection(esxDesc);
         Folder folder = findOrCreateFolder(getVmFolder(templateVmName));
