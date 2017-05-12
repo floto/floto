@@ -22,7 +22,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 	}
 
 	public VirtualDeviceConfigSpec createHardDisk(Disk vmDiskDesc, VirtualDiskType type, VirtualDiskMode mode, int ctrlKey) throws Exception {
-		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "/" + vm.getName() + "_" + (vmDiskDesc.slot+1) + ".vmdk"; //_data
+		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_" + (vmDiskDesc.slot+1) + ".vmdk"; //_data
 
 		VirtualDiskFlatVer2BackingInfo diskfileBacking = new VirtualDiskFlatVer2BackingInfo();
 		diskfileBacking.setFileName(vmdkPath);
@@ -43,7 +43,7 @@ public class VirtualDiskManager extends VirtualMachineDeviceManager {
 	}
 
 	public VirtualDeviceConfigSpec addVirtualDisk(Disk vmDiskDesc, VirtualDiskMode diskMode, int ctrlKey) throws Exception {
-		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "/" + vm.getName() + "_" + (vmDiskDesc.slot+1) + ".vmdk"; //_data
+		String vmdkPath = "[" + vmDiskDesc.datastore + "] " + vm.getName() + "_" + (vmDiskDesc.slot+1) + ".vmdk"; //_data
 
 		VirtualDiskFlatVer2BackingInfo diskfileBacking = new VirtualDiskFlatVer2BackingInfo();
 		diskfileBacking.setFileName(vmdkPath);
