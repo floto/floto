@@ -141,7 +141,7 @@ export default connect(state => {
 				let buttonStyle = {width: "100px"};
 				return <div style={{height: "100%"}}>
 					<div style={{display: "flex", flexboxDirection: "row", flexWrap: "nowrap", height: "100%"}}>
-						<div style={{flex: 1, height: "100%", display:"flex", flexDirection: "column"}}>
+						<div style={{flex: 1, height: "100%", width: "50%", display:"flex", flexDirection: "column"}}>
 							<div style={{flex: "0 0 auto", marginBottom: "10px", marginRight: "10px"}}>
 								<h2>Hosts <span className="text-muted">({hosts.length})</span>
 								<span className="pull-right"><small>Sort by:&nbsp;&nbsp;&nbsp;</small>
@@ -184,7 +184,7 @@ export default connect(state => {
 								</Table>
 							</div>
 						</div>
-						<div key={selectedHost.name} style={{flex: 1, paddingLeft: 20, height: "100%"}}>
+						<div key={selectedHost.name} style={{flex: 1, paddingLeft: 20, height: "100%", width: "50%"}}>
 							{this.props.children}
 						</div>
 					</div>
