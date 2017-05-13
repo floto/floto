@@ -270,7 +270,6 @@ public class FlotoService implements Closeable {
 		flotoDsl.setGlobal("flotoHome", flotoHome);
 		flotoDsl.setGlobal("patchMakerMode", patchMakerMode);
 		flotoDsl.setGlobal("developmentMode", commonParameters.developmentMode);
-		flotoDsl.setGlobal("templateUtil", createTemplateUtil());
 
 		this.imageRegistry = new ImageRegistry(new File(flotoHome, "images"));
 	}
@@ -325,6 +324,7 @@ public class FlotoService implements Closeable {
 				} else {
 					flotoDsl.setGlobal("PATCH_INFO", null);
 				}
+				flotoDsl.setGlobal("templateUtil", createTemplateUtil());
 				String manifestString = flotoDsl.generateManifestString(rootDefinitionFile, environment);
 				manifest = flotoDsl.toManifest(manifestString);
 
@@ -415,13 +415,14 @@ public class FlotoService implements Closeable {
 			for (String additionalInput : additionalInputs) {
 				md.update(additionalInput.getBytes(Charsets.UTF_8));
 			}
+			TemplateUtil templateUtil = createTemplateUtil();
 			buildSteps.forEach(step -> {
 				String type = step.path("type").asText();
 //				if (verbose) System.out.println(StringEscapeUtils.unescapeJava(step.toString()));
 
 				if ("ADD_TEMPLATE".equals(type)) {
 					hashStep(stepMapper, md, step, "template", debug);
-					String template = createTemplateUtil().getTemplate(step, globalConfig);
+					String template = templateUtil.getTemplate(step, globalConfig);
 					md.update(template.getBytes(Charsets.UTF_8));
 					try {
 						if (debug) System.out.println(Hex.encodeHexString(MessageDigest.getInstance("MD5").digest(template.getBytes(Charsets.UTF_8))) + " -> " + step.path("template").asText());
@@ -954,6 +955,7 @@ public class FlotoService implements Closeable {
 					out.putNextEntry(tarEntry);
 					out.write(bytes);
 					out.closeEntry();
+					TemplateUtil templateUtil = createTemplateUtil();
 					for (JsonNode step : buildSteps) {
 						String type = step.path("type").asText();
 						if ("ADD_TEMPLATE".equals(type)) {
@@ -962,7 +964,7 @@ public class FlotoService implements Closeable {
 							if (source.startsWith("/")) {
 								source = source.substring(1);
 							}
-							String templated = createTemplateUtil().getTemplate(step, globalConfig);
+							String templated = templateUtil.getTemplate(step, globalConfig);
 							TarEntry templateTarEntry = new TarEntry(source);
 							byte[] templateBytes = templated.getBytes(Charsets.UTF_8);
 							templateTarEntry.setSize(templateBytes.length);
@@ -1583,11 +1585,12 @@ public class FlotoService implements Closeable {
 				}
 
 				private void verifyTemplates(Iterable<JsonNode> steps, Map<String, Object> globalConfig) {
+					TemplateUtil templateUtil = createTemplateUtil();
 					for (JsonNode step : steps) {
 						String type = step.path("type").asText();
 						if ("ADD_TEMPLATE".equals(type)) {
 							try {
-								createTemplateUtil().getTemplate(step, globalConfig);
+								templateUtil.getTemplate(step, globalConfig);
 							} catch (Throwable throwable) {
 								String template = step.path("template").asText();
 								log.warn("Unable to generate template " + template, throwable);
