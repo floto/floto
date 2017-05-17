@@ -1,6 +1,7 @@
-import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
+import {Table, Label, Button, ButtonGroup} from "react-bootstrap";
 import { connect } from 'react-redux';
 import Icon from 'react-fa';
+import React from 'react';
 
 import RedeployButton from "../components/RedeployButton.js";
 
@@ -10,17 +11,13 @@ const labelStyleMapping = {
 	"not-there": "danger"
 };
 
-export default connect(state => {
-	return {
-		clientState: state.clientState,
-		selectedContainer: state.selectedContainer
-	};
-})(React.createClass({
-	displayName: "ContainerGroup",
-	contextTypes: {
-		actions: React.PropTypes.object.isRequired,
-		router: React.PropTypes.object.isRequired
-	},
+class ContainerGroup extends React.Component {
+
+	constructor( props ) {
+		super( props );
+
+		this.renderContainer = this.renderContainer.bind(this);
+	}
 
 	navigateToContainer(containerName, event) {
 		if(event.button === 1) {
@@ -32,7 +29,7 @@ export default connect(state => {
 			newUrl = this.props.location.pathname.replace(currentUrl, newUrl);
 		}
 		this.context.router.push({pathname: newUrl, query: this.props.location.query});
-	},
+	}
 
 	renderContainer(container) {
 		let actions = this.context.actions;
@@ -63,7 +60,7 @@ export default connect(state => {
 			purgeable = true;
 		}
 		var containerState = container.state;
-        let status = containerState.status;
+		let status = containerState.status;
 		let labelStyle = labelStyleMapping[status] || "default";
 		let config = container.config || {};
 		return <tr key={container.name} className={className}
@@ -77,10 +74,10 @@ export default connect(state => {
 			</td>
 			<td><div style={{width: 50}}>
 				{status === "running"?<Button bsStyle="success" bsSize="xs" onClick={actions.restartContainers.bind(null, [container.name])}
-						disabled={!(safetyArmed && startable)}>Restart</Button>:
-				<Button bsStyle="success" bsSize="xs" onClick={actions.startContainers.bind(null, [container.name])}
-						disabled={!(safetyArmed && startable)}>Start</Button>}
-				</div>
+											  disabled={!(safetyArmed && startable)}>Restart</Button>:
+					<Button bsStyle="success" bsSize="xs" onClick={actions.startContainers.bind(null, [container.name])}
+							disabled={!(safetyArmed && startable)}>Start</Button>}
+			</div>
 			</td>
 			<td><Button bsStyle="danger" bsSize="xs" onClick={actions.stopContainers.bind(null, [container.name])}
 						disabled={!(safetyArmed && stoppable)}>Stop</Button></td>
@@ -94,7 +91,7 @@ export default connect(state => {
 				className="text-muted">@{container.host}</span><span
 				className="text-muted pull-right">{config.version}</span></td>
 		</tr>;
-	},
+	}
 
 	render() {
 		let actions = this.context.actions;
@@ -123,7 +120,7 @@ export default connect(state => {
 
 		let titleComponent = null;
 		if (group.title) {
-			
+
 			titleComponent = <h4>{group.title} <span className="text-muted">({containerTitleCount})</span><span className="pull-right"><ButtonGroup bsSize='small'>
 				<RedeployButton disabled={!safetyArmed || changedContainerNames.length < 1} size="small" title={"Redeploy " + changedContainerNames.length + " changed"}
 								onExecute={(deploymentMode) => actions.redeployContainers(changedContainerNames, deploymentMode)} style={{width: "140px"}}/>
@@ -146,6 +143,17 @@ export default connect(state => {
 			</Table>
 		</div>;
 	}
+}
 
-}));
+ContainerGroup.contextTypes = {
+	actions: React.PropTypes.object.isRequired,
+	router: React.PropTypes.object.isRequired
+};
+
+export default connect(state => {
+	return {
+		clientState: state.clientState,
+		selectedContainer: state.selectedContainer
+	};
+})(ContainerGroup);
 
