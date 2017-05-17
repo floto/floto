@@ -1,16 +1,22 @@
 import { connect } from 'react-redux';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-export default connect(state => {
-	return {selectedFile: state.selectedFile, selectedFileError: state.selectedFileError};
-})(React.createClass({
+class FileViewer extends React.Component {
+
+	constructor() {
+		super();
+
+		this.scrollDown = this.scrollDown.bind(this);
+	}
 
 	componentDidMount() {
 		this.scrollDown();
-	},
+	}
 
 	componentDidUpdate(prevProps) {
 		this.scrollDown();
-	},
+	}
 
 	scrollDown() {
 		if(this.scrolledDown || !this.needsScroll) {
@@ -22,8 +28,7 @@ export default connect(state => {
 		}
 		domNode.scrollTop = domNode.scrollHeight;
 		this.scrolledDown = true;
-	},
-
+	}
 
 	render() {
 		var selectedFile = this.props.selectedFile;
@@ -42,5 +47,12 @@ export default connect(state => {
 				style={{display: "inline-block", wordBreak: "normal", wordWrap: "normal", overflow: "visible", minWidth: "100%", minHeight: "100%"}}>{selectedFile.content}</pre>
 		</div>;
 	}
-}));
+}
+
+export default connect(state => {
+	return {
+		selectedFile: state.selectedFile,
+		selectedFileError: state.selectedFileError
+	};
+})(FileViewer);
 
