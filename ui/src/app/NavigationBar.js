@@ -6,8 +6,11 @@ import Switch from "../components/Switch.js";
 
 class NavigationBar extends React.Component {
 
-	constructor( props ) {
-		super( props );
+	constructor() {
+		super();
+
+		this.recompileManifest = this.recompileManifest.bind(this);
+		this.onChangeSafety = this.onChangeSafety.bind(this);
 	}
 
 	componentDidMount() {

@@ -13,9 +13,10 @@ const labelStyleMapping = {
 
 class ContainerGroup extends React.Component {
 
-	constructor( props ) {
-		super( props );
+	constructor() {
+		super();
 
+		this.navigateToContainer = this.navigateToContainer.bind(this);
 		this.renderContainer = this.renderContainer.bind(this);
 	}
 
