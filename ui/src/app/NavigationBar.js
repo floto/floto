@@ -1,9 +1,7 @@
-import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
-import {NavItemLink} from 'react-router-bootstrap';
+import {Navbar, Nav, NavItem, NavDropdown, MenuItem, Button} from "react-bootstrap";
 import { connect } from 'react-redux';
 import Icon from 'react-fa';
 import React from 'react';
-
 import Switch from "../components/Switch.js";
 
 class NavigationBar extends React.Component {
