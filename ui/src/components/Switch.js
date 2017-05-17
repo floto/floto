@@ -2,6 +2,9 @@ require('expose?jQuery!expose?$!jquery');
 require("script!bootstrap-switch");
 require("bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.css");
 
+import React from 'react';
+import ReactDOM from 'react-dom';
+
 class Switch extends React.Component {
 
 	componentDidMount() {
@@ -31,6 +34,5 @@ class Switch extends React.Component {
 		return <input type="checkbox" name="my-checkbox" checked onChange={this.onChange}/>;
 	}
 }
-
 
 export default Switch;
