@@ -1,15 +1,9 @@
 import { connect } from 'react-redux';
-
-import { Redirect, Router, Route } from 'react-router';
-
 import NavigationBar from "./NavigationBar.js";
-import Containers from "../containers/Containers";
+import React from 'react';
 
+class Application extends React.Component {
 
-
-export default connect(state => {
-	return {flotoInfo: state.flotoInfo};
-})(React.createClass({
 	render() {
 		return <div style={{height: "100vh"}}>
 			<NavigationBar />
@@ -22,7 +16,11 @@ export default connect(state => {
 				 className="text-muted">{this.props.flotoInfo.flotoRevision}</div>
 		</div>;
 	}
-}));
+}
+
+export default connect(state => {
+	return {flotoInfo: state.flotoInfo};
+})(Application);
 
 
 
