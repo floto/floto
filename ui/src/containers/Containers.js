@@ -1,5 +1,4 @@
 import { connect } from 'react-redux';
-import { Navigation } from 'react-router';
 import DebounceInput from 'react-debounce-input';
 
 import ContainerGroup from "./ContainerGroup.js";
@@ -45,7 +44,6 @@ export default connect(state => {
 	};
 })(React.createClass({
 		displayName: "Containers",
-		mixins: [Navigation],
 		contextTypes: {
 			actions: React.PropTypes.object.isRequired,
 			router: React.PropTypes.object.isRequired

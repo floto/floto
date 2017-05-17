@@ -1,6 +1,5 @@
 import VirtualList from 'react-virtual-list';
 import { connect } from 'react-redux';
-import { Navigation } from 'react-router';
 import websocketService from "../util/websocketService.js";
 
 let handlers = {};
@@ -32,7 +31,6 @@ const maximumMessageLength = 1000;
 export default connect(state => {
 	return {selectedFile: state.selectedFile, selectedFileError: state.selectedFileError};
 })(React.createClass({
-	mixins: [Navigation],
 
 	getInitialState() {
 		return {
