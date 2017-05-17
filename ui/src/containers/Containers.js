@@ -51,7 +51,7 @@ export default connect(state => {
 			router: React.PropTypes.object.isRequired
 		},
 
-		onChangeContainerGrouping(event, grouping) {
+		onChangeContainerGrouping(grouping, event) {
 			let query = this.props.location.query || {};
 			if (grouping === "none") {
 				delete query.grouping;
