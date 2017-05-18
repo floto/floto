@@ -1,20 +1,26 @@
 import { connect } from 'react-redux';
-
 import Tasklog from "./Tasklog.js";
-import {Navbar, Nav, NavItem, NavDropdown, CollapsibleNav, MenuItem, Button} from "react-bootstrap";
+import {Button} from "react-bootstrap";
 import Icon from 'react-fa';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
+class Task extends React.Component {
 
-export default connect(state => {
-	return {task: state.activeTask};
-})(React.createClass({
-	getInitialState() {
+	constructor() {
+		super();
+
 		this.scrollDown = _.debounce(this.scrollDown, 10, {maxWait: 10, leading: true});
 		this.autoScrollTop = 0;
-		return {
+		this.state = {
 			autoScroll: true
-		};
-	},
+		}
+
+		this.scrollDown = this.scrollDown.bind(this);
+		this.onScroll = this.onScroll.bind(this);
+		this.onChangeAutoscroll = this.onChangeAutoscroll.bind(this);
+		this.onDownload = this.onDownload.bind(this);
+	}
 
 	componentWillUpdate(nextProps) {
 		if (!this.props.task) {
@@ -23,7 +29,7 @@ export default connect(state => {
 		if (nextProps.task && nextProps.task.id !== this.props.task.id) {
 			this.autoScrollTop = 0;
 		}
-	},
+	}
 
 	scrollDown(override) {
 		if (this.state.autoScroll || override) {
@@ -31,7 +37,7 @@ export default connect(state => {
 			scrollElement.scrollTop = scrollElement.scrollHeight;
 			this.autoScrollTop = scrollElement.scrollTop;
 		}
-	},
+	}
 
 	onScroll() {
 		let scrollElement = ReactDOM.findDOMNode(this.refs.scrollContainer);
@@ -40,7 +46,7 @@ export default connect(state => {
 			this.autoScrolltop = -1;
 			this.setState({autoScroll: false});
 		}
-	},
+	}
 
 	onChangeAutoscroll() {
 		let autoScroll = ReactDOM.findDOMNode(this.refs.autoScroll).checked;
@@ -48,7 +54,7 @@ export default connect(state => {
 			this.scrollDown(true);
 		}
 		this.setState({autoScroll});
-	},
+	}
 
 	onDownload() {
 		let task = this.props.task;
@@ -86,7 +92,7 @@ export default connect(state => {
 			link.setAttribute('href', 'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(elementHtml));
 			link.click();
 		}
-	},
+	}
 
 	render() {
 		let task = this.props.task;
@@ -112,5 +118,11 @@ export default connect(state => {
 			</div>
 		</div>;
 	}
-}));
+}
+
+export default connect(state => {
+	return {
+		task: state.activeTask
+	};
+})(Task);
 
