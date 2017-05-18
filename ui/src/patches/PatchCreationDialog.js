@@ -1,21 +1,27 @@
-import {Table, Label, Button, SplitButton, MenuItem, DropdownButton, Input, ButtonGroup, Modal} from "react-bootstrap";
+import {Button, Input, Modal} from "react-bootstrap";
+import React from 'react';
 
-export default React.createClass({
+class PatchCreationDialog extends React.Component {
 
-	getInitialState() {
-		return {
+	constructor() {
+		super();
+
+		this.state = {
 			name: "",
 			comment: ""
-		};
-	},
+		}
+
+		this.onCreate = this.onCreate.bind(this);
+		this.onCancel = this.onCancel.bind(this);
+	}
 
 	onCreate() {
 		this.props.done({name: this.state.name, comment: this.state.comment});
-	},
+	}
 
 	onCancel() {
 		this.props.done(null);
-	},
+	}
 
 	render() {
 		return <Modal {...this.props} onHide={this.onCancel}>
@@ -42,4 +48,6 @@ export default React.createClass({
 			</Modal.Footer>
 		</Modal>;
 	}
-});
+}
+
+export default PatchCreationDialog;
