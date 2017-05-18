@@ -101,6 +101,7 @@ function getNextStreamId() {
 	nextStreamId++;
 	return streamId;
 }
+
 taskService.subscribeToLog = function subscribeToLog(taskId, callback) {
 	var streamId = getNextStreamId();
 	logSubscriptions[streamId] = callback;
@@ -112,6 +113,10 @@ taskService.subscribeToLog = function subscribeToLog(taskId, callback) {
 	sendMessage(message);
 	return streamId;
 };
+
+taskService.removeFromLog = function removeFromLog(streamId) {
+	delete logSubscriptions[streamId];
+}
 
 export default taskService;
 
