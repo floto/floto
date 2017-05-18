@@ -173,6 +173,8 @@ public class EsxHypervisorService implements HypervisorService {
             Task task = vm.powerOnVM_Task(null);
 			EsxUtils.waitForTask(task, "Power on " + vmname);
 
+			// wait for vmware tools
+			isGuestToolsAvailable(vmname, 300);
         } catch (Throwable t) {
             throw Throwables.propagate(t);
         }
