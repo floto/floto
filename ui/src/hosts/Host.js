@@ -1,14 +1,9 @@
 import { connect } from 'react-redux';
 import {Link} from "react-router";
+import React from 'react';
 
-export default connect(state => {
-	return {
-		host: state.selectedHost,
-		templateMap: state.templateMap,
-		selectedFile: state.selectedFile,
-		selectedFileError: state.selectedFileError
-	};
-})(React.createClass({
+class Host extends React.Component {
+
 	render() {
 		let host = this.props.host;
 		if (!host) {
@@ -50,24 +45,33 @@ export default connect(state => {
 							}
 							return <li key={fileTarget.file} className={className}>
 								<Link to={{pathname:`/hosts/${host.name}/file/${fileTarget.file}`,
-									  query: this.props.location.query}}
+									query: this.props.location.query}}
 									  title={fileTarget.destination}
-									>{fileTarget.name}</Link>
+								>{fileTarget.name}</Link>
 							</li>;
 						})}
 					</ul>
 				</div>
-				{!externalVm && 
-					<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", height: "calc(100vh - 116px)", overflow: "hidden"}}>
+				{!externalVm &&
+				<div key={selectedFileName} style={{flex: "1 1 auto", minHeight: "0px", height: "calc(100vh - 116px)", overflow: "hidden"}}>
 					{this.props.children}
-					</div>
+				</div>
 				}
 			</div>
 
 		</div>;
 
 	}
-}));
+}
+
+export default connect(state => {
+	return {
+		host: state.selectedHost,
+		templateMap: state.templateMap,
+		selectedFile: state.selectedFile,
+		selectedFileError: state.selectedFileError
+	};
+})(Host);
 
 
 
