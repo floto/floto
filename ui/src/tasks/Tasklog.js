@@ -1,24 +1,19 @@
 import moment from "moment";
-
 import taskService from "./taskService.js";
 import websocketService from "../util/websocketService.js";
-
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 var classMap = {
 	ERROR: "danger",
 	WARN: "warning"
 };
 
-
-export default React.createClass({
+class Tasklog extends React.Component {
 
 	componentDidMount() {
 		var table = $(ReactDOM.findDOMNode(this.refs.table));
 		this.streamId = taskService.subscribeToLog(this.props.taskId, (entry) => {
-			if (!this.isMounted()) {
-				// Not mounted anymore, bail early
-				return;
-			}
 			var cls = classMap[entry.level];
 			var classPart = "";
 			if (cls) {
@@ -38,14 +33,15 @@ export default React.createClass({
 			table.append(row);
 			this.props.scrollDown();
 		});
-	},
+	}
 
 	componentWillUnmount() {
+		taskService.removeFromLog(this.streamId);
 		websocketService.sendMessage({
 			type: "unsubscribeFromTaskLog",
 			streamId: this.streamId
 		});
-	},
+	}
 
 	render() {
 		return <div style={{width: "100%", height: "100%"}}>
@@ -60,4 +56,6 @@ export default React.createClass({
 			</table>
 		</div>;
 	}
-});
+}
+
+export default Tasklog;
