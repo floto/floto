@@ -1,6 +1,8 @@
 import VirtualList from 'react-virtual-list';
 import { connect } from 'react-redux';
 import websocketService from "../util/websocketService.js";
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 let handlers = {};
 
@@ -11,10 +13,11 @@ websocketService.addMessageHandler("containerLogMessages", function (message) {
 	}
 });
 
-let MessageLine = React.createClass({
+class MessageLine extends React.Component {
+
 	shouldComponentUpdate(nextProps, nextState) {
 		return false;
-	},
+	}
 
 	render() {
 		let message = this.props.message;
@@ -23,31 +26,32 @@ let MessageLine = React.createClass({
 			{message.log}
 		</div>;
 	}
-});
+}
 
 let nextId = 0;
 const maximumMessageLength = 1000;
 
-export default connect(state => {
-	return {selectedFile: state.selectedFile, selectedFileError: state.selectedFileError};
-})(React.createClass({
+class ContainerLogtail extends React.Component {
 
-	getInitialState() {
-		return {
+	constructor() {
+		super();
+
+		this.state = {
 			messages: [],
 			autoScroll: true,
 			showTimestamps: true
-		};
-	},
+		}
+
+		this.changeShowTimestamps = this.changeShowTimestamps.bind(this);
+		this.changeAutoScroll = this.changeAutoScroll.bind(this);
+		this.renderAllMessages = this.renderAllMessages.bind(this);
+		this.onScroll = this.onScroll.bind(this);
+	}
 
 	componentDidMount() {
 		let containerName = this.props.params.containerName;
 		var myStreamId = this.streamId = +(new Date()) + "-" + Math.random();
 		handlers[myStreamId] = (data) => {
-			if (!this.isMounted()) {
-				// Not mounted anymore, bail early
-				return;
-			}
 			data.messages.forEach((message) => {
 				var className = "log-" + message.stream;
 				var log = message.log.replace(/(?:\r\n|\r|\n)/g, '');
@@ -67,7 +71,7 @@ export default connect(state => {
 			containerName: containerName
 		});
 		this.setState({container: ReactDOM.findDOMNode(this.refs.container)});
-	},
+	}
 
 	componentDidUpdate() {
 		if(this.state.autoScroll) {
@@ -75,29 +79,30 @@ export default connect(state => {
 			container.scrollTop = container.scrollHeight;
 			this.autoScrollTop = container.scrollTop;
 		}
-	},
+	}
 
 	componentWillUnmount() {
+		delete handlers[ this.streamId ];
 		websocketService.sendMessage({
 			type: "unsubscribeFromContainerLog",
 			streamId: this.streamId
 		});
-	},
+	}
 
 	changeShowTimestamps() {
 		this.setState({showTimestamps: !this.state.showTimestamps});
-	},
+	}
 
 	changeAutoScroll() {
 		let autoScroll = !this.state.autoScroll;
 		this.setState({autoScroll});
-	},
+	}
 
 	renderAllMessages(virtual, itemHeight) {
 		return <div style={virtual.style}>
 			{virtual.items.map((message) => <MessageLine key={message.key} message={message}/>)}
 		</div>;
-	},
+	}
 
 	onScroll() {
 		if(!this.state.autoScroll) {
@@ -107,7 +112,7 @@ export default connect(state => {
 		if(this.autoScrollTop !== container.scrollTop) {
 			this.setState({autoScroll: false});
 		}
-	},
+	}
 
 	render() {
 		let logClassname = "log-output";
@@ -137,5 +142,12 @@ export default connect(state => {
 
 		</div>;
 	}
-}));
+}
+
+export default connect(state => {
+	return {
+		selectedFile: state.selectedFile,
+		selectedFileError: state.selectedFileError
+	};
+})(ContainerLogtail);
 
