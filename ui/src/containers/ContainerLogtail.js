@@ -110,8 +110,6 @@ export default connect(state => {
 	},
 
 	render() {
-		console.log( this.state.messages);
-
 		let logClassname = "log-output";
 		if (!this.state.showTimestamps) {
 			logClassname += " log-hide-timestamps";
