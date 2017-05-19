@@ -77,7 +77,7 @@ class NavigationBar extends React.Component {
 				<div className="nav navbar-nav navbar-right hidden-xs hidden-md hidden-sm hidden-lg visible-xl"
 					 style={{textAlign: "center", paddingTop: "10px", paddingRight: "20px", height: "20px"}}>
 				<span style={{color: site.siteColor}}>{siteName}{site.environment ?
-					<span ng-if="site.environment"> ({site.environment})</span> : null}</span><br />
+					<span> ({site.environment})</span> : null}</span><br />
 					<span style={{fontSize: "80%", position: "relative", top: "-4px"}}
 						  className="text-muted">{site.projectRevision}</span>
 				</div>
