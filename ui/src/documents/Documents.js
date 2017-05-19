@@ -2,6 +2,7 @@ import { connect } from 'react-redux';
 import Icon from 'react-fa';
 import {Table} from "react-bootstrap";
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class Documents extends React.Component {
 
@@ -49,8 +50,8 @@ class Documents extends React.Component {
 }
 
 Documents.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 }
 
 export default connect(state => {

@@ -28,6 +28,8 @@ import reducers from '../reducers/reducers';
 
 import taskService from "../tasks/taskService.js";
 
+import PropTypes from 'prop-types';
+
 var initialState = {
 	manifest: {},
 	templateMap: {},
@@ -140,7 +142,7 @@ class Root extends React.Component {
 		super( props );
 
 		this.constructor.childContextTypes = {
-			actions: React.PropTypes.object.isRequired
+			actions: PropTypes.object.isRequired
 		}
 	}
 

@@ -2,6 +2,7 @@ import { connect } from 'react-redux';
 import {Table, Label, Button, MenuItem, DropdownButton, ButtonGroup} from "react-bootstrap";
 import DebounceInput from 'react-debounce-input';
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const labelStyleMapping = {
 	running: "success",
@@ -186,8 +187,8 @@ class Hosts extends React.Component {
 }
 
 Hosts.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 }
 
 export default connect(state => {

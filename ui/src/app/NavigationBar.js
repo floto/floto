@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import Icon from 'react-fa';
 import React from 'react';
 import Switch from "../components/Switch.js";
+import PropTypes from 'prop-types';
 
 class NavigationBar extends React.Component {
 
@@ -86,8 +87,8 @@ class NavigationBar extends React.Component {
 }
 
 NavigationBar.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 }
 
 export default connect(state => {

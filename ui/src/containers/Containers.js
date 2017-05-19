@@ -2,8 +2,9 @@ import { connect } from 'react-redux';
 import DebounceInput from 'react-debounce-input';
 import ContainerGroup from "./ContainerGroup.js";
 import React from 'react';
-import {Table, Label, Button, MenuItem, DropdownButton, ButtonGroup, Panel, Input} from "react-bootstrap";
+import {Table, Label, Button, MenuItem, DropdownButton, ButtonGroup, Panel} from "react-bootstrap";
 import RedeployButton from "../components/RedeployButton.js";
+import PropTypes from 'prop-types';
 
 let containerGroupings = {
 	none: {title: "None", groupFn: (containers) => [{containers: containers, id: "all"}]},
@@ -232,8 +233,8 @@ class Containers extends React.Component {
 }
 
 Containers.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 };
 
 export default connect(state => {

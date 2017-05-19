@@ -4,6 +4,7 @@ import TimeAgo from "react-timeago";
 import Icon from 'react-fa';
 import {formatBytes} from "../util/formatting.js";
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class PatchInfo extends React.Component {
 
@@ -75,7 +76,7 @@ class PatchInfo extends React.Component {
 }
 
 PatchInfo.contextTypes = {
-	actions: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired
 }
 
 export default connect(state => {

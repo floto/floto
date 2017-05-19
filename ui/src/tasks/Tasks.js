@@ -4,6 +4,7 @@ import Icon from 'react-fa';
 import TimeAgo from "react-timeago";
 import moment from "moment";
 import React from 'react';
+import PropTypes from 'prop-types';
 
 const iconMap = {
 	ERROR: "exclamation-circle",
@@ -97,8 +98,8 @@ class Tasks extends React.Component {
 }
 
 Tasks.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 }
 
 export default connect(state => {

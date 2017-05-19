@@ -2,6 +2,7 @@ import {Table, Label, Button, ButtonGroup} from "react-bootstrap";
 import { connect } from 'react-redux';
 import Icon from 'react-fa';
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import RedeployButton from "../components/RedeployButton.js";
 
@@ -147,8 +148,8 @@ class ContainerGroup extends React.Component {
 }
 
 ContainerGroup.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 };
 
 export default connect(state => {

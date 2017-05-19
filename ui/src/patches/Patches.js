@@ -4,6 +4,7 @@ import {Table, Button} from "react-bootstrap";
 import Icon from 'react-fa';
 import FileUploadComponent from "../components/FileUploadComponent.js";
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class Patches extends React.Component {
 
@@ -92,8 +93,8 @@ class Patches extends React.Component {
 }
 
 Patches.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 }
 
 export default connect(state => {

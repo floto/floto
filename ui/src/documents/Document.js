@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
 import React from 'react';
+import PropTypes from 'prop-types';
 
 class Document extends React.Component {
 	render() {
@@ -12,8 +13,8 @@ class Document extends React.Component {
 }
 
 Document.contextTypes = {
-	actions: React.PropTypes.object.isRequired,
-	router: React.PropTypes.object.isRequired
+	actions: PropTypes.object.isRequired,
+	router: PropTypes.object.isRequired
 }
 
 export default connect(state => {
