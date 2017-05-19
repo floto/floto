@@ -3,6 +3,7 @@ import notificationService from "../util/notificationService.js";
 import taskService from "../tasks/taskService.js";
 import bootstrap from "bootstrap";
 import bootbox from "bootbox";
+import ReactDOM from 'react-dom';
 
 
 import PatchCreationDialog from "../patches/PatchCreationDialog";
@@ -274,7 +275,7 @@ function createPatch(store, parentPatchId) {
 	var elementById = document.getElementById("dialog");
 	let done = (patchProperties) => {
 		setTimeout(() => {
-			React.unmountComponentAtNode(elementById);
+			ReactDOM.unmountComponentAtNode(elementById);
 		}, 0);
 		if (!patchProperties) {
 			return;
@@ -284,7 +285,7 @@ function createPatch(store, parentPatchId) {
 			loadPatches(store);
 		});
 	};
-	React.render(<PatchCreationDialog done={done} show={true}/>, elementById);
+	ReactDOM.render(<PatchCreationDialog done={done} show={true}/>, elementById);
 }
 
 export function createIncrementalPatch(store, parentPatchId) {
