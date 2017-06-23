@@ -291,7 +291,7 @@ public class VirtualMachineManager {
 
 	public void addDataDisk(VmDescription.Disk disk, VmDescription vmDesc, int ctrlKey) throws Exception {
 		VirtualMachine vm = getVm(vmDesc.vmName);
-		String fileName = "[" + disk.datastore + "] " + vm.getName() + "_" + (disk.slot+1) + ".vmdk"; //_data
+		String fileName = "[" + disk.datastore + "] " + vm.getName() + "_data" + disk.slot + ".vmdk"; //_data
 		List<VirtualDeviceConfigSpec> vDevConfSpecList = new ArrayList<>();
 		VirtualDiskManager vdm =  new VirtualDiskManager(vm);
 
