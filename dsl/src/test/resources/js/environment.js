@@ -1,1 +1,0 @@
-site.env = ENVIRONMENT;
